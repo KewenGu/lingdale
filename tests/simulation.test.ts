@@ -30,7 +30,11 @@ test('长期运行后存档保持自洽(含缺勤、扩建和作物死亡)', () 
       const state = progress.cards[id];
       assert.ok(state.mastery >= 0 && state.mastery <= MAX_MASTERY);
       if (inField.has(id)) continue;
-      assert.deepEqual([state.stage, state.wrongStreak, state.cycleWrongs], [0, 0, 0], `${id} 在休息却带着这一轮的进度`);
+      assert.deepEqual(
+        [state.stage, state.wrongStreak, state.cycleWrongs],
+        [0, 0, 0],
+        `${id} 在休息却带着这一轮的进度`,
+      );
     }
 
     const harvested = totals.harvests.reduce((sum, n) => sum + n, 0);
@@ -45,8 +49,12 @@ test('长期运行后存档保持自洽(含缺勤、扩建和作物死亡)', () 
 test('默认参数下的节奏:三天内有第一笔收入,每天都在学新词', () => {
   const { rows } = simulate(DEFAULT_OPTIONS);
   const firstIncome = rows.filter((r) => r.earned > 0)[0];
-  assert.ok(firstIncome && firstIncome.day <= 3, `第一次有收入是第 ${firstIncome ? firstIncome.day : '?'} 天`);
-  for (const row of rows.slice(0, 5)) assert.ok(row.newWords >= 5, `第 ${row.day} 天只有 ${row.newWords} 个新词`);
+  assert.ok(
+    firstIncome && firstIncome.day <= 3,
+    `第一次有收入是第 ${firstIncome ? firstIncome.day : '?'} 天`,
+  );
+  for (const row of rows.slice(0, 5))
+    assert.ok(row.newWords >= 5, `第 ${row.day} 天只有 ${row.newWords} 个新词`);
   const tail = rows.slice(-30);
   const perDay = tail.reduce((sum, r) => sum + r.newWords, 0) / tail.length;
   assert.ok(perDay >= 1 && perDay <= 6, `实际 ${perDay}`);

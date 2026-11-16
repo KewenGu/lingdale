@@ -41,9 +41,19 @@ test('日历:28 个游戏日一季,四季一年', () => {
   const start = gameDay(T0, 0);
   assert.deepEqual(calendar(start, T0, 0), { year: 1, season: 0, seasonName: 'spring', day: 1 });
   assert.equal(calendar(start, T0 + gameDays(27), 0).day, 28);
-  assert.deepEqual(calendar(start, T0 + gameDays(28), 0), { year: 1, season: 1, seasonName: 'summer', day: 1 });
+  assert.deepEqual(calendar(start, T0 + gameDays(28), 0), {
+    year: 1,
+    season: 1,
+    seasonName: 'summer',
+    day: 1,
+  });
   assert.equal(calendar(start, T0 + gameDays(28 * 3), 0).seasonName, 'winter');
-  assert.deepEqual(calendar(start, T0 + gameDays(28 * 4 + 2), 0), { year: 2, season: 0, seasonName: 'spring', day: 3 });
+  assert.deepEqual(calendar(start, T0 + gameDays(28 * 4 + 2), 0), {
+    year: 2,
+    season: 0,
+    seasonName: 'spring',
+    day: 3,
+  });
 });
 
 test('浇水次数随掌握度减少', () => {

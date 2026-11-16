@@ -200,7 +200,13 @@ export function plant(
 
   const season = calendar(save.startDay, now, save.tzOffsetMs).season;
   const crop = seasonCrop(season, questionType);
-  plot.crop = { id: `${plotIndex}-${now}`, deckId: deck.id, cardId: card.id, plantedAt: now, cropType: crop.id };
+  plot.crop = {
+    id: `${plotIndex}-${now}`,
+    deckId: deck.id,
+    cardId: card.id,
+    plantedAt: now,
+    cropType: crop.id,
+  };
   save.seeds[questionType]--;
   const xp = addXp(save, source === 'new' ? XP_PLANT : 0);
   save.updatedAt = now;
@@ -351,7 +357,10 @@ export function answer(
     clearedPlot = plotIndex;
   }
 
-  const gained = addXp(save, xpForAnswer(before.mastery, grade) + (harvest ? xpForHarvest(harvest.stars) : 0));
+  const gained = addXp(
+    save,
+    xpForAnswer(before.mastery, grade) + (harvest ? xpForHarvest(harvest.stars) : 0),
+  );
   save.updatedAt = now;
   return {
     xp: gained.xp,

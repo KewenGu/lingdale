@@ -41,9 +41,7 @@ export function activeProgress(save: SaveData): DeckProgress {
  * 单词会被用作对象的键,像 constructor 这样的词会撞上原型链上的属性,所以必须检查自有属性。
  */
 export function getState(progress: DeckProgress, cardId: string): CardState | undefined {
-  return Object.prototype.hasOwnProperty.call(progress.cards, cardId)
-    ? progress.cards[cardId]
-    : undefined;
+  return Object.prototype.hasOwnProperty.call(progress.cards, cardId) ? progress.cards[cardId] : undefined;
 }
 
 export function unlockedCount(save: SaveData): number {

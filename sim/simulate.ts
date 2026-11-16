@@ -64,7 +64,9 @@ console.log('');
 console.log(`最后 ${tail.length} 天平均:`);
 console.log(`  每天新词      ${average(tail, (r) => r.newWords).toFixed(1)}`);
 console.log(`  每天复习作物  ${average(tail, (r) => r.reviewCrops).toFixed(1)}`);
-console.log(`  每天题数      ${questions.toFixed(0)}(按每题 ${SECONDS_PER_QUESTION} 秒约 ${((questions * SECONDS_PER_QUESTION) / 60).toFixed(1)} 分钟)`);
+console.log(
+  `  每天题数      ${questions.toFixed(0)}(按每题 ${SECONDS_PER_QUESTION} 秒约 ${((questions * SECONDS_PER_QUESTION) / 60).toFixed(1)} 分钟)`,
+);
 console.log(`  每天金币收入  ${average(tail, (r) => r.earned).toFixed(0)}`);
 console.log(
   `共种 ${totals.cropsPlanted} 株,收获 ${harvested} 株:五星 ${share(totals.harvests[5])},四星 ${share(totals.harvests[4])},` +

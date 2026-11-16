@@ -39,7 +39,10 @@ test('种完开局的 5 颗种子就升到 2 级并解锁第一个内容', () =>
   const result = plant(save, deck, 4, T0);
   assert.ok(result.ok);
   assert.deepEqual([result.xp.levelBefore, result.xp.levelAfter], [1, 2]);
-  assert.deepEqual(result.xp.unlocked.map((m) => m.level), [2]);
+  assert.deepEqual(
+    result.xp.unlocked.map((m) => m.level),
+    [2],
+  );
   assert.equal(save.seeds.choice, 0);
 });
 
