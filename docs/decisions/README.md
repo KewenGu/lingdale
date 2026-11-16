@@ -20,6 +20,7 @@
 | [0010](0010-crop-type-sets-question-type.md) | 作物种类决定题型,全部用客观题 | 生效 |
 | [0011](0011-name.md) | 名称:Lingu Town / 灵谷小镇 | 生效 |
 | [0012](0012-build-in-public.md) | 边做边公开,内容需求进入开发方案 | 生效 |
+| [0013](0013-content-voice-art-and-budget.md) | 对外内容的口吻、美术来源和投入上限 | 生效 |
 
 ## 什么时候写一条
 
