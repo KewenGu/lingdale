@@ -1,0 +1,187 @@
+{
+  "id": "sample",
+  "name": "示例卡组(30 词)",
+  "version": 1,
+  "cards": [
+    {
+      "id": "abandon",
+      "front": "abandon",
+      "back": "v. 放弃;抛弃",
+      "phonetic": "/əˈbændən/"
+    },
+    {
+      "id": "ability",
+      "front": "ability",
+      "back": "n. 能力;才能",
+      "phonetic": "/əˈbɪləti/"
+    },
+    {
+      "id": "absorb",
+      "front": "absorb",
+      "back": "v. 吸收;使全神贯注",
+      "phonetic": "/əbˈzɔːrb/"
+    },
+    {
+      "id": "accurate",
+      "front": "accurate",
+      "back": "adj. 精确的;准确的",
+      "phonetic": "/ˈækjərət/"
+    },
+    {
+      "id": "achieve",
+      "front": "achieve",
+      "back": "v. 实现;达到",
+      "phonetic": "/əˈtʃiːv/"
+    },
+    {
+      "id": "adapt",
+      "front": "adapt",
+      "back": "v. 适应;改编",
+      "phonetic": "/əˈdæpt/"
+    },
+    {
+      "id": "adequate",
+      "front": "adequate",
+      "back": "adj. 足够的;合格的",
+      "phonetic": "/ˈædɪkwət/"
+    },
+    {
+      "id": "affect",
+      "front": "affect",
+      "back": "v. 影响;感动",
+      "phonetic": "/əˈfekt/"
+    },
+    {
+      "id": "ancient",
+      "front": "ancient",
+      "back": "adj. 古代的;古老的",
+      "phonetic": "/ˈeɪnʃənt/"
+    },
+    {
+      "id": "anxious",
+      "front": "anxious",
+      "back": "adj. 焦虑的;渴望的",
+      "phonetic": "/ˈæŋkʃəs/"
+    },
+    {
+      "id": "apparent",
+      "front": "apparent",
+      "back": "adj. 明显的;表面上的",
+      "phonetic": "/əˈpærənt/"
+    },
+    {
+      "id": "approach",
+      "front": "approach",
+      "back": "v. 接近 n. 方法",
+      "phonetic": "/əˈproʊtʃ/"
+    },
+    {
+      "id": "benefit",
+      "front": "benefit",
+      "back": "n. 益处 v. 有益于",
+      "phonetic": "/ˈbenɪfɪt/"
+    },
+    {
+      "id": "border",
+      "front": "border",
+      "back": "n. 边界;边缘",
+      "phonetic": "/ˈbɔːrdər/"
+    },
+    {
+      "id": "capable",
+      "front": "capable",
+      "back": "adj. 有能力的",
+      "phonetic": "/ˈkeɪpəbl/"
+    },
+    {
+      "id": "challenge",
+      "front": "challenge",
+      "back": "n. 挑战 v. 质疑",
+      "phonetic": "/ˈtʃælɪndʒ/"
+    },
+    {
+      "id": "climate",
+      "front": "climate",
+      "back": "n. 气候;风气",
+      "phonetic": "/ˈklaɪmət/"
+    },
+    {
+      "id": "compare",
+      "front": "compare",
+      "back": "v. 比较;对照",
+      "phonetic": "/kəmˈper/"
+    },
+    {
+      "id": "consume",
+      "front": "consume",
+      "back": "v. 消耗;消费",
+      "phonetic": "/kənˈsuːm/"
+    },
+    {
+      "id": "crucial",
+      "front": "crucial",
+      "back": "adj. 至关重要的",
+      "phonetic": "/ˈkruːʃl/"
+    },
+    {
+      "id": "decline",
+      "front": "decline",
+      "back": "v. 下降;谢绝",
+      "phonetic": "/dɪˈklaɪn/"
+    },
+    {
+      "id": "deliver",
+      "front": "deliver",
+      "back": "v. 递送;发表",
+      "phonetic": "/dɪˈlɪvər/"
+    },
+    {
+      "id": "efficient",
+      "front": "efficient",
+      "back": "adj. 高效的",
+      "phonetic": "/ɪˈfɪʃnt/"
+    },
+    {
+      "id": "emerge",
+      "front": "emerge",
+      "back": "v. 出现;浮现",
+      "phonetic": "/ɪˈmɜːrdʒ/"
+    },
+    {
+      "id": "essential",
+      "front": "essential",
+      "back": "adj. 必不可少的;本质的",
+      "phonetic": "/ɪˈsenʃl/"
+    },
+    {
+      "id": "flexible",
+      "front": "flexible",
+      "back": "adj. 灵活的;柔韧的",
+      "phonetic": "/ˈfleksəbl/"
+    },
+    {
+      "id": "generate",
+      "front": "generate",
+      "back": "v. 产生;引起",
+      "phonetic": "/ˈdʒenəreɪt/"
+    },
+    {
+      "id": "harvest",
+      "front": "harvest",
+      "back": "n. 收获 v. 收割",
+      "phonetic": "/ˈhɑːrvɪst/"
+    },
+    {
+      "id": "maintain",
+      "front": "maintain",
+      "back": "v. 维持;保养;主张",
+      "phonetic": "/meɪnˈteɪn/"
+    },
+    {
+      "id": "obtain",
+      "front": "obtain",
+      "back": "v. 获得;得到",
+      "phonetic": "/əbˈteɪn/"
+    }
+  ]
+}
