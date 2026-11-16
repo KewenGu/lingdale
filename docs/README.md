@@ -27,6 +27,13 @@
 | [开发指南](dev/development.md) | 环境、命令、测试、模拟、代码约定、怎么改规则 |
 | [Cocos 接入](dev/cocos-integration.md) | 怎么把核心层接进 Cocos Creator,界面层怎么调用 |
 
+## 对外内容
+
+| 文档 | 内容 |
+|---|---|
+| [内容策略](marketing/01-content-strategy.md) | 为什么做内容、对谁说、说什么、质量标准、平台分工、对开发方案的要求 |
+| [选题库](marketing/02-content-backlog.md) | 可以做成内容的选题和各自需要的素材 |
+
 ## 其他
 
 | 文档 | 内容 |

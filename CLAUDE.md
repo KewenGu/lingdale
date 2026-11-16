@@ -67,6 +67,7 @@ sim/           学习者模拟,用来在做界面之前验证数值
 data/          卡组数据(目前只有 30 词的示例)
 docs/design/   设计文档:愿景、玩法规则、学习设计、数值、内容、路线图
 docs/dev/      开发文档:架构、开发指南、Cocos 接入
+docs/marketing/ 对外内容:内容策略、选题库
 docs/decisions/ 决策记录:每个重要决定的背景、理由和被否决的方案
 ```
 
@@ -104,6 +105,13 @@ npm run sim -- --buy --days=90   # 模拟参数见 docs/dev/development.md
 3. 改常量和逻辑,补上或更新测试。
 4. 跑 `npm run sim`,把关键数字和上一版对比,更新 `docs/design/04-economy-balance.md`。
 5. 如果是方向性的决定,或否决了一个看起来合理的方案,在 `docs/decisions/` 写一条记录。
+
+**完成一个里程碑或做出一个方向性决定时:** 留下改动前后的截图或录屏和一两个关键数字,
+并在 [`docs/marketing/02-content-backlog.md`](docs/marketing/02-content-backlog.md) 登记一条选题。
+我们边做边对外发布内容,素材只在开发过程中存在,事后补不回来。
+
+**写对外内容:** 遵守 [`docs/marketing/01-content-strategy.md`](docs/marketing/01-content-strategy.md)。
+"诚实"一节同样适用:模拟数字注明是模拟的,不夸大学习效果,没做出来的不当成已有的展示。
 
 **其他改动:** 代码、测试、文档在同一个提交里保持一致。文档和代码对不上时,以谁为准先弄清楚,然后把另一边改对。
 
