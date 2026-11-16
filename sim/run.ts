@@ -177,7 +177,10 @@ export function simulate(options: SimOptions): { rows: DayRow[]; totals: SimTota
 
         if (options.autoBuy) {
           for (let i = 0; i < save.plots.length; i++) {
-            if (!save.plots[i].unlocked && save.coins >= plotCost(unlockedCount(save)) + seedKind('choice').seedPrice) {
+            if (
+              !save.plots[i].unlocked &&
+              save.coins >= plotCost(unlockedCount(save)) + seedKind('choice').seedPrice
+            ) {
               unlockPlot(save, i);
             }
           }

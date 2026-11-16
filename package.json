@@ -1,15 +1,23 @@
 {
-  "name": "lingu-town-core",
+  "name": "lingu-town",
   "version": "0.1.0",
+  "description": "Lingu Town 灵谷小镇:以语言学习为里、游戏为表的种田背单词游戏",
   "private": true,
   "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "test": "tsx --test tests/*.test.ts",
     "typecheck": "tsc -p tsconfig.core.json && tsc -p tsconfig.json",
+    "format": "prettier --write \"core/**/*.ts\" \"tests/**/*.ts\" \"sim/**/*.ts\"",
+    "format:check": "prettier --check \"core/**/*.ts\" \"tests/**/*.ts\" \"sim/**/*.ts\"",
+    "check": "npm run typecheck && npm run format:check && npm test",
     "sim": "tsx sim/simulate.ts"
   },
   "devDependencies": {
     "@types/node": "^26.6.6",
+    "prettier": "^3.10.1",
     "tsx": "^4.23.15",
     "typescript": "^7.0.2"
   }

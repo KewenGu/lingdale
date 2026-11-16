@@ -71,7 +71,10 @@ test('播种:种子不绑定单词,没有该复习的词时长成新词', () => 
   assert.equal(crop.cardId, 'w0');
   assert.deepEqual([crop.cropType, result.cropType, cropQuestionType(crop)], ['turnip', 'turnip', 'choice']); // 春季的基础作物
   assert.deepEqual(cropWaterings(save, crop), { done: 0, needed: 5 });
-  assert.deepEqual([cropGrowth(save, crop), cropStars(save, crop), cropHealth(save, crop)], [0, 5, 'healthy']);
+  assert.deepEqual(
+    [cropGrowth(save, crop), cropStars(save, crop), cropHealth(save, crop)],
+    [0, 5, 'healthy'],
+  );
 });
 
 test('播种失败的四种原因', () => {
@@ -305,7 +308,10 @@ test('作物种类:三种种子对应三种题型,按等级解锁,越难越贵�
   assert.equal(buySeeds(save, T0, 'reverse'), false); // 等级不够,买不了
 
   save.xp = 10000; // 升到足够高的等级
-  assert.deepEqual(seedOffers(save, T0).map((o) => o.unlocked), [true, true, true]);
+  assert.deepEqual(
+    seedOffers(save, T0).map((o) => o.unlocked),
+    [true, true, true],
+  );
   assert.equal(buySeeds(save, T0, 'reverse', 2), true);
   assert.equal(save.coins, 1000 - 2 * seedKind('reverse').seedPrice);
   assert.deepEqual(plant(save, deck, 5, T0, 'reverse').ok, true);
@@ -330,7 +336,10 @@ test('季节:每季有自己的作物,规则不变;换季前种下的作物照�
   const { deck, save } = setup();
   plant(save, deck, 0, T0);
   const summer = T0 + gameDays(28);
-  assert.deepEqual(seedOffers(save, summer).map((o) => o.cropName), ['番茄', '玉米', '西瓜']);
+  assert.deepEqual(
+    seedOffers(save, summer).map((o) => o.cropName),
+    ['番茄', '玉米', '西瓜'],
+  );
   const result = plant(save, deck, 1, summer); // 春天剩下的种子到夏天长成夏季作物
   assert.ok(result.ok);
   assert.equal(result.cropType, 'tomato');

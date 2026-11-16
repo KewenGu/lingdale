@@ -85,7 +85,10 @@ test('会话:题型跟着作物走,回答自动判对错', () => {
   const second = session.current()!;
   assert.equal(second.type, 'reverse');
   const miss = session.submit((second.correctIndex + 1) % 4, T0);
-  assert.deepEqual([miss.correct, miss.requeued, miss.result?.stars, miss.result?.health], [false, true, 4, 'stunted']);
+  assert.deepEqual(
+    [miss.correct, miss.requeued, miss.result?.stars, miss.result?.health],
+    [false, true, 4, 'stunted'],
+  );
 
   assert.equal(session.current()!.type, 'spell');
   assert.equal(session.submit('WORD2', T0).correct, true);
@@ -102,7 +105,10 @@ test('会话:题型跟着作物走,回答自动判对错', () => {
 
   const progress = activeProgress(save);
   assert.deepEqual([getState(progress, 'w1')?.wrongStreak, getState(progress, 'w1')?.lapses], [1, 1]);
-  assert.deepEqual(progress.logs.map((log) => log.questionType), ['choice', 'reverse', 'spell']);
+  assert.deepEqual(
+    progress.logs.map((log) => log.questionType),
+    ['choice', 'reverse', 'spell'],
+  );
   assert.equal(save.coins, 0); // 答题不给金币
 
   const stats = todayStats(save, T0);
@@ -124,7 +130,10 @@ test('会话:hard 不生长也不扣星;作物死亡或收获后不再排回队�
 
   const next = fieldOf(['choice']);
   const hard = new ReviewSession(next.save, next.deck, ['w0'], mulberry32(1)).submitGrade('hard', T0);
-  assert.deepEqual([hard.correct, hard.requeued, hard.result?.stars, hard.result?.health], [false, false, 5, 'healthy']);
+  assert.deepEqual(
+    [hard.correct, hard.requeued, hard.result?.stars, hard.result?.health],
+    [false, false, 5, 'healthy'],
+  );
 });
 
 test('存档可以序列化后原样读回', () => {

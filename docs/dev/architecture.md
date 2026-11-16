@@ -1,0 +1,203 @@
+# 架构
+
+## 总体结构
+
+```
+┌──────────────────────────────────────────────┐
+│  界面层(Cocos Creator)           尚未开始   │
+│  场景、动画、输入、音效                       │
+└───────────────┬──────────────────────────────┘
+                │ 调用函数,读取返回值
+┌───────────────▼──────────────────────────────┐
+│  核心层 core/                     已完成     │
+│  全部游戏规则。纯 TypeScript,没有任何外部依赖 │
+└───────────────▲──────────────────────────────┘
+                │ 提供时间、存储、提醒
+┌───────────────┴──────────────────────────────┐
+│  平台层                           尚未开始   │
+│  各平台的存储、登录、支付、通知、分享         │
+└──────────────────────────────────────────────┘
+```
+
+**核心层不知道界面和平台的存在。** 它只接收数据、返回数据。
+
+这样分的原因:
+
+- 同一套规则要跑在原生应用、微信小游戏、抖音小游戏和网页上。
+- 规则可以脱离引擎做测试和模拟,几十毫秒跑完 60 天。
+- 界面可以随意重做而不碰规则。
+
+## 核心层的模块
+
+| 文件 | 职责 | 依赖 |
+|---|---|---|
+| `types.ts` | 所有数据类型 | 无 |
+| `constants.ts` | 时间、掌握度、作物相关的规则常量 | 无 |
+| `time.ts` | 游戏日、下次浇水时间、日历 | constants |
+| `crops.ts` | 种子种类表和作物表 | types |
+| `economy.ts` | 种子供应、地块价格、作物售价 | constants、crops |
+| `level.ts` | 经验来源、升级曲线、等级解锁、`addXp` | types |
+| `scheduler.ts` | 一个词的状态怎么随浇水、收获、死亡变化。全是纯函数 | constants、time |
+| `deck.ts` | 按 id 查卡片 | types |
+| `save.ts` | 创建存档、序列化、读取词的状态 | constants、economy、time |
+| `farm.ts` | 游戏操作:领种子、买种子、播种、浇水、卖作物、解锁地块,以及所有查询 | 以上全部 |
+| `quiz.ts` | 按题型出题、判对错 | constants、deck |
+| `session.ts` | 一次浇水会话:出题顺序、首次作答、重复练习 | farm、quiz |
+| `stats.ts` | 从作答日志算统计 | constants、save、time |
+| `index.ts` | 统一导出 | |
+
+依赖方向是单向的,从上到下。`scheduler.ts` 不知道地块和金币的存在,`farm.ts` 不知道题目长什么样。
+
+## 数据模型
+
+完整定义见 `core/types.ts`。分三层:
+
+**内容层**,只读,随卡组下发:
+
+```
+Deck { id, name, version, cards: Card[] }
+Card { id, front, back, phonetic?, example?, exampleTranslation?, audioKey? }
+```
+
+**学习层**,每个学过的词一份:
+
+```
+CardState {
+  mastery       掌握度,0 是新词
+  stage         这一轮已经浇对几次水
+  dueAt         在田里:下次能浇水的时间;不在田里:休息结束的时间
+  wrongStreak   这一轮连续答错的次数
+  cycleWrongs   这一轮答错的总次数,决定品质
+  reps, lapses  累计作答和答错次数
+  lastReviewAt
+}
+ReviewLog { cardId, at, grade, mastery, stage, questionType, elapsedMs }
+```
+
+**游戏层**:
+
+```
+SaveData {
+  schemaVersion, tzOffsetMs, startDay, activeDeckId
+  progress: { [deckId]: DeckProgress { cards, cursor, logs } }
+  plots: Plot[] { unlocked, crop: Crop | null }
+  coins, xp
+  seeds: { choice, reverse, spell }
+  seedGiftDay, shopDay, shopBought
+  produce: { [cropId]: number[] }      各星级的库存数量
+  updatedAt
+}
+Crop { id, deckId, cardId, plantedAt, cropType }
+```
+
+`SaveData` 是一个可以直接 `JSON.stringify` 的普通对象,没有类实例、没有循环引用。
+
+## 必须遵守的约束
+
+### 1. core 保持纯净
+
+`core/` 不能引用 Cocos、Node 或 DOM 的任何接口,只能用 ES2015 标准库。
+
+`tsconfig.core.json` 把 `lib` 限制为 `ES2015`、`types` 设为空,所以用了 `console`、`setTimeout`、
+`Object.values`、`Array.prototype.includes` 这类东西会直接编译失败。这是有意的:
+小游戏的运行环境不是浏览器,老设备上的 JavaScript 引擎也不保证支持新接口。
+
+### 2. 时间和随机数从参数传入
+
+`core/` 里任何地方都不调用 `Date.now()` 和 `Math.random()`。需要时间的函数接收 `now` 参数,需要随机的函数接收 `rng` 参数。
+
+原因:
+
+- 测试可以精确控制时间,不需要等待或打桩。
+- 模拟可以用固定的随机种子复现结果。
+- 调试时给时间加一个偏移量就能"快进一个游戏日",这是调一个跨多天的游戏循环的唯一可行办法。
+
+### 3. 能推导的不存档
+
+存档里只存事实,不存能算出来的东西。
+
+| 不存 | 由什么算出 |
+|---|---|
+| 作物的生长形态、品质、健康状态 | 这个词的 `CardState` |
+| 作物能不能浇水 | `dueAt` 和当前时间 |
+| 哪些词该复习 | 所有词的 `dueAt`,去掉正在田里的 |
+| 玩家等级 | `xp` |
+| 现在是哪个季节 | `startDay` 和当前时间 |
+
+同一个事实只存一份,就不会出现两份数据对不上的缺陷。
+
+### 4. 用单词当键时检查自有属性
+
+`progress.cards` 以单词为键。`constructor`、`toString` 这些既是英语单词,也是对象原型上的属性名,
+直接写 `cards['constructor']` 会拿到一个函数而不是 `undefined`。
+
+读取词的状态一律用 `getState(progress, cardId)`,它检查自有属性。`tests/farm.test.ts` 里有专门的测试。
+
+### 5. 修改状态的函数和纯函数分开
+
+- `scheduler.ts`、`time.ts`、`economy.ts`、`quiz.ts` 里是纯函数,返回新值,不修改参数。
+- `farm.ts` 和 `session.ts` 里的函数直接修改传入的 `save`,并在注释里写明。
+
+界面层调用 `farm.ts` 的函数后,存档已经是新状态,返回值描述的是"刚才发生了什么",用来驱动动画。
+
+### 6. 存档版本
+
+`SCHEMA_VERSION` 目前是 1。`deserialize` 拒绝读取版本不符的存档。
+
+产品上线之前可以直接修改存档结构。上线之后,任何结构变化都要增加版本号,并在 `deserialize` 里写从旧版本到新版本的迁移。
+
+### 7. 多卡组的预留
+
+目前只有一个当前卡组(`activeDeckId`),但存档结构已经按多卡组设计:学习进度按卡组分开存(`progress[deckId]`),
+`Crop` 记录了自己属于哪个卡组。经验、金币、地块、种子是全局的,不分卡组。
+
+函数接口目前只操作当前卡组。真要做多卡组时改函数签名即可,存档不用迁移。
+
+## 时间模型
+
+所有时间都是 UTC 毫秒时间戳。本地时区偏移存在 `save.tzOffsetMs` 里,由平台层在每次启动时更新。
+
+```
+gameDay(now, tz) = floor((now + tz - 4 小时) / 12 小时)
+```
+
+- 游戏日的编号是连续整数,偶数是白天那一半(4:00 到 16:00),奇数是夜晚那一半。
+- 浇水后的下次可浇时间是 `max(下个游戏日开始, 现在 + 6 小时)`。
+- 休息的到期时间对齐到游戏日的开始,所以词总是在换日时"回来"。
+- 玩家跨时区旅行时,`tzOffsetMs` 更新后游戏日边界随之移动,不需要特殊处理。
+
+## 一次浇水的数据流
+
+```
+界面:玩家点水壶
+  → thirstyCards(save, now)                  哪些词现在能浇
+  → new ReviewSession(save, deck, ids, rng)
+  → session.current()                        cropOfCard → 作物种类 → 题型 → makeQuestion
+界面:展示题目,玩家作答
+  → session.submit(response, now, elapsedMs)
+      → isCorrect                            判对错
+      → answer(save, cardId, grade, now)     只在首次作答时调用
+          → scheduler.water                  算出浇水后的状态
+          → 写作答日志
+          → 死亡 / 收获 / 继续生长           更新词的状态、地块、库存
+          → addXp                            结算经验和升级
+      → 答错且作物还在:排回队尾
+界面:按返回值播放生长、扣星、枯萎、死亡、收获、升级
+  → 循环直到 session.current() 返回 null
+  → serialize(save) 存档
+```
+
+## 平台层(计划)
+
+平台层还没有实现。核心层需要平台提供的能力很少:
+
+```ts
+interface Platform {
+  load(): Promise<string | null>;        // 读存档
+  save(json: string): Promise<void>;     // 写存档
+  now(): number;                          // 当前时间,调试时可以加偏移
+  scheduleReminder(at: number, text: string): void;
+}
+```
+
+登录、支付、分享等在各平台差异很大,等真正需要时再定义接口。详见 [Cocos 接入](cocos-integration.md)。

@@ -1,4 +1,11 @@
-import { DAYS_PER_SEASON, DAY_START_HOUR, GAME_DAY_MS, HOUR_MS, MIN_WATER_GAP_MS, SEASONS } from './constants';
+import {
+  DAYS_PER_SEASON,
+  DAY_START_HOUR,
+  GAME_DAY_MS,
+  HOUR_MS,
+  MIN_WATER_GAP_MS,
+  SEASONS,
+} from './constants';
 
 /** 时间戳所在的游戏日编号。游戏日在本地时间 4:00 和 16:00 切换。 */
 export function gameDay(now: number, tzOffsetMs: number): number {
