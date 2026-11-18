@@ -26,7 +26,8 @@
 - **一句话:** 背单词的方法大家都知道,难的是坚持。种田游戏恰好最擅长让人每天回来。
 - **讲什么:** 为什么坚持不下来;种田"每天照料"和记忆"每天回忆"的节奏是一回事;这个游戏打算怎么玩。
 - **素材:** 文字见[愿景](../design/01-vision.md)和[决策记录 0001](../decisions/0001-learning-inside-game-outside.md)。缺概念图。
-- **状态:** 写作中。原稿见 [drafts/001](drafts/001-why-a-farming-game.md),已补入创作者的经历,待最终确认
+- **状态:** 制作中。原稿见 [drafts/001](drafts/001-why-a-farming-game.md);已在 SM-Intelligence 建选题(postId `78b8e3bb-58d7-465c-baf0-d20cadeae209`),
+  各平台版本的快照见 [drafts/001-generated-versions](drafts/001-generated-versions.md),待审阅
 - **备注:** 这是第一篇,承担验证需求的任务。结尾要有明确的下一步。
 
 ### 2. 答错了,作物会枯萎甚至死掉
