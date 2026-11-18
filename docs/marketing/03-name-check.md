@@ -80,6 +80,7 @@
 | **Lexivale** | 无 | 无 | lexivale.com 2014 年注册,空页面 | 可用 |
 | **Lingdale** | 无 | 无 | lingdale.com 2016 年注册,空页面 | 可用 |
 | **Linggu Valley** | 无 | 无 | .com、.app 都未注册 | 可用,但和灵谷寺、灵谷洞同名 |
+| Lingoo | 中国区有一款德语区的语言学习应用 "Lingoo: Sprachen lernen"(2026-09 上架) | 无 | lingoo.com 是 **Lingoo Limited(伦敦)的语言交换和寄宿家庭平台**;lingoo.app 已注册 | 淘汰。读音和"灵谷"最接近,但同领域有两个使用者,且 LINGOO 是美国的有效注册商标(见下) |
 
 几个可用候选的域名:
 
@@ -90,6 +91,11 @@
 | Linggu Valley | 未注册 | 未注册 | 查询被限流,未知 |
 
 网页搜索也没有找到使用 Lingdale、Lexivale、Lexidale 的产品或公司(除上表的网站外)。
+
+关于 Lingoo:商标信息网站显示,LINGOO 是 Lingoo Limited(伦敦)持有的美国注册商标(注册号 4043859,2011 年注册,
+第 35 类,2017 年做过维持申报,目前有效)。它的申请号以 79 开头,说明是通过马德里体系的国际注册延伸到美国的,
+同一份国际注册可能也指定了其他国家,包括中国,这一点没有核实。来源:
+[Justia 商标记录](https://trademark.justia.com/790/96/lingoo-79096542.html)、[Markinton 商标记录](https://markinton.com/trademark/lingoo-79096542)。
 
 和第一轮一样,这只是公开渠道,商标局的正式检索还没做。
 
