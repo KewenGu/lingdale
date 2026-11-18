@@ -58,6 +58,7 @@ sim/             学习者模拟
 data/            卡组数据
 docs/design/     设计文档
 docs/dev/        开发文档
+docs/marketing/  对外内容:策略和选题库
 docs/decisions/  决策记录
 ```
 
@@ -74,6 +75,7 @@ docs/decisions/  决策记录
 | 代码怎么组织、有哪些不能破坏的约束 | [架构](docs/dev/architecture.md) |
 | 怎么开发、测试、调数值 | [开发指南](docs/dev/development.md) |
 | 怎么把核心层接进 Cocos Creator | [Cocos 接入](docs/dev/cocos-integration.md) |
+| 对外发什么内容、怎么发 | [内容策略](docs/marketing/01-content-strategy.md)、[选题库](docs/marketing/02-content-backlog.md) |
 | 某个设计为什么是现在这样 | [决策记录](docs/decisions/README.md) |
 | 文档和代码里的术语 | [术语表](docs/glossary.md) |
 
