@@ -33,6 +33,7 @@
 |---|---|
 | [内容策略](marketing/01-content-strategy.md) | 为什么做内容、对谁说、说什么、质量标准、平台分工、对开发方案的要求 |
 | [选题库](marketing/02-content-backlog.md) | 可以做成内容的选题和各自需要的素材 |
+| [名称查重](marketing/03-name-check.md) | 查了什么、查到了什么、还剩什么没查 |
 
 ## 其他
 
