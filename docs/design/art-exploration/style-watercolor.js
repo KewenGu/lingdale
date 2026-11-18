@@ -89,18 +89,20 @@
   }
 
   // ---------- 一层画:色块在下(整组过滤镜),铅笔线在上 ----------
-  function Painter(seed) {
+  function Painter(seed, rim) {
     this.rnd = LD.rng(seed);
     this.w = [];
     this.k = '';
     this.k2 = '';
+    // rim:整层共用一个水渍边颜色。作物那一层色块又多又小,逐个写加深色太占字节,而且小叶子上看不出差别
+    this.rim = rim || '';
   }
   var PP = Painter.prototype;
   PP.j = function (a) {
     return (this.rnd() * 2 - 1) * a;
   };
   PP.wash = function (d, col, op) {
-    this.w.push('<path d="' + d + '" fill="' + col + '" stroke="' + dark(col) + '"' + (op != null ? ' opacity="' + op + '"' : '') + '/>');
+    this.w.push('<path d="' + d + '" fill="' + col + '"' + (this.rim ? '' : ' stroke="' + dark(col) + '"') + (op != null ? ' opacity="' + op + '"' : '') + '/>');
   };
   // 一笔线状的颜色(茎、竿、条纹)
   PP.stroke = function (d, col, wd, op) {
@@ -186,6 +188,7 @@
       s +=
         '<g' +
         (filter ? ' filter="url(#' + PRE + filter + ')"' : '') +
+        (this.rim ? ' stroke="' + this.rim + '"' : '') +
         ' fill-opacity="' +
         (fo || 0.8) +
         '" stroke-opacity=".45" stroke-width="' +
@@ -267,7 +270,7 @@
   };
   // 枯萎的颜色:往土黄和生褐靠,再掺一点纸色(更淡、更干)
   PL.col = function (c) {
-    return this.wilt ? mix(mix(c, '#d9b65c', 0.8), C.paper, 0.14) : c;
+    return this.wilt ? mix(mix(c, '#dbb95e', 0.82), C.paper, 0.1) : c;
   };
   PL.fcol = function (c) {
     return this.wilt ? mix(c, '#b89a6c', 0.5) : c;
@@ -276,15 +279,16 @@
     return [p[0] + this.j(a), p[1] + this.j(a)];
   };
   // 叶子的中脉是一条先按原方向长出去、再弯下来的曲线;枯萎时弯得多,叶尖朝下
-  PL.arc = function (x, y, ang, len, curl) {
+  PL.arc = function (x, y, ang, len, curl, stalk) {
     ang = ((((ang + 180) % 360) + 360) % 360) - 180;
     var i = this.li,
       sg = ang > 4 ? 1 : ang < -4 ? -1 : i % 2 ? 1 : -1,
       w = this.wilt ? 1 : 0,
       a0 = ang * RAD + this.j(0.08),
-      a1 = a0 + sg * (curl + w * 1.5);
-    if (Math.abs(a1) > 2.8) a1 = sg * 2.8;
-    var l1 = len * 0.5 * (w ? 0.7 : 1),
+      a1 = a0 + sg * (curl + w * (stalk ? 1.15 : 1.35));
+    if (Math.abs(a1) > 2.7) a1 = sg * 2.7;
+    // 枯萎时叶柄还撑着一点高度、叶片从上面垂下来:看得出是"蔫了的一株",不是地上的一堆
+    var l1 = len * 0.5 * (w && !stalk ? 0.75 : 1),
       cx = x + Math.sin(a0) * l1,
       cy = y - Math.cos(a0) * l1;
     var tx = cx + Math.sin(a1) * len * 0.55,
@@ -305,7 +309,7 @@
     var nx = -(a.t[1] - y),
       ny = a.t[0] - x,
       nl = Math.sqrt(nx * nx + ny * ny) || 1,
-      ww = (wid * (this.wilt ? 0.85 : 1)) / nl;
+      ww = (wid * (this.wilt ? 0.9 : 1)) / nl;
     nx *= ww;
     ny *= ww;
     var B = this.pt(x, y),
@@ -313,13 +317,14 @@
       L = this.pt(a.c[0] + nx, a.c[1] + ny),
       R = this.pt(a.c[0] - nx, a.c[1] - ny);
     p.wash('M' + P2(B) + 'Q' + P2(L) + ' ' + P2(T) + 'Q' + P2(R) + ' ' + P2(B) + 'Z', col, o.op);
-    if (o.ink !== false) p.ink('M' + P2(this.jp(B, 0.5)) + 'Q' + P2(this.jp(L, 0.8)) + ' ' + P2(this.jp(T, 0.6)) + 'Q' + P2(this.jp(R, 0.8)) + ' ' + P2(this.jp(B, 0.5)));
-    if (o.rib !== false && len * this.s > 10) p.ink2('M' + P2(B) + 'Q' + P2(this.pt(a.c[0], a.c[1])) + ' ' + P2(mid(this.pt(a.c[0], a.c[1]), T)));
+    // 枯萎的叶子用细线、隔一片才勾一次:线太密会显得焦枯扎人,要的是软塌塌的
+    if (o.ink !== false && !(this.wilt && i % 2)) (this.wilt ? p.ink2 : p.ink).call(p, 'M' + P2(this.jp(B, 0.5)) + 'Q' + P2(this.jp(L, 0.8)) + ' ' + P2(this.jp(T, 0.6)) + 'Q' + P2(this.jp(R, 0.8)) + ' ' + P2(this.jp(B, 0.5)));
+    if (o.rib !== false && !this.wilt && len * this.s > 10) p.ink2('M' + P2(B) + 'Q' + P2(this.pt(a.c[0], a.c[1])) + ' ' + P2(mid(this.pt(a.c[0], a.c[1]), T)));
     return a;
   };
   // 叶柄或小枝,返回曲线上的取点函数,好把小叶挂上去
   PL.sprig = function (x, y, ang, len, col, wd) {
-    var a = this.arc(x, y, ang, len, 0.2),
+    var a = this.arc(x, y, ang, len, 0.2, true),
       p0 = [x, y];
     this.p.stroke('M' + P2(this.pt(x, y)) + 'Q' + P2(this.pt(a.c[0], a.c[1])) + ' ' + P2(this.pt(a.t[0], a.t[1])), this.col(col), wd || 1.1);
     return {
@@ -505,21 +510,22 @@
     },
     // 土豆:蓬松的圆灌丛。后排的枝高、前排的枝矮,叠成一个圆顶。开花形态顶上有小白花,土边露出两个土豆
     potato: function (c, st) {
-      var A = st === 2 ? [-38, 0, 38] : [-54, -19, 19, 54, -80, -30, 30, 80],
-        L = st === 2 ? [10, 13, 10] : [19, 25, 25, 19, 11, 12, 12, 11],
+      var A = st === 2 ? [-40, 0, 40] : [-50, 0, 50, -26, 26, -82, 82, -4],
+        L = st === 2 ? [12, 16, 12] : [21, 27, 21, 17, 17, 12, 12, 9],
         tips = [],
         i,
         sp;
       c.yl = 3;
       c.yn = 3;
       for (i = 0; i < A.length; i++) {
-        sp = c.tri(c.j(1.5), 0, A[i] + c.j(4), L[i], st === 2 ? 8.5 : 11, st === 2 ? 6 : 7.5, i % 2 ? C.sap : C.olive, C.olive, 62);
+        sp = c.tri(c.j(1.5), 0, A[i] + c.j(4), L[i], st === 2 ? 10 : 12.5, st === 2 ? 7 : 8.5, i % 2 ? C.sap : C.olive, C.olive, 62);
         tips.push(sp.at(1));
       }
       if (st === 4) {
-        c.flower(tips[1][0] - 3, tips[1][1] - 9, 3.2, C.white);
-        c.flower(tips[2][0] + 3, tips[2][1] - 7, 3.2, C.white);
-        c.flower(tips[0][0] - 1, tips[0][1] - 3, 2.8, C.white);
+        c.flower(tips[1][0] - 4, tips[1][1] - 6, 3.4, C.white);
+        c.flower(tips[1][0] + 7, tips[1][1] + 2, 3.2, C.white);
+        c.flower(tips[0][0] - 1, tips[0][1] - 5, 3, C.white);
+        c.flower(tips[2][0] + 2, tips[2][1] - 4, 3, C.white);
         c.blob(-17, 2.5, 5, 3.8, '#d6a04c', { n: 7 });
         c.blob(-9.5, 5, 4, 3, '#d6a04c', { n: 7 });
         c.dot(-18, 1.8);
@@ -529,8 +535,8 @@
     },
     // 草莓:贴地的三出叶(圆叶),红果垂在叶子下面。同样是后高前低两排,中间不留空
     strawberry: function (c, st) {
-      var A = st === 2 ? [-36, 32] : [-44, 0, 44, -80, -28, 28, 80],
-        L = st === 2 ? [8, 9] : [15, 17, 15, 9, 8, 8, 9],
+      var A = st === 2 ? [-40, 0, 38] : [-44, 0, 44, -82, 82, -38, 38, 2],
+        L = st === 2 ? [8, 10, 8] : [15, 17, 15, 9, 9, 8, 8, 5],
         i;
       c.yl = 3;
       c.yn = 3;
@@ -805,27 +811,38 @@
   // ---------- 一块地 ----------
   var PW = 66; // 地块的宽
   var PH = 50; // 土色块的高。星星画在土块下面的白纸上,这样在干土、湿土上都一样清楚
+  var RIM = '#4f5a34'; // 作物层共用的水渍边:偏暗的橄榄色,压在绿叶和红果的边上都不突兀
   var BX = 33; // 作物根部在地块里的位置
   var BY = 37;
   // 每种作物的整体大小。目标是长满的时候差不多占满自己的地块,最高的(玉米、番茄)刚好碰到后一行的星星但不盖住
   var GS = { turnip: 1.3, potato: 1.15, strawberry: 1.38, tomato: 1.18, corn: 1.12, melon: 1.3, eggplant: 1.3, pumpkin: 1.25, grape: 1.15, cabbage: 1.5, leek: 1.25, snowpea: 1.15 };
 
-  function star(p, cx, cy, r, on) {
-    var pts = [],
+  // 星星很多(每屏一百多颗):用相对坐标写路径,亮的星放进一个共用填色和描边的组里,省字节
+  function star(L, cx, cy, r, on) {
+    var p = L.mark,
+      d = '',
+      px = 0,
+      py = 0,
       i,
       a,
       rr,
-      d = '';
+      x,
+      y;
     for (i = 0; i < 10; i++) {
       a = -Math.PI / 2 + (i / 10) * 6.283 + p.j(0.06);
       rr = (i % 2 ? 0.46 : 1) * r * (1 + p.j(0.1));
-      pts.push([cx + Math.cos(a) * rr, cy + Math.sin(a) * rr]);
-      d += (i ? 'L' : 'M') + P2(pts[i]);
+      x = r1(cx + Math.cos(a) * rr);
+      y = r1(cy + Math.sin(a) * rr);
+      d += i ? (i === 1 ? 'l' : ' ') + r1(x - px) + ' ' + r1(y - py) : 'M' + x + ' ' + y;
+      px = x;
+      py = y;
     }
-    d += 'Z';
-    // 星星很多(每屏一百多颗),亮的星用一个 path 同时带填色和铅笔边,省一半字节
-    if (on) p.w.push('<path d="' + d + '" fill="' + C.yellow + '" stroke="' + C.ink + '" stroke-width=".55" stroke-opacity=".75"/>');
+    d += 'z';
+    if (on) L.stars.push(d);
     else p.ink2(d);
+  }
+  function marksHtml(L) {
+    return '<g fill="' + C.yellow + '" stroke="' + C.ink + '" stroke-width=".55" stroke-opacity=".75" stroke-linejoin="round"><path d="' + L.stars.join('"/><path d="') + '"/></g>' + L.mark.html(null, 1);
   }
   // 水滴:贴在地块右上角的一张小圆纸片上。有白纸衬底,压在叶子或深色的土上也一样醒目
   function dropMark(p, cx, cy, s) {
@@ -899,7 +916,7 @@
     }
 
     var m = L.mark;
-    for (i = 0; i < 5; i++) star(m, x + BX + (i - 2) * 8.6, y + PH + 7, 3.3, i < plot.stars);
+    for (i = 0; i < 5; i++) star(L, x + BX + (i - 2) * 8.6, y + PH + 7, 3.3, i < plot.stars);
     if (plot.thirsty) dropMark(m, x + PW - 6.5, y + 3, 1);
     if (plot.harvestNext) basketMark(m, x + 6.5, y + 3, 1);
   }
@@ -1123,7 +1140,7 @@
 
   function farm(scene) {
     var sky = new Painter(11),
-      L = { soil: new Painter(23), crop: new Painter(37), mark: new Painter(41) },
+      L = { soil: new Painter(23), crop: new Painter(37, RIM), mark: new Painter(41), stars: [] },
       hud = new Painter(53),
       bar = new Painter(67),
       deco = new Painter(71),
@@ -1151,7 +1168,7 @@
       deco.html(null) +
       L.soil.html('wash', 0.8, 1.7) +
       L.crop.html('wash', 0.9) +
-      L.mark.html(null, 1) +
+      marksHtml(L) +
       hud.html('wash-s', 1) +
       bar.html('wash-s', 0.92) +
       txt.join('') +
@@ -1162,7 +1179,7 @@
 
   // ---------- 单块样张 ----------
   function tile(plot) {
-    var L = { soil: new Painter(301), crop: new Painter(307), mark: new Painter(311) },
+    var L = { soil: new Painter(301), crop: new Painter(307, RIM), mark: new Painter(311), stars: [] },
       seed = 500;
     if (plot) seed += plot.stage * 7 + plot.stars * 13 + plot.crop.length * 31 + plot.crop.charCodeAt(1) * 3 + (plot.thirsty ? 5 : 0);
     drawPlot(L, 0, 0, plot, seed);
@@ -1173,7 +1190,7 @@
       '"/>' +
       L.soil.html('wash-s', 0.8, 1.7) +
       L.crop.html('wash-s', 0.9) +
-      L.mark.html(null, 1) +
+      marksHtml(L) +
       grain(-9, -31, 84, 96) +
       '</svg>'
     );
@@ -1183,7 +1200,7 @@
   // 画的部分都在 360×480 的坐标里画,再放大 3 倍:这样滤镜的抖动幅度、铅笔线的粗细和农场画面是同一个比例
   function cover() {
     var bg = new Painter(701),
-      L = { soil: new Painter(709), crop: new Painter(719), mark: new Painter(727) },
+      L = { soil: new Painter(709), crop: new Painter(719, RIM), mark: new Painter(727), stars: [] },
       fg = new Painter(733),
       ttl = new Painter(739),
       ox = 20,
@@ -1243,7 +1260,7 @@
       bg.html('wash', 0.8, 1.8) +
       L.soil.html('wash', 0.8, 1.7) +
       L.crop.html('wash', 0.9) +
-      L.mark.html(null, 1) +
+      marksHtml(L) +
       fg.html('wash-s', 0.95) +
       '</g>' +
       T(540, 222, '把背单词', 158, { w: 700, ls: 6 }) +
