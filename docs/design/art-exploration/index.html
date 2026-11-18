@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- artifact:head -->
+<meta name="claude:viewport-fit-sides" content="cover">
+<title>灵谷小镇画风探索</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Fredoka:wght@500;600;700&family=LXGW+WenKai+TC:wght@400;700&family=Noto+Sans+SC:wght@400;500;700;900&family=Noto+Serif+SC:wght@600;900&family=ZCOOL+KuaiLe&display=swap">
+<link rel="stylesheet" href="fonts.css">
+<link rel="stylesheet" href="page.css">
+<!-- /artifact:head -->
+</head>
+<body>
+<!-- artifact:body -->
+<svg id="ld-defs" width="0" height="0" aria-hidden="true" focusable="false"></svg>
+
+<header class="top">
+  <div class="wrap">
+    <p class="eyebrow">灵谷小镇 Lingdale · 美术方向探索稿</p>
+    <h1>四种画风,同一片农场</h1>
+    <p class="lede">
+      下面四张图画的是同一个存档:第 1 年夏季第 3 天,30 块地,其中 12 块等着浇水。只有画风不同。
+      看完告诉我你选哪个,我再把它写成美术规范。
+    </p>
+    <div class="notice">
+      <strong>这些是示意稿,不是成品。</strong>
+      全部用代码绘制(SVG),没有任何 AI 生成的图像。它们用来检验配色、布局,以及各种状态在手机上认不认得出,
+      不代表每种画风最终能达到的精细程度。用代码画对四个方向并不公平,<a href="#bias">偏差在哪里</a>写在推荐一节里。
+    </div>
+    <nav class="jump" aria-label="页面目录">
+      <a href="#compare">并排比较</a>
+      <a href="#small">缩小检验</a>
+      <a href="#matrix">逐项对比</a>
+      <a href="#dir-pixel">A 像素</a>
+      <a href="#dir-watercolor">B 水彩</a>
+      <a href="#dir-paper">C 拼贴</a>
+      <a href="#dir-lowpoly">D 低多边形</a>
+      <a href="#verdict">对照要求</a>
+      <a href="#recommend">推荐</a>
+      <a href="#next">下一步</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <section id="compare" class="band">
+    <div class="wrap">
+      <h2>并排比较</h2>
+      <p class="sub">
+        场景里有 12 块能浇水、2 株枯萎、3 株不生长、4 株浇对就收获、4 块空地。
+        先别看后面的说明,试着在每张图里把它们找出来。找得越快,这个画风越符合"农场就是记忆的样子"。
+      </p>
+      <div class="seg" id="phone-tabs" role="group" aria-label="跳到某个方向"></div>
+      <div class="phones" id="phones"></div>
+    </div>
+  </section>
+
+  <section id="small" class="band">
+    <div class="wrap">
+      <h2>缩小检验:120 块地</h2>
+      <p class="sub">
+        地块最多 120 块,是现在的四倍。全景要么滚动,要么缩小。这里把同一片农场缩到每块地约 28pt,四片拼在一起,
+        相当于一屏看到 120 块地时的大小。这时还分得出哪些要浇水、哪些枯萎了吗?
+      </p>
+      <div class="smalls" id="smalls"></div>
+    </div>
+  </section>
+
+  <section id="matrix" class="band">
+    <div class="wrap">
+      <div class="head-row">
+        <h2>逐项对比</h2>
+        <div class="seg" id="tile-size" role="group" aria-label="样张大小">
+          <button type="button" id="tile-size-l" data-size="l" aria-pressed="true">正常大小</button>
+          <button type="button" id="tile-size-s" data-size="s" aria-pressed="false">缩到 40px</button>
+        </div>
+      </div>
+      <p class="sub">同一个状态,四种画法。每一行是一个方向。</p>
+      <div id="matrix-body"></div>
+    </div>
+  </section>
+
+  <div id="directions"></div>
+
+  <section id="verdict" class="band">
+    <div class="wrap">
+      <h2>对照七条要求</h2>
+      <p class="sub">
+        这是我的判断,不是数据。依据是上面的画面和每种画风的制作方式。圆点越多越符合:三个是强,两个是中,一个是弱。
+      </p>
+      <div class="table-scroll"><table class="verdict" id="verdict-table"></table></div>
+    </div>
+  </section>
+
+  <section id="recommend" class="band">
+    <div class="wrap prose">
+      <h2>我的推荐</h2>
+      <p class="pick"><span class="pick-letter">C</span> 我推荐彩纸拼贴。最终由你决定。</p>
+
+      <h3>理由</h3>
+      <ol>
+        <li>
+          <strong>农场是用来读的。</strong>
+          支柱 2 要求扫一眼看出状态,而地块最多 120 块。缩小检验里 C 和 A 最清楚,B 和 D 掉得最快。
+          这一条排在最前面,因为它直接关系到产品目标,不是审美偏好。
+        </li>
+        <li>
+          <strong>一个人做。</strong>
+          12 种作物、5 个形态、3 种健康状态,还要有生长、枯萎、收获的动画,而路线图里说这部分"决定了答题是享受还是忍受"。
+          在 C 里,这些都是同一组形状的换色、旋转和缩放,不用为每个状态多画一张;A 要多画像素变体,B 要逐帧画或接受作物不动,D 要建模。
+        </li>
+        <li>
+          <strong>AI 协助的方式更稳。</strong>
+          C 的素材可以由代码或矢量工具直接产出,这份示意稿本身就是这样来的。它不经过"生成一张图再去修",所以没有逐张风格漂移的问题。
+        </li>
+        <li>
+          <strong>正文是单词。</strong>
+          答题界面上的单词、音标、释义必须好读。C、B、D 用的都是普通字体,A 的像素字体在这里吃亏。
+        </li>
+      </ol>
+
+      <h3>选 C 要付的代价</h3>
+      <p>
+        它是四个方向里最容易被看成"一个应用"的。治愈感不是自带的,要靠配色、形状和纸的质感经营;
+        在小红书上它清楚、醒目,但不如 B 让人想停下来看。
+        <strong>如果你看完觉得 C"干净但没感觉",那这个代价就是真的,不该选它。</strong>
+      </p>
+
+      <h3>其他三个</h3>
+      <ul>
+        <li>
+          <strong>B 水彩绘本是第二选择。</strong>
+          气质上它最贴"治愈的田园小镇",离修仙最远。如果你自己愿意画,或者把画面气质放在第一位,选它是合理的;
+          代价是要为状态另外设计一层清晰的标记,并且长期和"成套一致"较劲。
+        </li>
+        <li>
+          <strong>A 像素菜园</strong>没有被推荐,不是因为不好看。"像素加种田"这个组合里已经有一个人人都知道的作品,
+          我们很难不被拿来比较,而选题库里本来就有一篇要讲"为什么不能照搬它的规则"。再加上中文像素字体对答题界面不友好。
+        </li>
+        <li>
+          <strong>D 低多边形沙盘</strong>在短视频里最出彩,但遮挡损害可辨认度,建模和 3D 管线对一个人来说太重。
+        </li>
+      </ul>
+
+      <h3>一个可以考虑的折中</h3>
+      <p>
+        C 的形状和状态画法,加上 B 的纸纹、柔和配色和手工的不规则。也就是:作物仍然是可以用变换驱动的纸片,
+        但边缘带一点手剪的不整齐,颜色更柔,表面有水彩纸的颗粒。如果你觉得 C 太冷、B 太难做,告诉我,我照这个再出一版。
+      </p>
+
+      <h3 id="bias">这个推荐的局限</h3>
+      <ul>
+        <li>
+          <strong>示意稿偏向 C。</strong>
+          代码最擅长画的恰好是纯色的几何形状。B 的水彩和 D 的 3D 用真正的工具做会比这里好看得多,A 由熟练的像素画师来摆也会更精致。
+          所以比较"好不好看"时请给 C 打个折扣;比较"认不认得出"相对公平,因为那主要取决于明暗对比和轮廓。
+        </li>
+        <li>
+          <strong>审美由你决定。</strong>
+          我能判断的是可辨认度和产能,判断不了哪个更打动你和小红书上的目标用户。后者正是"这几种画风,你更喜欢哪个"这条内容要问观众的。
+        </li>
+        <li>
+          <strong>有些依据没有实测。</strong>
+          关于 AI 图像工具画不好像素画、AI 对 3D 建模帮助有限,是我对这类工具的了解,没有在这个项目里试过。
+          微信小游戏主包 4MB 的上限来自多份第三方资料,没有核对官方文档。
+        </li>
+      </ul>
+    </div>
+  </section>
+
+  <section id="finding" class="band">
+    <div class="wrap prose">
+      <h2>画的过程中核实的一件事</h2>
+      <p>
+        画"快收获"这个状态时,我先以为"开花"就等于"快收获"。按规则核对后发现不是:
+        只有新词要浇对 5 次、依次经过五个形态;掌握度高的旧词浇对 1 到 3 次就收获,会跳过后面的形态。
+      </p>
+      <p>
+        用现有的模拟器跑了一下(默认参数,正确率 85%,每天开两次,3 到 5 个随机种子取平均,第 7 天到第 365 天):
+        田里<strong>下一次浇对就能收获</strong>的作物占 20% 到 38%,而处在<strong>开花</strong>形态的只占 7% 到 18%。
+        也就是说,大部分快收获的作物看起来并不像快收获。
+      </p>
+      <p>
+        所以四份稿里都加了一个独立的"浇对就收获"标记(地块左上角)。这是在不改规则的前提下,靠美术补上的。
+        同一次模拟还显示,任何时候田里大约有四分之一到三分之一的作物是"种子"形态,所以种子这个最不起眼的形态值得认真画。
+      </p>
+      <p class="fine">
+        这些数字来自模拟,不是真实玩家的数据。我还验证了另一个猜想:"玩到后期,田里会不会大部分是种子"。
+        模拟不支持这个猜想,各形态的占比在一年内都比较稳定。
+      </p>
+    </div>
+  </section>
+
+  <section id="next" class="band">
+    <div class="wrap prose">
+      <h2>下一步</h2>
+      <p>告诉我下面任意一种,我就继续:</p>
+      <ul>
+        <li>"选 C"(或 A、B、D):我把它写成美术规范。</li>
+        <li>"C 和 B 的折中再出一版":我先补一份探索稿。</li>
+        <li>"都不满意,我想要更……":说说哪里不对,我换方向。</li>
+      </ul>
+      <p>你选定之后我会做这些:</p>
+      <ul>
+        <li>写 <code>docs/design/07-art-direction.md</code> 美术规范:配色、字体、作物和地块的画法、各状态的表达、社交媒体画面的版式。</li>
+        <li>写一条决策记录,包括没选的方向和原因。</li>
+        <li>把候选方案整理成可以发出去征求意见的图,更新选题库里"这几种画风,你更喜欢哪个"这一条。</li>
+        <li>更新路线图和文档索引。</li>
+      </ul>
+      <h3>这次没做的</h3>
+      <ul>
+        <li><strong>没有生成任何 AI 图像。</strong>每个方向都写好了中英文提示词,你可以自己拿去试。如果想让我来生成,先告诉我用哪个工具、预算多少。</li>
+        <li>没有画答题界面、单词卡片、收获动画和小镇。这次只检验农场这一屏。</li>
+        <li>没有做动效。四个方向"动起来"的差别只写在了说明里,没有演示。</li>
+        <li>没有问过任何目标用户。</li>
+      </ul>
+      <h3>素材来源</h3>
+      <p class="fine">
+        本页所有画面由 Claude 编写的代码绘制,属于 AI 协助产出的内容;没有使用图像生成模型,没有使用任何第三方图片。
+        字体:Fusion Pixel(像素)、霞鹜文楷、站酷快乐体、Baloo 2、Fredoka、思源黑体、思源宋体,
+        均标注为 SIL 开源字体许可(OFL),正式使用前需要再核对一次许可。对外发布这些画面时,按规定声明其中有 AI 协助生成的内容。
+      </p>
+    </div>
+  </section>
+</main>
+
+<script src="scene.js"></script>
+<script src="style-pixel.js"></script>
+<script src="style-watercolor.js"></script>
+<script src="style-paper.js"></script>
+<script src="style-lowpoly.js"></script>
+<script src="directions.js"></script>
+<script src="page.js"></script>
+<!-- /artifact:body -->
+</body>
+</html>
