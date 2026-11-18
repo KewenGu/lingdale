@@ -1,6 +1,6 @@
 # Lingdale 灵谷小镇
 
-[![CI](https://github.com/KewenGu/lingu-town/actions/workflows/ci.yml/badge.svg)](https://github.com/KewenGu/lingu-town/actions/workflows/ci.yml)
+[![CI](https://github.com/KewenGu/lingdale/actions/workflows/ci.yml/badge.svg)](https://github.com/KewenGu/lingdale/actions/workflows/ci.yml)
 
 一款种田背单词游戏。**以语言学习为里,游戏为表。**
 
