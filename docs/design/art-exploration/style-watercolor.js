@@ -4,11 +4,12 @@
 // - 整个画面是一张暖白色的水彩纸。颜色薄、透明,叠在纸上,留白很多。
 // - 色块是"手涂"的:轮廓的控制点用 LD.rng 抖动;同一块颜色里有浓淡;边缘有一圈略深的水渍边;
 //   叠了两层的地方更深。色块和铅笔线各自独立抖动,所以会有涂出线外、没涂满的地方。
-// - 线是深褐灰色的铅笔线:抖动、断续,重要的轮廓画两遍。
+// - 线是深褐灰色的铅笔线:抖动、断续、有石墨的颗粒,重要的轮廓画两遍。
 // - 界面元素是贴在纸上的小纸签:一块涂了颜色的色块加铅笔轮廓,字用霞鹜文楷(课本感,不是书法)。
 //
-// 性能上的取舍:feTurbulence 和 feDisplacementMap 只加在"整层"上(远景一层、土一层、作物一层、界面两小层),
-// 纸纹用一个 160×160 的可平铺 pattern,只算一次。星星、水滴这些状态标记不过滤镜,保证小尺寸下清楚。
+// 性能上的取舍:滤镜(feTurbulence + feDisplacementMap)只加在"整层"上,一屏农场一共十来次:
+// 远景、土、作物、界面各一层色块,每层的铅笔线再合成一组过一次。纸纹是一个 160×160 的可平铺 pattern,只算一次。
+// 星星的填色、水滴和小篮子的色块不过滤镜,保证缩到很小的时候状态标记还是清楚的。
 (function () {
   'use strict';
   var LD = window.LD;
@@ -17,6 +18,7 @@
   var FONT = "'LXGW WenKai TC','Noto Serif SC',serif";
   var RAD = Math.PI / 180;
 
+  // 颜料盒。画面里其余的颜色都是用这几管颜料互相调、或者兑水(降低不透明度、掺纸色)得到的
   var C = {
     paper: '#f7f0e1',
     ink: '#5a4b41',
@@ -26,17 +28,13 @@
     olive: '#6f8f4a',
     pale: '#a9c9a0',
     ochre: '#d2a84c',
-    umber: '#a8804a',
     red: '#d9625a',
     orange: '#e39a4c',
     yellow: '#efc95a',
     violet: '#8d73a8',
-    sky: '#9cc6d8',
     blue: '#5f9fc0',
     roof: '#c8705a',
     white: '#fffaf0', // 比纸更白一点的留白,用在花、萝卜、纸签上
-    wood: '#cdb084', // 木头和竹竿:生褐兑了很多水
-    leek: '#7fae9f', // 韭葱的蓝绿:淡青绿加一点天蓝
     text: '#4a3d35', // 字比铅笔线深一档,保证小字读得清
   };
 
@@ -56,6 +54,9 @@
     }
     return s;
   }
+  C.wood = mix(C.dry, C.wet, 0.25); // 木头和竹竿:干土色里调一点熟褐
+  C.leek = mix(mix(C.pale, C.blue, 0.4), C.olive, 0.15); // 韭葱的蓝绿:淡青绿加天蓝
+  C.water = mix(C.blue, C.white, 0.6); // 兑了很多水的天蓝,画水壶
   var darkCache = {};
   // 水渍边:颜料干的时候会被推到色块边缘,所以描边用同一个颜色加深,而不是统一的黑边
   function dark(c) {
@@ -196,15 +197,18 @@
         '" stroke-linejoin="round">' +
         this.w.join('') +
         '</g>';
-    // 断续的铅笔线:虚线的间隔很短、长短不一,长线会断几处,短线保持完整
-    if (this.k)
+    // 断续的铅笔线:虚线的间隔很短、长短不一,长线会断几处,短线保持完整。
+    // 粗细两条线放进同一个组过一次铅笔滤镜:石墨蹭在纸纹上是一粒一粒的,不是光滑的矢量线
+    if (this.k || this.k2)
       s +=
-        '<path d="' +
-        this.k +
-        '" fill="none" stroke="' +
+        '<g filter="url(#' +
+        PRE +
+        'pencil)" fill="none" stroke="' +
         C.ink +
-        '" stroke-width=".9" stroke-opacity=".74" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="31 2.5 17 2 47 3 23 2"/>';
-    if (this.k2) s += '<path d="' + this.k2 + '" fill="none" stroke="' + C.ink + '" stroke-width=".55" stroke-opacity=".64" stroke-linecap="round" stroke-linejoin="round"/>';
+        '" stroke-linecap="round" stroke-linejoin="round">' +
+        (this.k ? '<path d="' + this.k + '" stroke-width=".95" stroke-opacity=".8" stroke-dasharray="31 2.5 17 2 47 3 23 2"/>' : '') +
+        (this.k2 ? '<path d="' + this.k2 + '" stroke-width=".6" stroke-opacity=".7"/>' : '') +
+        '</g>';
     return s;
   };
 
@@ -270,7 +274,7 @@
   };
   // 枯萎的颜色:往土黄和生褐靠,再掺一点纸色(更淡、更干)
   PL.col = function (c) {
-    return this.wilt ? mix(mix(c, '#dbb95e', 0.82), C.paper, 0.1) : c;
+    return this.wilt ? mix(mix(c, C.ochre, 0.8), C.wet, 0.08) : c;
   };
   PL.fcol = function (c) {
     return this.wilt ? mix(c, '#b89a6c', 0.5) : c;
@@ -285,8 +289,17 @@
       sg = ang > 4 ? 1 : ang < -4 ? -1 : i % 2 ? 1 : -1,
       w = this.wilt ? 1 : 0,
       a0 = ang * RAD + this.j(0.08),
-      a1 = a0 + sg * (curl + w * (stalk ? 1.15 : 1.35));
-    if (Math.abs(a1) > 2.7) a1 = sg * 2.7;
+      rot = this.tilt,
+      a1;
+    // 下垂是朝着地面垂,不是朝着茎的"下方"垂:茎已经弯了的地方,要先换算成画面上的角度再决定往哪边倒
+    if (this.flop && y < 0) rot += this.flop * (y / this.H) * (y / this.H) * this.dir;
+    if (w) {
+      a1 = a0 + rot;
+      sg = a1 > 0.07 ? 1 : a1 < -0.07 ? -1 : sg;
+      a1 += sg * (curl + (stalk ? 1.15 : 1.35));
+      if (Math.abs(a1) > 2.7) a1 = sg * 2.7;
+      a1 -= rot;
+    } else a1 = a0 + sg * curl;
     // 枯萎时叶柄还撑着一点高度、叶片从上面垂下来:看得出是"蔫了的一株",不是地上的一堆
     var l1 = len * 0.5 * (w && !stalk ? 0.75 : 1),
       cx = x + Math.sin(a0) * l1,
@@ -522,12 +535,12 @@
         tips.push(sp.at(1));
       }
       if (st === 4) {
-        c.flower(tips[1][0] - 4, tips[1][1] - 6, 3.4, C.white);
-        c.flower(tips[1][0] + 7, tips[1][1] + 2, 3.2, C.white);
-        c.flower(tips[0][0] - 1, tips[0][1] - 5, 3, C.white);
-        c.flower(tips[2][0] + 2, tips[2][1] - 4, 3, C.white);
-        c.blob(-17, 2.5, 5, 3.8, '#d6a04c', { n: 7 });
-        c.blob(-9.5, 5, 4, 3, '#d6a04c', { n: 7 });
+        c.flower(tips[1][0] - 4, tips[1][1] - 6, 4.2, C.white);
+        c.flower(tips[1][0] + 8, tips[1][1] + 3, 3.8, C.white);
+        c.flower(tips[0][0] - 1, tips[0][1] - 5, 3.8, C.white);
+        c.flower(tips[2][0] + 2, tips[2][1] - 4, 3.8, C.white);
+        c.blob(-17, 2.5, 5, 3.8, C.ochre, { n: 7, op: 1 });
+        c.blob(-9.5, 5, 4, 3, C.ochre, { n: 7, op: 1 });
         c.dot(-18, 1.8);
         c.dot(-15.4, 3.2);
         c.dot(-10, 4.8);
@@ -546,8 +559,8 @@
         c.blob(-11, -2, 2, 2.4, '#d3dc9c', { n: 6, light: true, op: 1 });
       }
       if (st === 4) {
-        c.flower(-6, -22, 3, C.white);
-        c.flower(9, -20, 2.8, C.white);
+        c.flower(-6, -22, 3.6, C.white);
+        c.flower(9, -20, 3.4, C.white);
         var B = [[-14, -3.5], [0, -1.5], [14, -4.5]];
         for (i = 0; i < 3; i++) {
           c.blob(B[i][0], B[i][1], 4.4, 5.2, C.red, { n: 7, op: 1 });
@@ -566,7 +579,7 @@
         h,
         sd;
       c.H = H;
-      c.flop = c.wilt ? 1.9 : 0;
+      c.flop = c.wilt ? 1.25 : 0;
       c.yl = 3;
       c.yn = 3;
       c.stake(3.5, 1, 4.5, -H - 6);
@@ -598,7 +611,7 @@
         h,
         sd;
       c.H = H;
-      c.flop = c.wilt ? 1.6 : 0;
+      c.flop = c.wilt ? 1.2 : 0;
       c.yl = 2;
       c.stem([[0, 0], [c.j(0.6), -H * 0.5], [0, -H]], C.sap, st === 2 ? 2 : 3);
       for (i = 0; i < n; i++) {
@@ -664,7 +677,7 @@
       var i;
       c.s *= [0, 0, 0.52, 0.84, 1][st];
       c.H = 38;
-      c.flop = c.wilt ? 1.5 : 0;
+      c.flop = c.wilt ? 1.1 : 0;
       c.stem([[0, 0], [0.5, -12], [0, -21]], '#6f6a52', 2);
       c.stem([[0, -18], [-6, -26], [-9, -33]], '#6f6a52', 1.5);
       c.stem([[0, -20], [6, -28], [9, -36]], '#6f6a52', 1.5);
@@ -764,7 +777,7 @@
       var A = [-46, -25, -5, 15, 38],
         i;
       c.s *= [0, 0, 0.52, 0.82, 1][st];
-      for (i = 0; i < 5; i++) c.leaf(c.j(0.6), -14, A[i], 31 - Math.abs(A[i]) / 9, 5.5, i % 2 ? '#6b9b92' : C.leek, { curl: 0.14 });
+      for (i = 0; i < 5; i++) c.leaf(c.j(0.6), -14, A[i], 31 - Math.abs(A[i]) / 9, 5.5, i % 2 ? mix(C.leek, C.olive, 0.25) : C.leek, { curl: 0.14 });
       var a = c.pt(-3.4, 1.5),
         b = c.pt(-3, -15),
         d = c.pt(3, -15),
@@ -783,7 +796,7 @@
         sd;
       c.s *= [0, 0, 0.55, 0.85, 1][st];
       c.H = 47;
-      c.flop = c.wilt ? 1.3 : 0;
+      c.flop = c.wilt ? 1 : 0;
       c.yl = 2;
       c.yn = 2;
       c.stake(-10, 1, 5, -51, C.wood, 1.4);
@@ -1021,8 +1034,8 @@
 
   function scenery(p) {
     // 天:两层很淡的天蓝,下缘不齐,像一笔带过
-    p.wash(smooth([[-12, -12], [402, -12], [404, 96], [336, 112], [262, 98], [190, 114], [118, 100], [52, 112], [-12, 102]], true), C.sky, 0.5);
-    p.wash(smooth([[-12, -12], [402, -12], [404, 30], [300, 46], [180, 30], [70, 44], [-12, 34]], true), C.sky, 0.4);
+    p.wash(smooth([[-12, -12], [402, -12], [404, 96], [336, 112], [262, 98], [190, 114], [118, 100], [52, 112], [-12, 102]], true), C.blue, 0.3);
+    p.wash(smooth([[-12, -12], [402, -12], [404, 30], [300, 46], [180, 30], [70, 44], [-12, 34]], true), C.blue, 0.22);
     // 山坡:普通的田园丘陵,远的偏青,近的偏黄绿
     p.wash(smooth([[-14, 176], [-14, 126], [50, 108], [120, 116], [190, 130], [262, 118], [330, 106], [404, 116], [404, 172], [300, 180], [200, 174], [100, 181]], true), C.pale, 0.75);
     house(p, 54, 121, 17, 11);
@@ -1069,8 +1082,8 @@
       by = 707,
       bw = 180,
       bh = 62;
-    p.wash(p.rr(bx, by, bw, bh, 16, 1.2), C.sky, 1);
-    p.wash(p.rr(bx + 5, by + 24, bw - 12, bh - 27, 13, 2.2), C.blue, 0.42);
+    p.wash(p.rr(bx, by, bw, bh, 16, 1.2), C.blue, 0.62);
+    p.wash(p.rr(bx + 5, by + 24, bw - 12, bh - 27, 13, 2.2), C.blue, 0.36);
     p.ink(p.rr(bx - 0.6, by - 0.6, bw + 1.2, bh + 1.2, 16, 0.9));
     p.ink2(p.rr(bx + 0.8, by + 1, bw - 1, bh - 1.4, 16, 1.2));
     can(p, bx + 34, by + 33, 1.25, C.white);
@@ -1098,9 +1111,9 @@
     p.wash('M' + (sx + 0.5) + ' ' + (sy + 3) + 'Q' + (sx + 7) + ' ' + (sy + 1) + ' ' + (sx + 6) + ' ' + (sy - 4) + 'Q' + (sx + 1) + ' ' + (sy - 3) + ' ' + (sx + 0.5) + ' ' + (sy + 3) + 'Z', C.sap, 1);
     p.seg2(sx, sy + 3, sx, sy + 7, 0.2);
     txt.push(T(43, 762.5, '种子', 11.5));
-    p.wash(p.blob(67, 713, 9, 9, 8, 0.05), C.white, 1);
-    p.ink(p.blob(67, 713, 9.2, 9.2, 8, 0.06));
-    txt.push(T(67, 717.4, String(seeds), 12.5, { w: 700 }));
+    p.wash(p.blob(67, 713, 10, 10, 8, 0.05), C.white, 1);
+    p.ink(p.blob(67, 713, 10.2, 10.2, 8, 0.06));
+    txt.push(T(67, 717.8, String(seeds), 12.5, { w: 700 }));
 
     // 商店:一个带条纹雨棚的小摊
     tag(p, 276, 709, 48, 60, cream, 0.9, 9);
@@ -1184,14 +1197,14 @@
     if (plot) seed += plot.stage * 7 + plot.stars * 13 + plot.crop.length * 31 + plot.crop.charCodeAt(1) * 3 + (plot.thirsty ? 5 : 0);
     drawPlot(L, 0, 0, plot, seed);
     return (
-      '<svg xmlns="http://www.w3.org/2000/svg" viewBox="-9 -31 84 96">' +
-      '<rect x="-9" y="-31" width="84" height="96" fill="' +
+      '<svg xmlns="http://www.w3.org/2000/svg" viewBox="-9 -35 84 100">' +
+      '<rect x="-9" y="-35" width="84" height="100" fill="' +
       C.paper +
       '"/>' +
       L.soil.html('wash-s', 0.8, 1.7) +
       L.crop.html('wash-s', 0.9) +
       marksHtml(L) +
-      grain(-9, -31, 84, 96) +
+      grain(-9, -35, 84, 100) +
       '</svg>'
     );
   }
@@ -1211,8 +1224,8 @@
     ttl.wash(smooth([[40, 118], [180, 114], [326, 116], [328, 131], [180, 135], [38, 134]], true), C.yellow, 0.3);
 
     // 天:一笔不规则的淡蓝,不是规整的椭圆
-    bg.wash(smooth([[ox + 6, oy + 34], [ox + 62, oy + 2], [ox + 150, oy + 12], [ox + 236, oy - 4], [ox + 314, oy + 24], [ox + 322, oy + 78], [ox + 250, oy + 98], [ox + 160, oy + 100], [ox + 70, oy + 98], [ox, oy + 80]], true), C.sky, 0.55);
-    bg.wash(bg.blob(ox + 112, oy + 38, 86, 24, 9, 0.16), C.sky, 0.35);
+    bg.wash(smooth([[ox + 6, oy + 34], [ox + 62, oy + 2], [ox + 150, oy + 12], [ox + 236, oy - 4], [ox + 314, oy + 24], [ox + 322, oy + 78], [ox + 250, oy + 98], [ox + 160, oy + 100], [ox + 70, oy + 98], [ox, oy + 80]], true), C.blue, 0.33);
+    bg.wash(bg.blob(ox + 112, oy + 38, 86, 24, 9, 0.16), C.blue, 0.2);
     bg.wash(bg.blob(ox + 258, oy + 30, 14, 14, 9, 0.05), C.yellow, 0.85);
     bg.ink2(bg.blob(ox + 259, oy + 31, 14.6, 14.6, 9, 0.07));
     bg.wash(smooth([[ox + 2, oy + 116], [ox + 4, oy + 88], [ox + 60, oy + 68], [ox + 120, oy + 78], [ox + 190, oy + 64], [ox + 260, oy + 74], [ox + 316, oy + 90], [ox + 318, oy + 118], [ox + 160, oy + 124]], true), C.pale, 0.78);
@@ -1240,7 +1253,7 @@
       px = ox + 53;
     for (i = 0; i < 6; i++) drawPlot(L, px + (i % 3) * 74, oy + 136 + Math.floor(i / 3) * 61, plots[i], 811 + i * 23);
 
-    can(fg, ox + 26, oy + 214, 1.5, '#bcd7e2');
+    can(fg, ox + 26, oy + 214, 1.5, C.water);
     hat(fg, ox + 300, oy + 226, 1.25);
     tuft(fg, ox + 16, oy + 170, 1.2);
     tuft(fg, ox + 304, oy + 180, 1.2);
@@ -1302,6 +1315,14 @@
       '<defs>' +
       washFilter('wash', 6) +
       washFilter('wash-s', 30) +
+      '<filter id="' +
+      PRE +
+      'pencil" x="-20%" y="-20%" width="140%" height="140%" color-interpolation-filters="sRGB">' +
+      '<feTurbulence type="fractalNoise" baseFrequency=".7" numOctaves="2" seed="5" result="n"/>' +
+      '<feDisplacementMap in="SourceGraphic" in2="n" scale="1.3" xChannelSelector="R" yChannelSelector="G" result="d"/>' +
+      '<feColorMatrix in="n" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 3 0 -.45" result="a"/>' +
+      '<feComposite in="d" in2="a" operator="in"/>' +
+      '</filter>' +
       // 纸纹:深色颗粒和浅色颗粒各一层,叠在所有东西上面,颜料和铅笔线都会被纸的"牙"打断
       '<filter id="' +
       PRE +
@@ -1340,7 +1361,7 @@
     ],
     defs: defs,
     farm: farm,
-    field: { x: 12, y: 174, w: 366, h: 498 },
+    field: { x: 12, y: 178, w: 366, h: 492 },
     tile: tile,
     cover: cover,
   };

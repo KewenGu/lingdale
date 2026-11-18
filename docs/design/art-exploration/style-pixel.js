@@ -3,10 +3,11 @@
 // 画风要点:
 // - 真正的像素画:整屏按 1 美术像素 = 4pt 画成一张 98×211 的图,所有图形落在整数像素格上,
 //   没有抗锯齿、渐变、旋转和非整数缩放。
-// - 限定色板(见 PAL),暖色,描边用深褐紫色不用纯黑。
+// - 限定色板(见 PAL,共 26 色),暖色,描边用深褐紫色不用纯黑。
 // - 每株作物是手摆的字符画(16 列),程序只负责加 1 像素外描边、合并成 path。
 // - 地块是一个木框菜畦:上面 12 行是土(干土浅、湿土深),下面 3 行是木板,品质的 5 个小钉点钉在木板上。
-// - 枯萎和"不生长"不靠旋转:换色 + 逐行错位 + 压矮 + 外侧列下沉。
+// - "不生长"是左上一片叶子发黄、上半截错位 1 像素。枯萎不靠旋转:手画一张叶子垂到两边的姿态,
+//   换成橄榄色和枯黄色,根部留一点绿;没有手画姿态的作物用程序把整株下沉、错位、换色来顶替。
 // - 文字用 12 像素的中文像素字体,1 字体像素 = 2pt(半个美术像素),只放在整数坐标上。
 (function () {
   'use strict';
@@ -21,11 +22,11 @@
     s: '#b98d58', // 干土 暗
     E: '#8a5a3b', // 湿土 亮
     e: '#6b4230', // 湿土 暗
-    a: '#a7d468', // 草地 亮(也用作白菜、豆荚的淡黄绿)
     A: '#7fb850', // 草地 中
-    g: '#8fd05a', // 叶 亮
+    g: '#9bd45c', // 叶 亮 / 草地 亮(两处合用一个颜色,省出一个位置给蔫叶)
     G: '#57a84a', // 叶 中(也是草地暗部)
     d: '#35793f', // 叶 暗
+    K: '#a3a84a', // 蔫叶:介于叶绿和枯黄之间。只用枯黄的话,蔫了的作物在土上像一堆土
     L: '#c9a94e', // 枯叶 亮
     l: '#9a7b3c', // 枯叶 暗
     R: '#e2533f', // 红
@@ -71,7 +72,8 @@
   };
   /** 整数半径的像素圆。r*r+r 这个阈值让小圆的四个尖角被削掉,比 r*r 圆润。 */
   Buf.prototype.disc = function (cx, cy, r, c) {
-    for (var j = -r; j <= r; j++) for (var i = -r; i <= r; i++) if (i * i + j * j <= r * r + r) this.px(cx + i, cy + j, c);
+    for (var j = -r; j <= r; j++)
+      for (var i = -r; i <= r; i++) if (i * i + j * j <= r * r + r) this.px(cx + i, cy + j, c);
     return this;
   };
   /** 字符画。'.' 是透明;map 可以把占位字符换成实际颜色。 */
@@ -86,7 +88,8 @@
     return this;
   };
   Buf.prototype.blit = function (src, x, y) {
-    for (var j = 0; j < src.h; j++) for (var i = 0; i < src.w; i++) if (src.d[j * src.w + i]) this.px(x + i, y + j, src.d[j * src.w + i]);
+    for (var j = 0; j < src.h; j++)
+      for (var i = 0; i < src.w; i++) if (src.d[j * src.w + i]) this.px(x + i, y + j, src.d[j * src.w + i]);
     return this;
   };
   /** 给不透明区域加 1 像素外描边(四邻域,拐角自然是圆的)。 */
@@ -96,7 +99,8 @@
       for (var x = 0; x < this.w; x++) {
         var v = this.get(x, y);
         if (v) out.px(x, y, v);
-        else if (this.get(x - 1, y) || this.get(x + 1, y) || this.get(x, y - 1) || this.get(x, y + 1)) out.px(x, y, c || 'o');
+        else if (this.get(x - 1, y) || this.get(x + 1, y) || this.get(x, y - 1) || this.get(x, y + 1))
+          out.px(x, y, c || 'o');
       }
     }
     return out;
@@ -168,7 +172,14 @@
     grape: ['.PPPP.', 'PpPPPV', 'PPPpPV', '.PpPV.', '.PPPV.', '..PV..', '..V...'],
   };
 
-  var BUSH2 = ['......gg........', '.....gGGg.gg....', '....gGGGGgGGg...', '....GGGdGGGGd...', '.....GdGGGdd....', '......dGGd......'];
+  var BUSH2 = [
+    '......gg........',
+    '.....gGGg.gg....',
+    '....gGGGGgGGg...',
+    '....GGGdGGGGd...',
+    '.....GdGGGdd....',
+    '......dGGd......',
+  ];
   var BUSH3 = [
     '......gg..gg....',
     '....ggGGggGGg...',
@@ -211,14 +222,29 @@
   ];
 
   var ART = {
-    seed: { rows: ['......1111......', '....11n11n11....', '....21111112....'], base: 99 },
+    seed: { rows: ['......1W11......', '....1111W111....', '....21W11112....'], base: 99 },
     sprout: {
-      rows: ['....gG....Gg....', '....GGG..GGG....', '.....dGGGGd.....', '.......Gd.......', '......1Gd1......', '....21111112....'],
+      rows: [
+        '....gG....Gg....',
+        '....GGG..GGG....',
+        '.....dGGGGd.....',
+        '.......Gd.......',
+        '......1Gd1......',
+        '....21111112....',
+      ],
       base: 2,
     },
 
     'turnip-2': {
-      rows: ['.......gg.......', '....g..GG..g....', '....Gg.GG.gG....', '.....G.Gd.Gd....', '.....GgGdGd.....', '......GGGd......', '......pPPp......'],
+      rows: [
+        '.......gg.......',
+        '....g..GG..g....',
+        '....Gg.GG.gG....',
+        '.....G.Gd.Gd....',
+        '.....GgGdGd.....',
+        '......GGGd......',
+        '......pPPp......',
+      ],
       base: 1,
     },
     'turnip-3': {
@@ -255,7 +281,17 @@
       base: 5,
     },
 
-    'potato-2': { rows: BUSH2, base: 1 },
+    'potato-2': {
+      rows: BUSH2,
+      base: 1,
+      wilted: [
+        '....dd....dd....',
+        '..KKd.d..d.dKK..',
+        '..KKl.dGGd.lKK..',
+        '..Ll..dGGd..lL..',
+        '......dGGd......',
+      ],
+    },
     'potato-3': { rows: BUSH3, base: 1 },
     'potato-4': {
       rows: BUSH3.concat(['.......dd.......']),
@@ -268,8 +304,29 @@
       ],
     },
 
-    'strawberry-2': { rows: ['.....gg..gg.....', '....gGGggGGg....', '....GGGGGGGd....', '.....dGGGGd.....', '......dGGd......'], base: 1 },
-    'strawberry-3': { rows: BERRY_LEAVES, base: 1 },
+    'strawberry-2': {
+      rows: [
+        '.....gg..gg.....',
+        '....gGGggGGg....',
+        '....GGGGGGGd....',
+        '.....dGGGGd.....',
+        '......dGGd......',
+      ],
+      base: 1,
+    },
+    'strawberry-3': {
+      rows: BERRY_LEAVES,
+      base: 1,
+      wilted: [
+        '...dd......dd...',
+        '.KKd.d....d.dKK.',
+        'KKKd.d.KK.d.dKKK',
+        'KKKl..dKKKd.lKKK',
+        'LKl...dKKl...lKL',
+        '.Ll...dGGd...lL.',
+        '......dGGd......',
+      ],
+    },
     'strawberry-4': {
       rows: BERRY_LEAVES.concat(['................', '................']),
       base: 4,
@@ -365,7 +422,15 @@
     },
 
     'melon-2': {
-      rows: ['.....gg.........', '....gGGg..gg....', '....GGGGdgGGg...', '.....ddGdGGGd...', '...gGg.dd.dd....', '..gGGGd.........', '...ddd..........'],
+      rows: [
+        '.....gg.........',
+        '....gGGg..gg....',
+        '....GGGGdgGGg...',
+        '.....ddGdGGGd...',
+        '...gGg.dd.dd....',
+        '..gGGGd.........',
+        '...ddd..........',
+      ],
       base: 1,
     },
     'melon-3': {
@@ -384,12 +449,12 @@
     'melon-4': {
       rows: [
         '....gdgg...gg...',
-        '..ggdggdgg.gGg..',
+        '..gdgdgdgg.gGg..',
         '.gdggdggdggdGGg.',
-        '.ggdggdggdgGGGGd',
+        '.gdggdggdggGGGGd',
         '.gdggdggdggdGGd.',
-        '.ggdggdggdG.dd..',
-        '..dgGdgGdG......',
+        '.gdggdggdgG.dd..',
+        '..GdgdgdGG......',
         '....GdGG........',
       ],
       base: 3,
@@ -456,12 +521,12 @@
     },
     'cabbage-4': {
       rows: [
-        '.....agaaga.....',
-        '...aagaagaaga...',
-        '..gaaagaagaaag..',
-        '..gaWaagaaWaag..',
-        '..aaWWagaWWaaG..',
-        '..GaWWaWWaWWaG..',
+        '.....gGggGg.....',
+        '...ggGggGggGg...',
+        '..GgggGggGgggG..',
+        '..GgWggGggWggG..',
+        '..ggWWgGgWWggG..',
+        '..GgWWgWWgWWgG..',
         '.gGgWWWWWWWWgGg.',
         '.GGGCWWWWWWCGGd.',
         '..dGGCWWWWCGGd..',
@@ -492,20 +557,21 @@
     'snowpea-4': {
       rows: [
         '.......N........',
-        '.....g.N.g......',
-        '....WW.NgGg.....',
-        '...WWCGNGGd.....',
-        '....GGdN.aa.....',
-        '...gGG.N.aaa....',
-        '...GGd.N..aa....',
-        '....aa.NgG.a....',
-        '...aaa.NGGWW....',
-        '...aa..NGdWWC...',
-        '...a..gNG..GG...',
-        '....gGGNd..aa...',
-        '...gGGdN..aaa...',
-        '...GGd.N..aa....',
-        '....d..N...a....',
+        '.......N.gg.....',
+        '...gg..NgGGg....',
+        '..gGGg.NGGGd....',
+        '..GGGGdN.dd.....',
+        '...dGd.N........',
+        '...gg..N..WW....',
+        '...gg..N.WWWW...',
+        '...gg..NGgWW....',
+        '...gg..NGGg.....',
+        '....g.gNdGGg....',
+        '.....gGN.GGd....',
+        '....gGGN..gg....',
+        '....GGdN..gg....',
+        '.....d.N..gg....',
+        '.......N...g....',
         '.......N........',
       ],
       base: 1,
@@ -519,22 +585,24 @@
     BOTTOM = 22; // 作物本体最底下一行,再往下一行留给描边
 
   function isLeaf(c) {
-    return c === 'g' || c === 'G' || c === 'd' || c === 'a' || c === 'T';
+    return c === 'g' || c === 'G' || c === 'd' || c === 'T';
   }
   // 支架和架子是木头,植物蔫了它也不会弯,所以变形时原地不动。
   function isFixed(c) {
     return c === 'N' || c === 'n' || c === 'S' || c === 's' || c === 'E' || c === 'e';
   }
 
-  var WILT_MAP = { g: 'L', a: 'L', G: 'L', T: 'l', d: 'l', R: 'r', O: 'N', Y: 'L', P: 'V', W: 'C' };
-  var YELLOW_MAP = { g: 'Y', a: 'Y', G: 'L', T: 'L', d: 'l' };
+  var WILT_MAP = { g: 'K', G: 'K', T: 'K', d: 'l', R: 'r', O: 'N', Y: 'L', P: 'V', W: 'C' };
+  var YELLOW_MAP = { g: 'Y', G: 'L', T: 'L', d: 'l' };
 
-  function rawSprite(key, wet) {
+  function rawSprite(key, wet, rows) {
     var a = ART[key],
       b = new Buf(SW, SH),
       map = wet ? { 1: 'E', 2: 'e' } : { 1: 'S', 2: 's' };
-    var top = BOTTOM - a.rows.length + 1;
-    b.art(a.rows, SPAD, top, map);
+    rows = rows || a.rows;
+    var top = BOTTOM - rows.length + 1;
+    b.art(rows, SPAD, top, map);
+    if (rows !== a.rows) return b;
     (a.stamps || []).forEach(function (st) {
       b.art(STAMP[st[0]], SPAD + st[1], top + st[2]);
     });
@@ -542,13 +610,14 @@
   }
 
   function plantTop(b, baseTop) {
-    for (var y = 0; y < baseTop; y++) for (var x = 0; x < b.w; x++) if (b.get(x, y) && !isFixed(b.get(x, y))) return y;
+    for (var y = 0; y < baseTop; y++)
+      for (var x = 0; x < b.w; x++) if (b.get(x, y) && !isFixed(b.get(x, y))) return y;
     return baseTop;
   }
 
   /**
-   * 不生长:右上角那片叶子发黄,上半截往右错 1 像素。
-   * 选右上角是因为水滴标记也在右上,玩家看水滴时顺带就看到了这片黄叶。
+   * 不生长:左上角那片叶子发黄,上半截往左错 1 像素。
+   * 选左上角是因为右上角会被水滴气泡盖住。
    */
   function stunt(src, base) {
     var baseTop = Math.max(0, BOTTOM - base + 1),
@@ -559,7 +628,7 @@
       y;
     for (y = top; y < baseTop; y++) {
       for (x = 0; x < src.w; x++) {
-        if (isLeaf(src.get(x, y)) && (!best || x - y * 1.2 > best.s)) best = { x: x, y: y, s: x - y * 1.2 };
+        if (isLeaf(src.get(x, y)) && (!best || -x - y * 1.2 > best.s)) best = { x: x, y: y, s: -x - y * 1.2 };
       }
     }
     var rad = h >= 8 ? 2.7 : 1.7,
@@ -568,18 +637,20 @@
       for (x = 0; x < src.w; x++) {
         var c = src.get(x, y);
         if (!c) continue;
-        if (best && isLeaf(c) && (x - best.x) * (x - best.x) + (y - best.y) * (y - best.y) <= rad * rad) c = YELLOW_MAP[c] || c;
+        if (best && isLeaf(c) && (x - best.x) * (x - best.x) + (y - best.y) * (y - best.y) <= rad * rad)
+          c = YELLOW_MAP[c] || c;
         var lean = !isFixed(c) && y < top + Math.round(h * 0.45) ? 1 : 0;
-        out.px(x + lean, y, c);
+        out.px(x - lean, y, c);
       }
     }
     return out;
   }
 
   /**
-   * 枯萎:像素画不能旋转,所以用四件事叠出"蔫了":
-   * 整株往下沉一截(变矮);顶上三分之一向右错 1 像素;离中心越远的列整列下沉(叶尖垂向地面);
-   * 外圈叶子变黄褐,靠近根的一圈还留着绿色。留绿是为了说"还活着,浇对就能缓过来",全株变褐看起来像死了。
+   * 程序做的枯萎(没有手画姿态时的替补)。像素画不能旋转,所以用四件事叠出"蔫了":
+   * 整株往下沉一截(变矮);顶上三分之一向右错 1 像素;最外侧的列再下沉 1 像素;
+   * 叶子换成橄榄色、叶尖枯黄,靠近根的一圈还留着绿色。留绿是为了说"还活着,浇对就能缓过来",全株变褐看起来像死了。
+   * 试过让外侧列下沉 2 像素、整株逐行压扁,结果灌丛会塌成一个土堆,玉米会碎成一把草,所以收着用。
    */
   function wilt(src, base) {
     var baseTop = Math.max(0, BOTTOM - base + 1),
@@ -612,10 +683,12 @@
         if (y + sink > baseTop - 1) continue; // 沉到土面以下的那几行被截掉
         var nx = x + (y - top < h * 0.34 ? 1 : 0),
           dist = Math.abs(nx - cx),
-          ny = Math.min(y + sink + (dist < 3 ? 0 : dist < 6 ? 1 : 2), BOTTOM);
+          ny = Math.min(y + sink + (dist < 5 ? 0 : 1), BOTTOM);
         if (out.get(nx, ny)) continue;
-        var alive = reach(nx, ny) < maxR * 0.4;
-        out.px(nx, ny, alive ? (c === 'g' || c === 'a' ? 'G' : c) : WILT_MAP[c] || c);
+        var far = reach(nx, ny) / maxR,
+          to = far < 0.38 ? (c === 'g' ? 'G' : c) : WILT_MAP[c] || c;
+        if (far > 0.8 && to === 'K') to = 'L'; // 叶尖最先黄
+        out.px(nx, ny, to);
       }
     }
     return out;
@@ -637,7 +710,9 @@
       base = ART[key].base;
     if (key !== 'seed') {
       if (health === 'stunted') raw = stunt(raw, base);
-      else if (health === 'wilted') raw = wilt(raw, base);
+      // 有手画的枯萎姿态就用手画的(目前只有草莓成株和土豆幼苗);没有的先用程序变形顶着,效果差一截。
+      else if (health === 'wilted')
+        raw = ART[key].wilted ? rawSprite(key, wet, ART[key].wilted) : wilt(raw, base);
     }
     return raw.outlined('o');
   }
@@ -662,33 +737,60 @@
     b.rect(1, 1, 14, 11, hi);
     if (kind === 'dry') {
       b.hline(1, 1, 14, 's');
-      [[3, 3], [10, 4], [6, 6], [12, 7], [2, 8], [8, 9], [13, 10], [5, 10]].forEach(function (q) {
+      [
+        [3, 3],
+        [10, 4],
+        [6, 6],
+        [12, 7],
+        [2, 8],
+        [8, 9],
+        [13, 10],
+        [5, 10],
+      ].forEach(function (q) {
         b.px(q[0], q[1], 'C');
       });
-      [[11, 3], [4, 5], [9, 7], [3, 10]].forEach(function (q) {
+      [
+        [11, 3],
+        [4, 5],
+        [9, 7],
+        [3, 10],
+      ].forEach(function (q) {
         b.px(q[0], q[1], 's');
       });
     } else if (kind === 'wet') {
       b.hline(1, 1, 14, 'e');
-      [[3, 3], [10, 4], [6, 6], [12, 7], [2, 8], [8, 9], [5, 10]].forEach(function (q) {
+      [
+        [3, 3],
+        [10, 4],
+        [6, 6],
+        [12, 7],
+        [2, 8],
+        [8, 9],
+        [5, 10],
+      ].forEach(function (q) {
         b.hline(q[0], q[1], 2, 'e');
       });
     } else {
-      // 空地:翻好的三道垄沟,比干土暗、比湿土亮,不属于"该浇"也不属于"浇过"。
+      // 空地:只有土和几道翻过的痕迹。比干土暗、比湿土亮,不属于"该浇"也不属于"浇过"。
       b.hline(1, 1, 14, 'l');
-      for (i = 0; i < 3; i++) {
-        b.hline(2 + (i % 2), 3 + i * 3, 5, 'E');
-        b.hline(9 - (i % 2), 3 + i * 3, 5, 'E');
-        b.hline(3 + (i % 2), 4 + i * 3, 3, 'S');
-        b.hline(10 - (i % 2), 4 + i * 3, 3, 'S');
-      }
+      [
+        [3, 3],
+        [9, 4],
+        [5, 6],
+        [11, 7],
+        [2, 9],
+        [8, 10],
+      ].forEach(function (q) {
+        b.hline(q[0], q[1], 3, 'l');
+      });
     }
-    // 木板用浅木色:亮着的黄钉点在上面很安静,扣掉的星是深色的小洞,反而是它更显眼。
+    // 木板用浅木色、钉点只有 2×1:亮着的黄钉点在上面很安静,扣掉的星是深色的小洞,反而是它更显眼。
+    // 试过深色木板配 2×2 的黄点,30 块地连起来像一排警示条。
     b.rect(0, 12, 16, 3, 'N');
     b.hline(0, 12, 16, 'S');
     b.hline(1, 15, 14, 'o');
     b.px(0, 14, 'n').px(15, 14, 'n');
-    if (stars > 0) for (i = 0; i < 5; i++) b.rect(1 + i * 3, 13, 2, 2, i < stars ? 'Y' : 'n');
+    if (stars > 0) for (i = 0; i < 5; i++) b.hline(1 + i * 3, 13, 2, i < stars ? 'Y' : 'e');
     return b;
   }
   function tileId(plot) {
@@ -724,19 +826,78 @@
 
   // ---------------------------------------------------------------- 环境和界面部件
 
-  var HOUSE = ['...nn........', '..RnnRRRRRR..', '.RRRRRRRRRRR.', 'RRRrRRRrRRRrR', 'rrrrrrrrrrrrr', '.CCCCCCCCCCC.', '.CBBCCCCnnCC.', '.CBBCCCCnnCC.', '.CCCCCCCnnCC.'];
-  var HOUSE2 = ['........nn.', '..RRRRRRnn.', '.RRRRRRRRR.', 'RRrRRRrRRRr', 'rrrrrrrrrrr', '.CCCCCCCCC.', '.CnnCCBBCC.', '.CnnCCBBCC.', '.CnnCCCCCC.'];
+  var HOUSE = [
+    '...nn........',
+    '..RnnRRRRRR..',
+    '.RRRRRRRRRRR.',
+    'RRRrRRRrRRRrR',
+    'rrrrrrrrrrrrr',
+    '.CCCCCCCCCCC.',
+    '.CBBCCCCnnCC.',
+    '.CBBCCCCnnCC.',
+    '.CCCCCCCnnCC.',
+  ];
+  var HOUSE2 = [
+    '........nn.',
+    '..RRRRRRnn.',
+    '.RRRRRRRRR.',
+    'RRrRRRrRRRr',
+    'rrrrrrrrrrr',
+    '.CCCCCCCCC.',
+    '.CnnCCBBCC.',
+    '.CnnCCBBCC.',
+    '.CnnCCCCCC.',
+  ];
   var CLOUD = ['...WWW.....', '.WWWWWWWW..', 'WWWWWWWWWWW'];
-  var CAN = ['WW..........', 'WbB..BBBBB..', '..bB.BbBBBnn', '...bBBbBBB.n', '....BBbBBB.n', '.....BbBBBnn', '.....BBBBB..'];
-  var BAG = ['..SSSSS..', '...nnn...', '.SSSSSSS.', 'SSSgSgSSs', 'SSSGGGSSs', 'SSSSGSSSs', 'SSSSSSSss', '.sssssss.'];
-  var SHOP = ['RRWWRRWWRR', 'RRWWRRWWRR', 'rRCWrRCWrR', '.N......N.', '.NCCCCCCN.', '.NCYCRCGN.', '.NNNNNNNN.', '.NnnnnnnN.'];
-  var CRATE = ['.NNNNNNNN.', 'NnNNNNNNnN', 'NNnnNNnnNN', 'NNNNnnNNNN', 'NNNNnnNNNN', 'NNnnNNnnNN', 'NnNNNNNNnN', '.nnnnnnnn.'];
+  var CAN = [
+    'WW..........',
+    'WbB..BBBBB..',
+    '..bB.BbBBBnn',
+    '...bBBbBBB.n',
+    '....BBbBBB.n',
+    '.....BbBBBnn',
+    '.....BBBBB..',
+  ];
+  var BAG = [
+    '..SSSSS..',
+    '...nnn...',
+    '.SSSSSSS.',
+    'SSSgSgSSs',
+    'SSSGGGSSs',
+    'SSSSGSSSs',
+    'SSSSSSSss',
+    '.sssssss.',
+  ];
+  var SHOP = [
+    'RRWWRRWWRR',
+    'RRWWRRWWRR',
+    'rRCWrRCWrR',
+    '.N......N.',
+    '.NCCCCCCN.',
+    '.NCYCRCGN.',
+    '.NNNNNNNN.',
+    '.NnnnnnnN.',
+  ];
+  var CRATE = [
+    '.NNNNNNNN.',
+    'NnNNNNNNnN',
+    'NNnnNNnnNN',
+    'NNNNnnNNNN',
+    'NNNNnnNNNN',
+    'NNnnNNnnNN',
+    'NnNNNNNNnN',
+    '.nnnnnnnn.',
+  ];
   var COIN = ['..YYY..', '.YWYYO.', 'YWYYYYO', 'YYYOYYO', 'YYYYYYO', '.YYYYO.', '..OOO..'];
 
   function tree(b, x, y) {
     b.disc(x, y, 3, 'G');
-    b.px(x - 1, y - 2, 'g').px(x - 2, y - 1, 'g').px(x, y - 2, 'g');
-    b.px(x + 2, y + 1, 'd').px(x + 1, y + 2, 'd').px(x + 2, y + 2, 'd');
+    b.px(x - 1, y - 2, 'g')
+      .px(x - 2, y - 1, 'g')
+      .px(x, y - 2, 'g');
+    b.px(x + 2, y + 1, 'd')
+      .px(x + 1, y + 2, 'd')
+      .px(x + 2, y + 2, 'd');
   }
 
   function grass(b, x, y, w, h, seed, n) {
@@ -746,7 +907,7 @@
       var gx = x + Math.floor(r() * (w - 1)),
         gy = y + Math.floor(r() * h),
         t = r();
-      if (t < 0.5) b.px(gx, gy, 'a').px(gx + 1, gy, 'a');
+      if (t < 0.5) b.px(gx, gy, 'g').px(gx + 1, gy, 'g');
       else if (t < 0.92) b.px(gx, gy, 'G');
       else b.px(gx, gy, t < 0.95 ? 'W' : t < 0.98 ? 'Y' : 'p'); // 零星的小野花
     }
@@ -809,7 +970,17 @@
     b.rect(0, 0, 98, 36, 'b');
     b.art(CLOUD, 5, 4).art(CLOUD, 58, 2).art(['..WWW..', 'WWWWWWW'], 34, 7);
     grass(b, 0, 35, 98, 176, 11, 330);
-    town(b, 98, 35, [[2, 0, 't'], [9, 0, 0], [26, 0, 't'], [33, 0, 't'], [41, 0, 1], [56, 0, 't'], [64, 0, 't'], [72, 0, 0], [90, 0, 't']]);
+    town(b, 98, 35, [
+      [2, 0, 't'],
+      [9, 0, 0],
+      [26, 0, 't'],
+      [33, 0, 't'],
+      [41, 0, 1],
+      [56, 0, 't'],
+      [64, 0, 't'],
+      [72, 0, 0],
+      [90, 0, 't'],
+    ]);
     fenceH(b, 1, 37, 96);
     fenceV(b, 1, 44, 133);
     fenceV(b, 93, 44, 133);
@@ -818,7 +989,9 @@
     // 顶部:左边一块是等级 + 日期 + 经验条,右边一块是金币。
     panel(b, 1, UI.hudY, 68, UI.hudH, 'C', 'W', 'S');
     b.disc(8, UI.hudY + 7, 5, 'o').disc(8, UI.hudY + 7, 4, 'd');
-    b.px(5, UI.hudY + 5, 'G').px(6, UI.hudY + 4, 'G').px(7, UI.hudY + 3, 'G');
+    b.px(5, UI.hudY + 5, 'G')
+      .px(6, UI.hudY + 4, 'G')
+      .px(7, UI.hudY + 3, 'G');
     b.rect(UI.barX - 1, UI.hudY + 9, UI.barW + 2, 4, 'o').rect(UI.barX, UI.hudY + 10, UI.barW, 2, 's');
     panel(b, 70, UI.hudY, 26, UI.hudH, 'C', 'W', 'S');
     b.blit(artBuf(COIN).outlined('o'), 72, UI.hudY + 3);
@@ -844,7 +1017,19 @@
 
   function text(x, y, size, fill, str, anchor) {
     return (
-      '<text x="' + x + '" y="' + y + '" font-size="' + size + '" fill="' + fill + '"' + (anchor ? ' text-anchor="' + anchor + '"' : '') + '>' + LD.esc(str) + '</text>'
+      '<text x="' +
+      x +
+      '" y="' +
+      y +
+      '" font-size="' +
+      size +
+      '" fill="' +
+      fill +
+      '"' +
+      (anchor ? ' text-anchor="' + anchor + '"' : '') +
+      '>' +
+      LD.esc(str) +
+      '</text>'
     );
   }
 
@@ -858,7 +1043,16 @@
     b.rect(0, 0, 90, 62, 'b');
     b.art(CLOUD, 2, 1).art(CLOUD, 70, 3).art(CLOUD, 60, 46).art(['..WWW..', 'WWWWWWW'], 5, 46);
     grass(b, 0, 61, 90, 59, 23, 130);
-    town(b, 90, 61, [[1, 0, 't'], [15, 0, 0], [30, 0, 't'], [37, 0, 't'], [46, 0, 1], [59, 0, 't'], [74, 0, 0], [88, 0, 't']]);
+    town(b, 90, 61, [
+      [1, 0, 't'],
+      [15, 0, 0],
+      [30, 0, 't'],
+      [37, 0, 't'],
+      [46, 0, 1],
+      [59, 0, 't'],
+      [74, 0, 0],
+      [88, 0, 't'],
+    ]);
 
     // 标题是插在地里的一块木牌,名字是挂在下面的小木牌。
     var sign = new Buf(90, 120);
@@ -868,7 +1062,12 @@
     sign.hline(3, 40, 84, 'n').vline(86, 6, 35, 'n');
     sign.rect(5, 8, 80, 31, 'C');
     sign.hline(5, 8, 80, 'W').hline(5, 38, 80, 'S');
-    [[4, 7], [85, 7], [4, 39], [85, 39]].forEach(function (q) {
+    [
+      [4, 7],
+      [85, 7],
+      [4, 39],
+      [85, 39],
+    ].forEach(function (q) {
       sign.px(q[0], q[1], 'n');
     });
     sign.vline(27, 41, 3, 'n').vline(62, 41, 3, 'n');
@@ -878,8 +1077,8 @@
 
     fenceH(b, 0, 64, 90);
     // 右下角的示意标记和左下角的水壶。
-    panel(b, 49, 109, 39, 9, 'C', 'W', 'S');
-    b.blit(artBuf(CAN).outlined('o'), 4, 109);
+    panel(b, 49, 110, 39, 9, 'C', 'W', 'S');
+    b.blit(artBuf(CAN).outlined('o'), 4, 110);
     return b;
   }
 
@@ -961,20 +1160,42 @@
       var s = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 390 844" shape-rendering="crispEdges">';
       s += '<g transform="scale(4)"><use href="#' + PRE + 'bg"/>';
       var fill = Math.round(UI.barW * scene.xp);
-      s += '<path fill="' + PAL.g + '" d="M' + UI.barX + ' ' + (UI.hudY + 10) + 'h' + fill + 'v1h-' + fill + 'z"/>';
-      s += '<path fill="' + PAL.G + '" d="M' + UI.barX + ' ' + (UI.hudY + 11) + 'h' + fill + 'v1h-' + fill + 'z"/>';
+      s +=
+        '<path fill="' +
+        PAL.g +
+        '" d="M' +
+        UI.barX +
+        ' ' +
+        (UI.hudY + 10) +
+        'h' +
+        fill +
+        'v1h-' +
+        fill +
+        'z"/>';
+      s +=
+        '<path fill="' +
+        PAL.G +
+        '" d="M' +
+        UI.barX +
+        ' ' +
+        (UI.hudY + 11) +
+        'h' +
+        fill +
+        'v1h-' +
+        fill +
+        'z"/>';
       // 从后往前一行一行画,前一行的作物可以压在后一行的草缝上。
       for (var i = 0; i < scene.plots.length; i++) {
         s += plotSvg(scene.plots[i], X0 + (i % scene.cols) * PX, Y0 + Math.floor(i / scene.cols) * PY);
       }
-      s += '</g><g font-family=\'' + FONT + "'>";
+      s += "</g><g font-family='" + FONT + "'>";
       var seeds = scene.seeds.choice + scene.seeds.reverse + scene.seeds.spell;
       // 日期不加空格:这个字体的空格和间隔号都很宽,带空格的写法有 288pt,和等级、金币放不进一行。
       var date = '第' + scene.year + '年·' + LD.SEASONS[scene.season] + '·第' + scene.day + '天';
       s += text(34, 86, 24, PAL.C, scene.level, 'middle');
       s += text(62, 78, 24, PAL.o, date);
       s += text(376, 86, 24, PAL.o, scene.coins, 'end');
-      s += text((UI.mainX + 14) * 4, (UI.btnY + 8) * 4 + 2, 24, PAL.o, '浇一轮水');
+      s += text((UI.mainX + 17) * 4, (UI.btnY + 8) * 4 + 2, 24, PAL.o, '浇一轮水');
       s += text((UI.mainX + 46) * 4 - 6, (UI.btnY - 1) * 4 + 4, 24, PAL.o, scene.thirstyCount, 'end');
       s += text(50, (UI.btnY + 2) * 4 + 2, 24, PAL.o, seeds, 'middle');
       ['种子', '商店', '仓库'].forEach(function (t, k) {
@@ -990,7 +1211,9 @@
       // 宽 21 像素:样张按 84px 显示时正好 4 倍,像素不变形。底色垫一块草地,因为描边和土色都是照着草地配的。
       return (
         '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 21 28" shape-rendering="crispEdges">' +
-        '<path fill="' + PAL.A + '" d="M0 0h21v28h-21z"/>' +
+        '<path fill="' +
+        PAL.A +
+        '" d="M0 0h21v28h-21z"/>' +
         plotSvg(plot, 2, 10) +
         '</svg>'
       );
@@ -1000,14 +1223,19 @@
       var s = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 1440" shape-rendering="crispEdges">';
       s += '<g transform="scale(12)">' + toSvg(once('cover', buildCover));
       COVER_PLOTS.forEach(function (p, i) {
-        s += plotSvg(p, 3 + (i % 5) * PX, 72 + Math.floor(i / 5) * PY);
+        s += plotSvg(p, 3 + (i % 5) * PX, 71 + Math.floor(i / 5) * 22);
       });
-      s += '</g><g font-family=\'' + FONT + "'>";
+      s += "</g><g font-family='" + FONT + "'>";
       s += text(540, 240, 144, PAL.o, '把背单词', 'middle');
-      s += '<text x="540" y="420" font-size="144" text-anchor="middle" fill="' + PAL.o + '">做成<tspan fill="' + PAL.d + '">种田</tspan>游戏</text>';
+      s +=
+        '<text x="540" y="420" font-size="144" text-anchor="middle" fill="' +
+        PAL.o +
+        '">做成<tspan fill="' +
+        PAL.d +
+        '">种田</tspan>游戏</text>';
       s += text(252, 618, 72, PAL.W, '灵谷小镇');
       s += text(564, 618, 72, PAL.W, 'Lingdale');
-      s += text(1038, 1380, 48, PAL.o, '画风探索稿 · 示意', 'end');
+      s += text(1038, 1392, 48, PAL.o, '画风探索稿 · 示意', 'end');
       return s + '</g></svg>';
     },
   };

@@ -6,6 +6,10 @@
     return document.getElementById(id);
   };
   var esc = LD.esc;
+  /** 放进双引号属性里的值,字体名自带双引号。 */
+  var attr = function (s) {
+    return esc(s).replace(/"/g, '&quot;');
+  };
 
   // 某个画风的文件缺失或报错时,页面仍然显示其余的,方便单独调试。
   var dirs = LD.directions.filter(function (d) {
@@ -211,17 +215,17 @@
       '<div class="wordcard wc-' +
       d.id +
       '" style="font-family:' +
-      esc(display) +
+      attr(display) +
       '"><div class="wc-name">灵谷小镇 Lingdale</div></div>' +
       '<div class="wordcard wc-' +
       d.id +
       (d.id === 'pixel' ? ' wc-big' : '') +
       '" style="font-family:' +
-      esc(d.fontFamily) +
+      attr(d.fontFamily) +
       '"><div class="wc-word">abandon</div><div class="wc-ph">/əˈbændən/</div><div class="wc-def">v. 放弃;抛弃</div></div>' +
       (d.id === 'pixel'
         ? '<div class="wordcard wc-pixel" style="font-family:' +
-          esc(d.fontFamily) +
+          attr(d.fontFamily) +
           '"><div class="wc-word">abandon</div><div class="wc-ph">/əˈbændən/</div><div class="wc-def">v. 放弃;抛弃</div></div>'
         : '') +
       '</div>';
