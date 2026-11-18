@@ -157,7 +157,8 @@ SM-Intelligence
 |---|---|
 | 地址 | `https://sm-intelligence.vercel.app/api/mcp`(Streamable HTTP) |
 | 鉴权 | 请求头 `Authorization: Bearer <MCP_TOKEN>`,口令存在云端环境的 `MCP_TOKEN` 变量里 |
-| 连通确认 | 2026-11-18 已连通,24 个工具,支持全部 11 个平台 |
+| 连通确认 | 2026-11-18 已连通,27 个工具,支持全部 11 个平台 |
+| 人设 | "灵谷小镇",`personaId` 是 `e1f88bf3-ae36-4ab2-a15a-6138d8422dd1`,内容线"灵谷小镇",简体中文、北京时间,每日研究关闭 |
 
 **开发会话可以做的:**
 
@@ -165,12 +166,14 @@ SM-Intelligence
 2. `upload_image`(小图直接传),或 `request_media_upload` 加 `register_media_upload`(视频和大图,先要签名地址,传完再登记):
    上传截图和录屏,带上名称和标签,比如"第 3 天的农场截图"。
 3. `create_topic`:建选题,**原稿原样放进 `draft` 参数**,不要先改写或摘要。各平台版本会按原稿改写。
+   B 站要发专栏、小黑盒要发视频时,用 `forms` 参数指定,比如 `{"bilibili": "article"}`;形式建好后不能再改。
 4. `wait_for_post`、`get_post`:等生成完,读各平台版本。每个版本带 `draftCheck`,列出原稿里没有的数字和可能丢了限定语的数字。
    有问题的用 `edit_variant` 改,或带着理由用 `reject_and_regenerate` 重写。
 5. `set_production`:把上传的素材挂到版本上。
 
 **开发会话不做的,只由负责人在网页上操作:** 批准(`approve_variant`)、排程(`schedule_variant`)、
-任何花钱的生成(`generate_images`、`generate_video`、`write_image_prompt`)、发起研究和建图谱。
+任何花钱的生成(`generate_images`、`generate_video`、`write_image_prompt`)、发起研究和建图谱、
+开启人设的每日研究。修改人设(`update_persona`)要先经负责人同意。
 MCP 口令能读写整个工作区并触发付费和排程,服务端不会再确认,所以这条边界靠约定守住。
 
 **交接:** 开发会话做完上面几步后,在选题库里把这条选题标为"制作中",并把 SM-Intelligence 返回的 postId 和
@@ -180,8 +183,7 @@ MCP 口令能读写整个工作区并触发付费和排程,服务端不会再确
 
 | 限制 | 影响 | 处理 |
 |---|---|---|
-| 还没有"灵谷小镇"人设 | 没有人设不能建选题 | 负责人在网页的人设页建,MCP 不能建人设 |
-| 通过 MCP 建选题时不能选内容形式 | B 站只能是视频、小黑盒只能是图文帖;B 站专栏和小黑盒视频要在网页上建 | 需要时在 SM-Intelligence 里给 `create_topic` 加一个形式参数 |
+| 人设还没有绑定平台账号 | 可以建选题和制作,但排程发布前要先绑 | 负责人在网页的账号页绑定,MCP 不能绑 |
 | 火山方舟没有配置 | AI 生图和生视频不可用,只能用文字卡片 | 负责人配置。AI 旁白是否可用尚未确认 |
 | 已部署到生产,但真实发布和付费服务的全链路尚未验收 | 第一次用时可能遇到问题 | 头几篇内容同时当作它的验收,出问题记到它的仓库 |
 | AI 写作、生图生视频、语音合成都需要各自的密钥和费用 | 有持续开销 | 费用计入内容的投入,在它的费用页里看 |
