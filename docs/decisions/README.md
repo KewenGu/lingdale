@@ -18,9 +18,10 @@
 | [0008](0008-coins-only-from-selling.md) | 金币只来自卖作物 | 生效 |
 | [0009](0009-seasons-change-crops-not-rules.md) | 季节只换作物,不改规则 | 生效 |
 | [0010](0010-crop-type-sets-question-type.md) | 作物种类决定题型,全部用客观题 | 生效 |
-| [0011](0011-name.md) | 名称:Lingu Town / 灵谷小镇 | 生效 |
+| [0011](0011-name.md) | 名称:Lingu Town / 灵谷小镇 | 英文名已被 0014 取代 |
 | [0012](0012-build-in-public.md) | 边做边公开,内容需求进入开发方案 | 生效 |
 | [0013](0013-content-voice-art-and-budget.md) | 对外内容的口吻、美术来源和投入上限 | 生效 |
+| [0014](0014-english-name-lingdale.md) | 英文名改为 Lingdale | 生效 |
 
 ## 什么时候写一条
 

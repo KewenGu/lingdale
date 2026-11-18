@@ -1,4 +1,4 @@
-# Lingu Town 灵谷小镇
+# Lingdale 灵谷小镇
 
 [![CI](https://github.com/KewenGu/lingu-town/actions/workflows/ci.yml/badge.svg)](https://github.com/KewenGu/lingu-town/actions/workflows/ci.yml)
 

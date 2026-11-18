@@ -1,4 +1,4 @@
-# Lingu Town 灵谷小镇
+# Lingdale 灵谷小镇
 
 给在这个仓库里工作的人和 AI 的工作守则。`AGENTS.md` 是本文件的别名。
 
