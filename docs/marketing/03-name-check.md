@@ -81,6 +81,7 @@
 | **Lingdale** | 无 | 无 | lingdale.com 2016 年注册,空页面 | 可用 |
 | **Linggu Valley** | 无 | 无 | .com、.app 都未注册 | 可用,但和灵谷寺、灵谷洞同名 |
 | Lingoo | 中国区有一款德语区的语言学习应用 "Lingoo: Sprachen lernen"(2026-09 上架) | 无 | lingoo.com 是 **Lingoo Limited(伦敦)的语言交换和寄宿家庭平台**;lingoo.app 已注册 | 淘汰。读音和"灵谷"最接近,但同领域有两个使用者,且 LINGOO 是美国的有效注册商标(见下) |
+| Linggoo | 无 | 无 | linggoo.com 和 linggoo.app 在 2026-02-15 同一天被注册,目前都是空页面 | 不推荐。没有发现在用的产品,但两个主要域名同一天被注册,说明有人在准备;读音和已注册的 LINGOO 几乎相同,和语言学习应用 Linggo(学中文)也只差一个字母 |
 
 几个可用候选的域名:
 
