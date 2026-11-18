@@ -18,6 +18,7 @@
 | [04 数值与平衡](design/04-economy-balance.md) | 数值在哪、怎么验证、模拟结果、已知问题、调整记录 |
 | [05 内容](design/05-content.md) | 卡片和卡组的格式、题目怎么生成、词库计划 |
 | [06 路线图](design/06-roadmap.md) | 已完成的、接下来的、未决问题 |
+| [美术方向探索稿](design/art-exploration/README.md) | 四种画风画同一片农场的比较页、各方向的评估和生成提示词。等负责人挑选 |
 
 ## 开发文档
 
