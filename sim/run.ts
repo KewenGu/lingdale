@@ -11,6 +11,7 @@ import {
   claimReliefSeed,
   createSave,
   dueVeins,
+  getState,
   levelOf,
   masteredCount,
   plant,
@@ -67,10 +68,16 @@ export interface SimTotals {
   ore: number[]; // 下标是品级,值是累计挖到的数量
   missedNew: number; // 新词答错、进了词袋的次数
   missedReview: number; // 旧词答错、进了词袋的次数
+  flukedNew: number; // 不认识的新词在矿里蒙对的次数
+  flukedMastered: number; // 结束时掌握度 1 以上、其实从没学会的词数
+  flukedSolid: number; // 结束时掌握度 4 以上、其实从没学会的词数
   closedForRoom: number; // 想挖矿时因为田里没地方而挖不了的次数
   seedsBought: number;
   reliefSeeds: number; // 买不起又没东西可卖时,商店送的基础种子
 }
+
+// 报表里"牢固"的门槛:掌握度到这一级,休息间隔是 30 天以上
+const SOLID_MASTERY = 4;
 
 export const DEFAULT_OPTIONS: SimOptions = {
   days: 60,
@@ -122,6 +129,9 @@ export function simulate(options: SimOptions): { rows: DayRow[]; totals: SimTota
     ore: [0, 0, 0, 0, 0, 0, 0, 0, 0],
     missedNew: 0,
     missedReview: 0,
+    flukedNew: 0,
+    flukedMastered: 0,
+    flukedSolid: 0,
     closedForRoom: 0,
     seedsBought: 0,
     reliefSeeds: 0,
@@ -248,8 +258,11 @@ export function simulate(options: SimOptions): { rows: DayRow[]; totals: SimTota
           row.mineQuestions++;
           if (result.source === 'new') {
             row.newSeen++;
-            if (result.correct) row.newKnown++;
-            else totals.missedNew++;
+            if (!result.correct) totals.missedNew++;
+            else {
+              row.newKnown++;
+              if (knowledge.get(turn.vein.cardId) === 'unknown') totals.flukedNew++;
+            }
           } else {
             row.reviews++;
             if (!result.correct) totals.missedReview++;
@@ -274,13 +287,21 @@ export function simulate(options: SimOptions): { rows: DayRow[]; totals: SimTota
     row.bag = activeProgress(save).wordBag.length;
     row.seen = Object.keys(activeProgress(save).cards).length;
     row.mastered = masteredCount(save, 1);
-    row.solid = masteredCount(save, 4);
+    row.solid = masteredCount(save, SOLID_MASTERY);
     row.backlog = dueVeins(save, base + (day + 1) * DAY_MS).length;
     row.coins = save.coins;
     row.xp = save.xp;
     row.level = levelOf(save.xp);
     rows.push(row);
   }
+
+  knowledge.forEach((k, cardId) => {
+    if (k !== 'unknown') return;
+    const state = getState(activeProgress(save), cardId);
+    if (!state) return;
+    if (state.mastery >= 1) totals.flukedMastered++;
+    if (state.mastery >= SOLID_MASTERY) totals.flukedSolid++;
+  });
 
   return { rows, totals, save };
 }

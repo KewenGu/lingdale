@@ -93,3 +93,11 @@ test('一个词都不认识的学习者也不会卡死:买不起种子时商店�
   assert.ok(totals.reliefSeeds > 0);
   assert.ok(rows[rows.length - 1].mastered > 100);
 });
+
+test('第一次就蒙对的词会被之后的复习筛出来,不会一直算作掌握', () => {
+  const { rows, totals } = simulate(DEFAULT_OPTIONS);
+  assert.ok(totals.flukedNew > 50, `蒙对 ${totals.flukedNew} 次`);
+  assert.ok(totals.flukedMastered <= totals.flukedNew * 0.2, `还剩 ${totals.flukedMastered} 个`);
+  assert.ok(totals.flukedMastered <= rows[rows.length - 1].mastered * 0.05);
+  assert.ok(totals.flukedSolid <= 3);
+});

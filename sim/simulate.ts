@@ -85,6 +85,9 @@ console.log(
     `死亡 ${totals.cropsDied} 株,枯萎过 ${totals.wilts} 次`,
 );
 console.log(
+  `蒙对: 不认识的新词在矿里蒙对 ${totals.flukedNew} 次;结束时仍被算作掌握的有 ${totals.flukedMastered} 个,其中算作牢固的 ${totals.flukedSolid} 个`,
+);
+console.log(
   '挖到的矿石: ' +
     totals.ore
       .map((n, grade) => (grade > 0 && n > 0 ? `${ORE_NAMES[grade] || `品级 ${grade}`} ${n}` : ''))
