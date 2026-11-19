@@ -3,7 +3,11 @@
 四种画风画同一片农场,给项目负责人挑选。背景见[路线图](../06-roadmap.md)第 1 步和
 [决策记录 0013](../../decisions/0013-content-voice-art-and-budget.md)。
 
-**状态:等负责人挑选。** 选定之后写成 `docs/design/07-art-direction.md`,这个目录留作当时的记录和对外内容的素材。
+**状态:已选定 C 彩纸拼贴(2026-11-19)。** 规定写在[美术规范](../07-art-direction.md)里,理由和没选的方向见
+[决策记录 0015](../../decisions/0015-art-direction-paper-collage.md)。这个目录留作当时的记录和对外内容的素材。
+
+选定之后只改过一个地方:`style-paper.js` 里主按钮的底色、等级和种子数的底色(白字对比不足)、房子窗户的颜色(蓝色只留给"水")。
+它现在是美术规范的参考实现。另外三个画风的文件不再改动。
 
 ## 怎么看
 
@@ -73,6 +77,12 @@
 | `style-pixel.js`、`style-watercolor.js`、`style-paper.js`、`style-lowpoly.js` | 四个画风各自的绘制代码 |
 | `fonts.css` | 内嵌的像素字体子集(Fusion Pixel,SIL 开源字体许可) |
 | `prompts.md` | 生成提示词的纯文本版 |
+| `cards.html` | 征求观众意见用的图文组,9 张 1080×1440 的卡片。导出的图在 [`docs/marketing/assets/art-directions/`](../../marketing/assets/art-directions/) |
+
+## 导出图文组
+
+用浏览器打开 `cards.html`,每个 `.card` 元素是一张 1080×1440 的图,按 1 倍像素比逐个截图即可。
+仓库里的 9 张是用 Playwright 这样导出的,再做了无损压缩。改了卡片内容或任何一个画风的绘制代码之后,要重新导出。
 
 ## 守的规矩
 

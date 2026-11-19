@@ -22,6 +22,7 @@
 | [0012](0012-build-in-public.md) | 边做边公开,内容需求进入开发方案 | 生效 |
 | [0013](0013-content-voice-art-and-budget.md) | 对外内容的口吻、美术来源和投入上限 | 生效 |
 | [0014](0014-english-name-lingdale.md) | 英文名改为 Lingdale | 生效 |
+| [0015](0015-art-direction-paper-collage.md) | 美术方向:彩纸拼贴 | 生效 |
 
 ## 什么时候写一条
 

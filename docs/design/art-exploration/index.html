@@ -21,8 +21,13 @@
     <h1>四种画风,同一片农场</h1>
     <p class="lede">
       下面四张图画的是同一个存档:第 1 年夏季第 3 天,30 块地,其中 12 块等着浇水。只有画风不同。
-      看完告诉我你选哪个,我再把它写成美术规范。
+      项目负责人看过之后,选一个写成美术规范。
     </p>
+    <div class="notice">
+      <strong>结果:2026-11-19 选定了 C 彩纸拼贴。</strong>
+      规定写在仓库的 <code>docs/design/07-art-direction.md</code> 里。本页保留为当时的记录;
+      选定后 C 的画稿改了三处颜色(主按钮、等级角标、房子的窗户),其余没有动。
+    </div>
     <div class="notice">
       <strong>这些是示意稿,不是成品。</strong>
       全部用代码绘制(SVG),没有任何 AI 生成的图像。它们用来检验配色、布局,以及各种状态在手机上认不认得出,
@@ -38,7 +43,7 @@
       <a href="#dir-lowpoly">D 低多边形</a>
       <a href="#verdict">对照要求</a>
       <a href="#recommend">推荐</a>
-      <a href="#next">下一步</a>
+      <a href="#next">选定之后</a>
     </nav>
   </div>
 </header>
@@ -194,21 +199,15 @@
 
   <section id="next" class="band">
     <div class="wrap prose">
-      <h2>下一步</h2>
-      <p>告诉我下面任意一种,我就继续:</p>
+      <h2>选定之后</h2>
+      <p>负责人选了 C。随后做了这些,都在仓库里:</p>
       <ul>
-        <li>"选 C"(或 A、B、D):我把它写成美术规范。</li>
-        <li>"C 和 B 的折中再出一版":我先补一份探索稿。</li>
-        <li>"都不满意,我想要更……":说说哪里不对,我换方向。</li>
+        <li><code>docs/design/07-art-direction.md</code> 美术规范:配色、字体、形状、作物和地块的画法、各状态的表达、社交媒体画面的版式。</li>
+        <li><code>docs/decisions/0015-art-direction-paper-collage.md</code> 决策记录,包括没选的方向和原因。</li>
+        <li><code>docs/marketing/assets/art-directions/</code> 征求观众意见用的 9 张图,以及原稿的起草稿。</li>
+        <li>路线图、选题库、文档索引的更新。</li>
       </ul>
-      <p>你选定之后我会做这些:</p>
-      <ul>
-        <li>写 <code>docs/design/07-art-direction.md</code> 美术规范:配色、字体、作物和地块的画法、各状态的表达、社交媒体画面的版式。</li>
-        <li>写一条决策记录,包括没选的方向和原因。</li>
-        <li>把候选方案整理成可以发出去征求意见的图,更新选题库里"这几种画风,你更喜欢哪个"这一条。</li>
-        <li>更新路线图和文档索引。</li>
-      </ul>
-      <h3>这次没做的</h3>
+      <h3>探索时没做的</h3>
       <ul>
         <li><strong>没有生成任何 AI 图像。</strong>每个方向都写好了中英文提示词,你可以自己拿去试。如果想让我来生成,先告诉我用哪个工具、预算多少。</li>
         <li>没有画答题界面、单词卡片、收获动画和小镇。这次只检验农场这一屏。</li>
