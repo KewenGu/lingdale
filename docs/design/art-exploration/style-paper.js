@@ -39,6 +39,9 @@
     pinkD: '#e58fb9',
     blue: '#3d9be9',
     blueD: '#2468b8',
+    // 主按钮的底。白字压在水蓝上只有 2.9:1,换成这一档是 4.0:1;水滴本身是图形不是文字,仍然用更亮的水蓝。
+    btn: '#2b7fd6',
+    btnD: '#1f5ba6',
     white: '#fffaf0',
     whiteD: '#e9dfc8',
     ink: '#27402f',
@@ -1084,8 +1087,9 @@
         roof,
       );
     }
-    o += rrect(x + w * 0.18, y - h + 4, 5, 5, 1, C.blue);
-    if (w > 24) o += rrect(x + w * 0.62, y - h + 4, 5, 5, 1, C.blue);
+    // 窗户不用蓝色:整个画面里蓝色只表示"水"。
+    o += rrect(x + w * 0.18, y - h + 4, 5, 5, 1, C.ink);
+    if (w > 24) o += rrect(x + w * 0.62, y - h + 4, 5, 5, 1, C.ink);
     o += rrect(x + w * 0.42, y - 8, 5, 8, 1.2, C.wet);
     return o;
   }
@@ -1181,7 +1185,7 @@
   }
   function shopIcon(x, y) {
     var o =
-      rrect(-10, -4, 20, 16, 2, C.dry) + rrect(-2.5, 3, 6, 9, 1.4, C.wet) + rrect(-8, 0, 4.4, 4.4, 1, C.blue);
+      rrect(-10, -4, 20, 16, 2, C.dry) + rrect(-2.5, 3, 6, 9, 1.4, C.wet) + rrect(-8, 0, 4.4, 4.4, 1, C.ink);
     o += pth('M-10.5 -12L10.5 -12L13 -3L-13 -3Z', C.roof);
     for (var i = 0; i < 4; i++) o += circ(-9.75 + i * 6.5, -3, 3.25, i % 2 ? C.white : C.roof);
     o += pth('M-4 -12L2.5 -12L3.2 -3L-3.3 -3Z', C.white);
@@ -1212,7 +1216,7 @@
       text = '',
       date = '第 ' + scene.year + ' 年 · ' + LD.SEASONS[scene.season] + ' · 第 ' + scene.day + ' 天';
     // 等级:绿色圆片上的数字加一条经验纸带
-    shapes += rrect(12, 53, 110, 32, 16, C.white) + circ(29, 69, 12.5, C.leaf);
+    shapes += rrect(12, 53, 110, 32, 16, C.white) + circ(29, 69, 12.5, C.leafD);
     shapes +=
       rrect(47, 71, 66, 7.4, 3.7, C.grass) + rrect(47, 71, Math.max(7.4, 66 * scene.xp), 7.4, 3.7, C.leaf);
     text +=
@@ -1241,11 +1245,11 @@
       shapes += rrect(b.x, 714, 49, 60, 14, C.white) + b.icon(b.x + 24.5, 737);
       text += txt(b.x + 24.5, 769, b.label, 10.5, C.ink, { a: 'middle', w: 700 });
     });
-    shapes += circ(59, 717, 9, C.leaf);
+    shapes += circ(59, 717, 9, C.leafD);
     text += txt(59, 721.2, seeds, 12, C.white, { a: 'middle' });
     // 主按钮:整屏唯一的大块饱和蓝色,下面垫一层深蓝,像一张厚纸。
     shapes +=
-      rrect(184, 717, 192, 60, 26, C.blueD) + rrect(184, 712, 192, 60, 26, C.blue) + canIcon(222, 743, 1.3);
+      rrect(184, 717, 192, 60, 26, C.btnD) + rrect(184, 712, 192, 60, 26, C.btn) + canIcon(222, 743, 1.3);
     text += txt(298, 750, '浇一轮水', 23, C.white, { a: 'middle', ls: 1 });
     shapes += circ(366, 715, 16, C.white) + circ(366, 715, 13.2, C.yellow);
     text += txt(366, 720.4, scene.thirstyCount, 16, C.ink, { a: 'middle' });
@@ -1297,7 +1301,8 @@
       { hex: C.red, name: '番茄红', role: '果实、屋顶' },
       { hex: C.yellow, name: '玉米黄', role: '星星、收获标记、角标' },
       { hex: C.purple, name: '茄紫', role: '茄子、葡萄' },
-      { hex: C.blue, name: '水蓝', role: '水滴标记和主按钮,别处不用' },
+      { hex: C.blue, name: '水蓝', role: '水滴标记,别处不用' },
+      { hex: C.btn, name: '按钮蓝', role: '主按钮的底,比水蓝深一档,保证白字清楚' },
       { hex: C.white, name: '纸白', role: '界面纸片、水滴底片、白色的根' },
       { hex: C.ink, name: '墨绿', role: '文字和投影' },
     ],
@@ -1421,7 +1426,7 @@
           txt(92, 1166, '把背单词', 152, C.ink, { f: FONT_T, w: 400 }) +
           txt(92, 1338, '做成种田游戏', 152, C.ink, { f: FONT_T, w: 400 }),
       );
-      o += g('rotate(4 870 1100)', rrect(736, 1034, 270, 142, 30, C.leaf), SHL);
+      o += g('rotate(4 870 1100)', rrect(736, 1034, 270, 142, 30, C.leafD), SHL);
       o += txt(871, 1102, '灵谷小镇', 60, C.white, {
         f: FONT_T,
         w: 400,
