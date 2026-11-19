@@ -1,0 +1,462 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>画风征求意见图文组</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Fredoka:wght@500;600;700&family=LXGW+WenKai+TC:wght@400;700&family=Noto+Sans+SC:wght@400;500;700;900&family=ZCOOL+KuaiLe&display=swap">
+<link rel="stylesheet" href="fonts.css">
+<style>
+/*
+  "这几种画风,你更喜欢哪个"的小红书图文组,9 张,每张 1080×1440(3:4)。
+  卡片本身的版式按已选定的彩纸拼贴方向来做(见 docs/design/07-art-direction.md 的"社交媒体画面"一节):
+  草绿底、纸白色的纸片、硬边投影、站酷快乐体的标题。四个候选画风的画面原样嵌入,不做修饰。
+  每个 .card 是一张图,导出方法见 README。
+*/
+:root {
+  --grass: #cfe6a6;
+  --grass-d: #a9cf7c;
+  --paper: #fffaf0;
+  --ink: #27402f;
+  --yellow: #ffd24a;
+  --leaf: #43a85c;
+  --shadow: rgba(31, 61, 43, 0.3);
+  --title: 'ZCOOL KuaiLe', 'Noto Sans SC', sans-serif;
+  --ui: 'Baloo 2', 'Noto Sans SC', sans-serif;
+}
+body {
+  margin: 0;
+  padding: 40px;
+  background: #5c6670;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 40px;
+}
+#ld-defs {
+  position: absolute;
+}
+.card {
+  position: relative;
+  flex: none;
+  width: 1080px;
+  height: 1440px;
+  overflow: hidden;
+  background: var(--grass);
+  color: var(--ink);
+  font: 700 36px/1.4 var(--ui);
+}
+.card svg {
+  display: block;
+}
+.paper {
+  background: var(--paper);
+  box-shadow: 7px 12px 0 var(--shadow);
+}
+.badge {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  background: var(--yellow);
+  box-shadow: 4px 7px 0 var(--shadow);
+  font: 800 64px/1 var(--ui);
+}
+.foot {
+  position: absolute;
+  left: 64px;
+  right: 64px;
+  bottom: 34px;
+  display: flex;
+  justify-content: space-between;
+  font: 700 26px/1 var(--ui);
+  opacity: 0.8;
+}
+h1 {
+  margin: 0;
+  font: 400 104px/1.15 var(--title);
+}
+
+/* 第 1 张:封面 */
+.c-cover .grid {
+  position: absolute;
+  left: 64px;
+  top: 64px;
+  display: grid;
+  grid-template-columns: repeat(2, 464px);
+  gap: 24px;
+}
+.c-cover .cell {
+  position: relative;
+  width: 464px;
+  height: 440px;
+  overflow: hidden;
+  border-radius: 28px;
+  box-shadow: 7px 12px 0 var(--shadow);
+}
+.c-cover .cell svg {
+  width: 100%;
+  height: 100%;
+}
+.c-cover .cell .badge {
+  position: absolute;
+  left: 16px;
+  top: 16px;
+}
+.c-cover .band {
+  position: absolute;
+  left: 46px;
+  right: 46px;
+  top: 1014px;
+  height: 330px;
+  border-radius: 44px;
+  padding: 26px 46px;
+  box-sizing: border-box;
+  transform: rotate(-1.2deg);
+}
+.c-cover h1 {
+  font-size: 132px;
+}
+.c-cover h1 mark {
+  background: var(--yellow);
+  color: inherit;
+  padding: 0 14px;
+  border-radius: 20px;
+}
+
+/* 第 2 到 5 张:每个方向一张 */
+.c-dir .head {
+  position: absolute;
+  left: 64px;
+  top: 56px;
+  display: flex;
+  align-items: center;
+  gap: 28px;
+}
+.c-dir .phone {
+  position: absolute;
+  left: 64px;
+  top: 204px;
+  width: 520px;
+  height: 1125px;
+  border-radius: 46px;
+  overflow: hidden;
+  box-shadow: 9px 15px 0 var(--shadow);
+}
+.c-dir .phone svg {
+  width: 100%;
+  height: 100%;
+}
+.c-dir .side {
+  position: absolute;
+  left: 632px;
+  top: 204px;
+  width: 384px;
+}
+.c-dir .line {
+  border-radius: 28px;
+  padding: 26px 30px;
+  font: 700 37px/1.45 var(--ui);
+}
+.c-dir .stages {
+  display: grid;
+  grid-template-columns: repeat(2, 150px);
+  justify-content: space-around;
+  gap: 10px 20px;
+  margin-top: 36px;
+}
+.tile {
+  text-align: center;
+  font: 700 28px/1.2 var(--ui);
+}
+.tile svg {
+  width: 100%;
+  height: auto;
+  margin-bottom: 4px;
+}
+.tile.pix svg {
+  border-radius: 14px;
+}
+
+/* 第 6 张:同一株草莓的三种状态 */
+.c-rows .title,
+.c-crops .title {
+  position: absolute;
+  left: 64px;
+  top: 56px;
+  right: 64px;
+}
+.c-rows h1,
+.c-crops h1 {
+  font-size: 92px;
+}
+.c-rows .table {
+  position: absolute;
+  left: 64px;
+  right: 64px;
+  top: 216px;
+  display: grid;
+  grid-template-columns: 120px repeat(3, 1fr);
+  align-items: center;
+  gap: 4px 24px;
+}
+.c-rows .colhead {
+  text-align: center;
+  font: 700 38px/1.2 var(--ui);
+}
+.c-rows .colhead small {
+  display: block;
+  font-size: 27px;
+  opacity: 0.75;
+}
+.c-rows .tile svg {
+  width: 186px;
+  margin: 0 auto;
+}
+
+/* 第 7、8 张:12 种作物 */
+.c-crops .blocks {
+  position: absolute;
+  left: 64px;
+  right: 64px;
+  top: 200px;
+  bottom: 96px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+.c-crops .block .name {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  font: 400 56px/1 var(--title);
+  margin-bottom: 14px;
+}
+.c-crops .block .badge {
+  width: 76px;
+  height: 76px;
+  font-size: 50px;
+}
+.c-crops .crops {
+  display: grid;
+  grid-template-columns: repeat(6, 132px);
+  justify-content: space-between;
+  align-items: end;
+  gap: 12px 14px;
+}
+.c-crops .tile {
+  font-size: 26px;
+}
+
+/* 第 9 张:结尾 */
+.c-end .sheet {
+  position: absolute;
+  left: 64px;
+  right: 64px;
+  top: 150px;
+  border-radius: 48px;
+  padding: 64px 60px 70px;
+  transform: rotate(-1deg);
+}
+.c-end h1 {
+  font-size: 150px;
+}
+.c-end p {
+  margin: 34px 0 0;
+  font: 700 46px/1.5 var(--ui);
+}
+.c-end .row {
+  position: absolute;
+  left: 64px;
+  right: 64px;
+  top: 880px;
+  display: flex;
+  justify-content: space-between;
+}
+.c-end .row .badge {
+  width: 200px;
+  height: 200px;
+  font-size: 130px;
+  box-shadow: 8px 13px 0 var(--shadow);
+}
+.c-end .note {
+  position: absolute;
+  left: 64px;
+  right: 64px;
+  top: 1150px;
+  font: 500 31px/1.6 var(--ui);
+}
+</style>
+</head>
+<body>
+<svg id="ld-defs" width="0" height="0" aria-hidden="true"></svg>
+<script src="scene.js"></script>
+<script src="style-pixel.js"></script>
+<script src="style-watercolor.js"></script>
+<script src="style-paper.js"></script>
+<script src="style-lowpoly.js"></script>
+<script src="directions.js"></script>
+<script>
+(function () {
+  'use strict';
+  var LD = window.LD;
+  var dirs = LD.directions;
+  var TOTAL = 9;
+  var P = LD.plot;
+
+  var defs = '';
+  dirs.forEach(function (d) {
+    if (LD.styles[d.id].defs) defs += LD.styles[d.id].defs();
+  });
+  document.getElementById('ld-defs').innerHTML = defs;
+
+  function card(n, cls, html) {
+    var el = document.createElement('section');
+    el.className = 'card ' + cls;
+    el.id = 'card-' + (n < 10 ? '0' : '') + n;
+    el.innerHTML =
+      html +
+      '<div class="foot"><span>灵谷小镇 Lingdale · 画风探索</span><span>示意稿,不是成品 · ' +
+      n +
+      '/' +
+      TOTAL +
+      '</span></div>';
+    document.body.appendChild(el);
+  }
+
+  function tile(d, plot, label) {
+    return (
+      '<div class="tile' +
+      (d.id === 'pixel' ? ' pix' : '') +
+      '">' +
+      LD.styles[d.id].tile(plot) +
+      (label ? '<div>' + label + '</div>' : '') +
+      '</div>'
+    );
+  }
+
+  /** 把一屏农场裁到只剩地块的那一块,用在封面的四宫格里。 */
+  function field(d) {
+    var st = LD.styles[d.id];
+    var f = st.field;
+    return st
+      .farm(LD.scene)
+      .replace(
+        /viewBox="[^"]*"/,
+        'viewBox="' + [f.x, f.y, f.w, f.h].join(' ') + '" preserveAspectRatio="xMidYMin slice"',
+      );
+  }
+
+  // 1 封面
+  card(
+    1,
+    'c-cover',
+    '<div class="grid">' +
+      dirs
+        .map(function (d) {
+          return '<div class="cell">' + field(d) + '<div class="badge">' + d.letter + '</div></div>';
+        })
+        .join('') +
+      '</div><div class="band paper"><h1>四种画风</h1><h1>你更喜欢<mark>哪个</mark>?</h1></div>',
+  );
+
+  // 2 到 5 每个方向一张
+  var short = {
+    pixel: '像素画。像一块小小的电子菜园,颗粒分明。',
+    watercolor: '水彩绘本。铅笔线、淡彩、纸的纹理,安安静静的。',
+    paper: '彩纸拼贴。一片片剪出来、贴起来的农场,颜色干净。',
+    lowpoly: '低多边形。像摆在桌上的积木沙盘,有体积有影子。',
+  };
+  dirs.forEach(function (d, i) {
+    var stages = [0, 1, 2, 3, 4]
+      .map(function (s) {
+        return tile(d, P('turnip', s), LD.STAGES[s]);
+      })
+      .join('');
+    stages += tile(d, P('strawberry', 3, { health: 'wilted', stars: 3 }), '蔫了');
+    card(
+      2 + i,
+      'c-dir',
+      '<div class="head"><div class="badge">' +
+        d.letter +
+        '</div><h1>' +
+        d.name +
+        '</h1></div>' +
+        '<div class="phone">' +
+        LD.styles[d.id].farm(LD.scene) +
+        '</div>' +
+        '<div class="side"><div class="line paper">' +
+        short[d.id] +
+        '</div><div class="stages">' +
+        stages +
+        '</div></div>',
+    );
+  });
+
+  // 6 同一株草莓的三种状态
+  var cols = [
+    ['健康', '一直答对', P('strawberry', 3)],
+    ['没长', '答错一次', P('strawberry', 3, { health: 'stunted', stars: 4 })],
+    ['蔫了', '连错两次', P('strawberry', 3, { health: 'wilted', stars: 3 })],
+  ];
+  var table = '<div></div>';
+  cols.forEach(function (c) {
+    table += '<div class="colhead">' + c[0] + '<small>' + c[1] + '</small></div>';
+  });
+  dirs.forEach(function (d) {
+    table += '<div class="badge">' + d.letter + '</div>';
+    cols.forEach(function (c) {
+      table += tile(d, c[2]);
+    });
+  });
+  card(
+    6,
+    'c-rows',
+    '<div class="title"><h1>答错了,它会蔫</h1></div><div class="table">' + table + '</div>',
+  );
+
+  // 7、8 十二种作物,两个方向一张
+  [
+    [dirs[0], dirs[1]],
+    [dirs[2], dirs[3]],
+  ].forEach(function (pair, i) {
+    var html = '<div class="title"><h1>12 种作物 · ' + (i === 0 ? '上' : '下') + '</h1></div><div class="blocks">';
+    pair.forEach(function (d) {
+      html +=
+        '<div class="block"><div class="name"><div class="badge">' +
+        d.letter +
+        '</div>' +
+        d.name +
+        '</div><div class="crops">' +
+        LD.samples.crops
+          .map(function (it) {
+            return tile(d, it.plot, it.label);
+          })
+          .join('') +
+        '</div></div>';
+    });
+    html += '</div>';
+    card(7 + i, 'c-crops', html);
+  });
+
+  // 9 结尾
+  card(
+    9,
+    'c-end',
+    '<div class="sheet paper"><h1>你选哪个?</h1><p>我自己最喜欢 C。<br>评论区告诉我你的选择,还有你喜欢它的什么。</p></div>' +
+      '<div class="row">' +
+      dirs
+        .map(function (d) {
+          return '<div class="badge">' + d.letter + '</div>';
+        })
+        .join('') +
+      '</div>' +
+      '<div class="note">这些画面是用代码画的示意稿,不是成品,代码由 AI 协助编写。<br>游戏还在开发中,农场目前只有这几张图。</div>',
+  );
+
+  document.body.setAttribute('data-ready', '1');
+})();
+</script>
+</body>
+</html>

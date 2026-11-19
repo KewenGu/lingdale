@@ -40,7 +40,7 @@
 这个项目里已经发生过的例子:
 
 - 星露谷里过季的种子会作废,那是为了制造季节规划的压力。这里的种子承载的是学习机会,作废只会浪费,所以没有照搬(见 `docs/decisions/0009`)。
-- "每株作物都浇 5 次水"听起来整齐。模拟显示这样每天题量从 207 道涨到 272 道,新词反而从 9.2 个降到 6.5 个,所以改成越熟的词浇水次数越少(见 `docs/decisions/0006`;这条规则后来被矿洞取代,见 `0015`)。
+- "每株作物都浇 5 次水"听起来整齐。模拟显示这样每天题量从 207 道涨到 272 道,新词反而从 9.2 个降到 6.5 个,所以改成越熟的词浇水次数越少(见 `docs/decisions/0006`;这条规则后来被矿洞取代,见 `0016`)。
 
 ### 诚实
 
@@ -65,13 +65,15 @@ core/          核心逻辑。纯 TypeScript,不依赖引擎、Node 或 DOM
 tests/         单元测试(node:test)
 sim/           学习者模拟,用来在做界面之前验证数值
 data/          卡组数据(目前只有 30 词的示例)
-docs/design/   设计文档:愿景、玩法规则、学习设计、数值、内容、路线图
+docs/design/   设计文档:愿景、玩法规则、学习设计、数值、内容、路线图、美术规范
+docs/design/art-exploration/  定美术方向时的探索稿:四种画风的比较页和绘制代码
 docs/dev/      开发文档:架构、开发指南、Cocos 接入
 docs/marketing/ 对外内容:内容策略、选题库
 docs/decisions/ 决策记录:每个重要决定的背景、理由和被否决的方案
 ```
 
-动手之前先读相关文档。玩法规则以 [`docs/design/02-gameplay.md`](docs/design/02-gameplay.md) 为准,术语以 [`docs/glossary.md`](docs/glossary.md) 为准。
+动手之前先读相关文档。玩法规则以 [`docs/design/02-gameplay.md`](docs/design/02-gameplay.md) 为准,
+画面以 [`docs/design/07-art-direction.md`](docs/design/07-art-direction.md) 为准,术语以 [`docs/glossary.md`](docs/glossary.md) 为准。
 
 ## 常用命令
 
@@ -132,5 +134,5 @@ npm run sim -- --buy --days=90   # 模拟参数见 docs/dev/development.md
 
 ## 当前状态
 
-核心逻辑层(矿洞、农场、商店)已完成并有测试和模拟。还没有界面、Cocos 工程和正式词库。
+核心逻辑层(矿洞、农场、商店)已完成并有测试和模拟。美术方向已定为彩纸拼贴,目前只有农场一屏的示意稿,矿洞还没画。还没有界面、Cocos 工程和正式词库。
 进度和下一步见 [`docs/design/06-roadmap.md`](docs/design/06-roadmap.md)。
