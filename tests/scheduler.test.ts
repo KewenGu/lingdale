@@ -3,18 +3,19 @@ import { test } from 'node:test';
 import {
   HOUR_MS,
   MAX_MASTERY,
+  blankState,
   calendar,
   gameDay,
   gameDayStart,
-  masteryAfterDeath,
   masteryAfterHarvest,
-  newCardState,
+  masteryAfterHit,
+  masteryAfterLapse,
+  mined,
   nextWaterTime,
   rest,
   starsOf,
   startCycle,
   water,
-  wateringsNeeded,
 } from '../core/index';
 import { T0, gameDays, hours } from './helpers';
 
@@ -56,30 +57,47 @@ test('日历:28 个游戏日一季,四季一年', () => {
   });
 });
 
-test('浇水次数随掌握度减少', () => {
-  assert.deepEqual([0, 1, 2, 3, 4, MAX_MASTERY].map(wateringsNeeded), [5, 3, 2, 1, 1, 1]);
-});
-
-test('收获后的掌握度:五星升级,四星只有新词升级,三星以下降级', () => {
+test('掌握度:矿里答对升一级,忘了降两级,收获按星级升降', () => {
+  assert.equal(masteryAfterHit(0), 1); // 新词答对从 1 级开始
+  assert.equal(masteryAfterHit(3), 4);
+  assert.equal(masteryAfterHit(MAX_MASTERY), MAX_MASTERY);
+  assert.equal(masteryAfterLapse(5), 3);
+  assert.equal(masteryAfterLapse(1), 0);
   assert.equal(masteryAfterHarvest(0, 5), 1);
   assert.equal(masteryAfterHarvest(3, 5), 4);
   assert.equal(masteryAfterHarvest(MAX_MASTERY, 5), MAX_MASTERY);
-  assert.equal(masteryAfterHarvest(0, 4), 1);
+  assert.equal(masteryAfterHarvest(0, 4), 1); // 初学允许错一次
   assert.equal(masteryAfterHarvest(3, 4), 3);
   assert.equal(masteryAfterHarvest(3, 3), 2);
   assert.equal(masteryAfterHarvest(0, 1), 0);
-  assert.equal(masteryAfterDeath(5), 3);
-  assert.equal(masteryAfterDeath(1), 0);
 });
 
-test('新词种下后下个游戏日才能浇第一次水', () => {
-  const state = newCardState(T0, 0);
-  assert.deepEqual([state.mastery, state.stage, starsOf(state)], [0, 0, 5]);
-  assert.equal(state.dueAt, Date.UTC(2026, 0, 1, 16));
+test('矿里答对:升级并去休息,掌握度越高休息越久', () => {
+  const today = gameDay(T0, 0);
+  const first = mined(blankState(T0), true, T0, 0);
+  assert.deepEqual([first.mastery, first.reps, first.lapses], [1, 1, 0]);
+  assert.equal(first.dueAt, gameDayStart(today + 6, 0)); // 3 天
+  const again = mined({ ...first, mastery: 3 }, true, T0, 0);
+  assert.equal(again.mastery, 4);
+  assert.equal(again.dueAt, gameDayStart(today + 60, 0)); // 30 天
+});
+
+test('矿里答错:降两级,不休息,等着被种下', () => {
+  const fresh = mined(blankState(T0), false, T0, 0);
+  assert.deepEqual([fresh.mastery, fresh.reps, fresh.lapses], [0, 1, 1]);
+  const lapsed = mined({ ...blankState(T0), mastery: 5 }, false, T0, 0);
+  assert.equal(lapsed.mastery, 3);
+});
+
+test('种下后下个游戏日才能浇第一次水,品质从五星算起', () => {
+  const seed = { ...mined(blankState(T0), false, T0, 0), cycleWrongs: 2, wrongStreak: 2 };
+  const planted = startCycle(seed, T0, 0);
+  assert.deepEqual([planted.mastery, planted.stage, starsOf(planted), planted.lapses], [0, 0, 5, 1]);
+  assert.equal(planted.dueAt, Date.UTC(2026, 0, 1, 16));
 });
 
 test('浇水:答对生长,hard 不生长也不算错,答错不生长并扣星', () => {
-  const start = newCardState(T0, 0);
+  const start = startCycle(blankState(T0), T0, 0);
   const now = T0 + gameDays(1);
   const good = water(start, 'good', now, 0);
   assert.deepEqual([good.stage, good.wrongStreak, starsOf(good), good.reps], [1, 0, 5, 1]);
@@ -100,26 +118,21 @@ test('浇水:答对生长,hard 不生长也不算错,答错不生长并扣星', 
   assert.equal(starsOf(worst), 1); // 最低一星
 });
 
-test('休息:掌握度越高休息越久,到期时间对齐到游戏日开始', () => {
-  const state = water(newCardState(T0, 0), 'again', T0, 0);
+test('休息:到期时间对齐到游戏日开始,这一轮的进度清空', () => {
+  const state = water(startCycle(blankState(T0), T0, 0), 'again', T0, 0);
   const today = gameDay(T0, 0);
   const short = rest(state, 0, T0, 0);
   assert.equal(short.dueAt, gameDayStart(today + 1, 0)); // 半天后
   assert.deepEqual([short.stage, short.wrongStreak, short.cycleWrongs, short.lapses], [0, 0, 0, 1]);
   assert.equal(rest(state, 1, T0, 0).dueAt, gameDayStart(today + 6, 0)); // 3 天
-  assert.equal(rest(state, 4, T0, 0).dueAt, gameDayStart(today + 60, 0)); // 30 天
-});
-
-test('重新种下:保留掌握度和累计记录,品质重新按五星算', () => {
-  const resting = { ...rest(water(newCardState(T0, 0), 'again', T0, 0), 2, T0, 0), reps: 9 };
-  const again = startCycle(resting, T0 + hours(100), 0);
-  assert.deepEqual([again.mastery, again.stage, starsOf(again), again.reps, again.lapses], [2, 0, 5, 9, 1]);
-  assert.equal(again.dueAt, nextWaterTime(T0 + hours(100), 0));
+  assert.equal(rest(state, 4, T0 + hours(3), 0).dueAt, gameDayStart(today + 60, 0)); // 30 天
 });
 
 test('调度函数不修改传入的状态', () => {
-  const state = newCardState(T0, 0);
+  const state = blankState(T0);
   const copy = { ...state };
+  mined(state, true, T0, 0);
+  mined(state, false, T0, 0);
   water(state, 'again', T0, 0);
   rest(state, 3, T0, 0);
   startCycle(state, T0, 0);

@@ -1,6 +1,7 @@
 import { answer, AnswerResult, cropOfCard, cropQuestionType } from './farm';
 import { isCorrect, makeQuestion, Rng } from './quiz';
-import { Deck, Grade, Question, SaveData } from './types';
+import { DigResult, MineClosed, Vein, dig, mineStatus } from './mine';
+import { Deck, Grade, Question, QuestionType, SaveData } from './types';
 
 export interface SubmitResult {
   cardId: string;
@@ -74,5 +75,57 @@ export class ReviewSession {
     const requeued = grade === 'again' && !gone;
     if (requeued) this.queue.push(cardId);
     return { cardId, correct: grade === 'good', first, requeued, result };
+  }
+}
+
+export interface MineTurn {
+  question: Question;
+  vein: Vein;
+  allowance: number; // 还能再答错几次
+}
+
+/**
+ * 一次挖矿会话。每次取下一条矿脉出一道题,答完再取下一条,直到矿洞关门或玩家离开。
+ * 和浇水不同,这里答错不会重复练习:答错的词变成种子,到田里去学。
+ */
+export class MineSession {
+  private turn: MineTurn | null = null;
+
+  constructor(
+    private save: SaveData,
+    private deck: Deck,
+    private rng: Rng,
+    private questionType: QuestionType = 'choice',
+  ) {}
+
+  /** 矿洞现在挖不了的原因;能挖时返回 null。 */
+  closed(now: number): MineClosed | null {
+    const status = mineStatus(this.save, this.deck, now);
+    return status.open ? null : status.reason;
+  }
+
+  /** 当前这道题;矿洞关门时返回 null。重复调用返回同一道题。 */
+  current(now: number): MineTurn | null {
+    if (this.turn) return this.turn;
+    const status = mineStatus(this.save, this.deck, now);
+    if (!status.open) return null;
+    const question = makeQuestion(this.deck, status.vein.cardId, this.questionType, this.rng);
+    this.turn = { question, vein: status.vein, allowance: status.allowance };
+    return this.turn;
+  }
+
+  /** 提交玩家的回答:选择题传选项下标,拼写题传输入的文字。 */
+  submit(response: number | string, now: number, elapsedMs: number = 0): DigResult {
+    const turn = this.current(now);
+    if (!turn) throw new Error('矿洞现在挖不了');
+    return this.submitCorrect(isCorrect(turn.question, response), now, elapsedMs);
+  }
+
+  /** 直接按对错提交。 */
+  submitCorrect(correct: boolean, now: number, elapsedMs: number = 0): DigResult {
+    const turn = this.current(now);
+    if (!turn) throw new Error('矿洞现在挖不了');
+    this.turn = null;
+    return dig(this.save, this.deck, turn.vein.cardId, correct, now, this.rng, turn.question.type, elapsedMs);
   }
 }

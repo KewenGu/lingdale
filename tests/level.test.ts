@@ -13,7 +13,7 @@ import {
   xpToNext,
 } from '../core/index';
 import { DEFAULT_OPTIONS, simulate } from '../sim/run';
-import { T0, makeDeck } from './helpers';
+import { T0, digNext, gameDays, makeDeck } from './helpers';
 
 test('等级由累计经验算出', () => {
   assert.deepEqual(levelInfo(0), { level: 1, into: 0, needed: 10 });
@@ -31,19 +31,17 @@ test('浇水经验随掌握度增长,答错没有经验;收获经验等于星数
   assert.equal(xpForHarvest(4), 4);
 });
 
-test('种完开局的 5 颗种子就升到 2 级并解锁第一个内容', () => {
+test('在矿里答对 10 个新词就升到 2 级并解锁第一个内容', () => {
   const deck = makeDeck(50);
   const save = createSave(deck.id, T0, 0);
-  for (let i = 0; i < 4; i++) assert.ok(plant(save, deck, i, T0).ok);
-  assert.equal(save.xp, 8);
-  const result = plant(save, deck, 4, T0);
-  assert.ok(result.ok);
-  assert.deepEqual([result.xp.levelBefore, result.xp.levelAfter], [1, 2]);
+  for (let i = 0; i < 9; i++) digNext(save, deck, true, T0);
+  assert.equal(save.xp, 9);
+  const { result } = digNext(save, deck, true, T0);
+  assert.deepEqual([result.levelBefore, result.levelAfter], [1, 2]);
   assert.deepEqual(
-    result.xp.unlocked.map((m) => m.level),
+    result.unlocked.map((m) => m.level),
     [2],
   );
-  assert.equal(save.seeds.choice, 0);
 });
 
 test('一次升多级时返回跨过的全部解锁内容', () => {
@@ -55,10 +53,13 @@ test('一次升多级时返回跨过的全部解锁内容', () => {
   assert.deepEqual(addXp(save, 0).unlocked, []);
 });
 
-test('一株新词作物从种下到五星收获一共 12 点经验', () => {
+test('一个不会的词从答错、种下到四星收获一共 11 点经验', () => {
   const deck = makeDeck(50);
   const save = createSave(deck.id, T0, 0);
-  plant(save, deck, 0, T0);
+  assert.equal(digNext(save, deck, false, T0).result.xp, 0); // 答错没有经验,但得到种子
+  const planted = plant(save, deck, 0, T0);
+  assert.ok(planted.ok);
+  assert.equal(planted.xp.xp, 2);
   assert.equal(answer(save, 'w0', 'good', T0).xp, 1);
   assert.equal(answer(save, 'w0', 'again', T0).xp, 0);
   for (let i = 0; i < 3; i++) answer(save, 'w0', 'good', T0);
@@ -66,6 +67,14 @@ test('一株新词作物从种下到五星收获一共 12 点经验', () => {
   assert.equal(last.harvest?.stars, 4);
   assert.equal(last.xp, 1 + 4); // 浇水 1 点,加上四星收获 4 点
   assert.equal(save.xp, 2 + 5 + 4);
+});
+
+test('记得越久的词,答对的经验越多', () => {
+  const deck = makeDeck(1);
+  const save = createSave(deck.id, T0, 0);
+  assert.equal(digNext(save, deck, true, T0).result.xp, 1);
+  assert.equal(digNext(save, deck, true, T0 + gameDays(6)).result.xp, 2);
+  assert.equal(digNext(save, deck, true, T0 + gameDays(30)).result.xp, 3);
 });
 
 test('升级节奏:第一周每天都有进展,第一个月约 20 级', () => {

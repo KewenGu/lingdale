@@ -1,22 +1,34 @@
-import { MAX_MASTERY, MAX_STARS, REST_DAYS, WATERINGS_BY_MASTERY } from './constants';
+import { MAX_MASTERY, MAX_STARS, REST_DAYS } from './constants';
 import { gameDay, gameDayStart, nextWaterTime } from './time';
 import { CardState, Grade } from './types';
 
 // 这个文件里都是纯函数:返回新状态,不修改传入的对象。
-
-/** 这个掌握度的词要浇对几次水才能收获。 */
-export function wateringsNeeded(mastery: number): number {
-  return WATERINGS_BY_MASTERY[Math.min(mastery, WATERINGS_BY_MASTERY.length - 1)];
-}
+//
+// 一个词在三个地方之间流转:
+//   矿里(休息结束后以矿脉的形式出现,答一道题)
+//     答对 → 掌握度升一级,休息更久,之后再回到矿里
+//     答错 → 变成种子进背包
+//   背包(等着被种下)
+//   田里(浇对 5 次水后收获)→ 按收获的星级调整掌握度,休息,之后回到矿里
 
 /** 这株作物现在的品质:满分 5 星,这一轮每答错一次扣 1 星,最低 1 星。 */
 export function starsOf(state: CardState): number {
   return Math.max(1, MAX_STARS - state.cycleWrongs);
 }
 
+/** 在矿里答对:掌握度升一级。新词答对也是从 1 级开始。 */
+export function masteryAfterHit(mastery: number): number {
+  return Math.min(MAX_MASTERY, mastery + 1);
+}
+
+/** 忘了(在矿里答错,或作物死亡):掌握度降两级。 */
+export function masteryAfterLapse(mastery: number): number {
+  return Math.max(0, mastery - 2);
+}
+
 /**
  * 收获后掌握度怎么变:
- * 五星升一级;四星时新词也升级(允许初学时错一次),其他词保持不变;三星及以下降一级。
+ * 五星升一级;四星时掌握度为 0 的词也升级(允许初学时错一次),其他词保持不变;三星及以下降一级。
  */
 export function masteryAfterHarvest(mastery: number, stars: number): number {
   if (stars >= MAX_STARS) return Math.min(MAX_MASTERY, mastery + 1);
@@ -24,17 +36,12 @@ export function masteryAfterHarvest(mastery: number, stars: number): number {
   return Math.max(0, mastery - 1);
 }
 
-/** 作物死亡后掌握度降两级。 */
-export function masteryAfterDeath(mastery: number): number {
-  return Math.max(0, mastery - 2);
-}
-
-/** 第一次种下的新词。 */
-export function newCardState(now: number, tzOffsetMs: number): CardState {
+/** 第一次在矿里见到的词,还没有任何记录。 */
+export function blankState(now: number): CardState {
   return {
     mastery: 0,
     stage: 0,
-    dueAt: nextWaterTime(now, tzOffsetMs),
+    dueAt: now,
     wrongStreak: 0,
     cycleWrongs: 0,
     reps: 0,
@@ -43,7 +50,39 @@ export function newCardState(now: number, tzOffsetMs: number): CardState {
   };
 }
 
-/** 旧词休息结束后被重新种下,开始新的一轮。 */
+/** 带着某个掌握度去休息,到期后重新出现在矿里。到期时间对齐到游戏日的开始。 */
+export function rest(state: CardState, mastery: number, now: number, tzOffsetMs: number): CardState {
+  const restGameDays = Math.round(REST_DAYS[mastery] * 2);
+  return {
+    mastery,
+    stage: 0,
+    dueAt: gameDayStart(gameDay(now, tzOffsetMs) + restGameDays, tzOffsetMs),
+    wrongStreak: 0,
+    cycleWrongs: 0,
+    reps: state.reps,
+    lapses: state.lapses,
+    lastReviewAt: state.lastReviewAt,
+  };
+}
+
+/** 在矿里答了一次。答对:升级并去休息。答错:降级,变成种子等着被种下。 */
+export function mined(state: CardState, correct: boolean, now: number, tzOffsetMs: number): CardState {
+  const answered: CardState = {
+    mastery: state.mastery,
+    stage: 0,
+    dueAt: now,
+    wrongStreak: 0,
+    cycleWrongs: 0,
+    reps: state.reps + 1,
+    lapses: state.lapses + (correct ? 0 : 1),
+    lastReviewAt: now,
+  };
+  if (correct) return rest(answered, masteryAfterHit(state.mastery), now, tzOffsetMs);
+  answered.mastery = masteryAfterLapse(state.mastery);
+  return answered;
+}
+
+/** 种子被种下,开始一轮新的生长。品质从五星算起。 */
 export function startCycle(state: CardState, now: number, tzOffsetMs: number): CardState {
   return {
     mastery: state.mastery,
@@ -73,20 +112,5 @@ export function water(state: CardState, grade: Grade, now: number, tzOffsetMs: n
     reps: state.reps + 1,
     lapses: state.lapses + (wrong ? 1 : 0),
     lastReviewAt: now,
-  };
-}
-
-/** 一轮结束(收获或死亡)后,这个词带着新的掌握度去休息,到期后可以再被种下。 */
-export function rest(state: CardState, mastery: number, now: number, tzOffsetMs: number): CardState {
-  const restGameDays = Math.round(REST_DAYS[mastery] * 2);
-  return {
-    mastery,
-    stage: 0,
-    dueAt: gameDayStart(gameDay(now, tzOffsetMs) + restGameDays, tzOffsetMs),
-    wrongStreak: 0,
-    cycleWrongs: 0,
-    reps: state.reps,
-    lapses: state.lapses,
-    lastReviewAt: state.lastReviewAt,
   };
 }
