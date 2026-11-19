@@ -37,13 +37,47 @@ sim/             不放进 assets
 ### 启动
 
 ```ts
-import { claimDailySeeds, createSave, deserialize } from './core/index';
+import { createSave, deserialize } from './core/index';
 
 const json = await platform.load();
 const save = json ? deserialize(json) : createSave(deck.id, platform.now(), tzOffsetMs);
 save.tzOffsetMs = -new Date().getTimezoneOffset() * 60000;
-claimDailySeeds(save, platform.now());
 ```
+
+新存档没有种子也没有金币,只有 30 块空地。玩家的第一件事是去挖矿。
+
+### 挖矿
+
+```ts
+import { MineSession, mineAllowance, sellAllOre, sellOre } from './core/index';
+
+const session = new MineSession(save, deck, Math.random);
+
+let turn = session.current(platform.now());
+while (turn) {
+  // turn.vein.source     'new' 或 'review',可以用不同的矿脉外观
+  // turn.vein.mastery    旧词的掌握度,决定答对会出哪一级矿石
+  // turn.allowance       还能答错几次,要一直显示在界面上
+  const response = await askPlayer(turn.question);
+  const result = session.submit(response, platform.now(), elapsedMs);
+
+  // result.correct                  答对了没有
+  // result.oreGrade / .lucky        爆出的矿石品级;运气好时多升了一级
+  // result.bagged                   答错,这个词进了词袋
+  // result.allowance                这次之后还能答错几次
+  // result.levelAfter / .unlocked   升级和新解锁的内容
+  turn = session.current(platform.now());
+}
+session.closed(platform.now());   // 'no_room':田里没地方了;'exhausted':没有矿脉可挖;null:玩家自己离开
+await platform.save(serialize(save));
+
+save.ore;                 // 各品级矿石的数量,下标是品级
+sellOre(save, 3, 2);      // 卖 2 块 3 级矿石
+sellAllOre(save);         // 全卖
+```
+
+矿洞关门时要告诉玩家怎么重新开门:`no_room` 时引导他去种下词袋里的词或浇水收获,`exhausted` 时告诉他旧词什么时候回来。
+矿洞经常关门(见[数值与平衡](../design/04-economy-balance.md#2-矿洞经常关门)),这个提示不是可有可无的。
 
 ### 画农场
 
@@ -67,25 +101,29 @@ for (const plot of save.plots) {
 
 这些函数都很便宜,不需要缓存。
 
-### 种子店和播种
+### 商店和播种
 
 ```ts
-import { buySeeds, plant, seedOffers, seedStockLeft } from './core/index';
+import { activeProgress, buySeeds, claimReliefSeed, plant, seedOffers } from './core/index';
 
-seedOffers(save, now);     // 三种种子:这个季节长成什么作物、解锁了没有、手里有几颗
-seedStockLeft(save, now);  // 今天还能买几颗
-buySeeds(save, now, 'reverse', 2);
+seedOffers(save, now);          // 三种种子:这个季节长成什么作物、价格、解锁了没有、手里有几颗
+buySeeds(save, 'reverse', 2);   // 金币不够或没解锁时返回 false
+claimReliefSeed(save);          // 进商店时调用。玩家卡住时送一颗基础种子并返回 true,其余情况什么都不做
 
-const result = plant(save, deck, plotIndex, now, 'choice');
+activeProgress(save).wordBag;   // 词袋:等着被种下的词
+
+const result = plant(save, deck, plotIndex, now, { cardId, questionType: 'choice' });
 if (result.ok) {
-  // result.card      展示这个词的卡片,这是学习的第一步
-  // result.source    'new' 或 'review',可以用不同的展示方式
-  // result.mastery   旧词的掌握度
+  // result.card      展示这个词的卡片。玩家刚在矿里答错它,这是学习的第一步
+  // result.mastery   这个词现在的掌握度
+  // result.cropType  长成哪种作物
   // result.xp        可能触发升级动画
 } else {
-  // result.reason    'plot_locked' | 'plot_occupied' | 'crop_locked' | 'no_seeds' | 'deck_exhausted'
+  // result.reason    'plot_locked' | 'plot_occupied' | 'crop_locked' | 'no_words' | 'word_not_found' | 'no_seeds'
 }
 ```
+
+`cardId` 不传就种最早进词袋的那个词,`questionType` 不传就用基础种子。
 
 ### 浇水
 
@@ -130,7 +168,7 @@ sellAllProduce(save);                  // 全卖
 
 ### 什么时候存档
 
-每次会改变存档的操作之后都存:播种、一轮浇水结束、买卖、解锁地块。存档是一份不大的 JSON,整份写入即可。
+每次会改变存档的操作之后都存:一次挖矿结束、播种、一轮浇水结束、买卖、解锁地块。存档是一份不大的 JSON,整份写入即可。
 
 ## 时间
 
@@ -173,6 +211,8 @@ interface Platform {
 
 1. **农场要一眼看出状态。** 哪些能浇水、哪些在枯萎、哪些快收获,这是"农场就是记忆的样子"的直接体现。
 2. **答题的手感。** 答对时的生长、答错时的反馈、收获时的星级展示,决定了每天几十次答题是享受还是忍受。
-3. **播种时的单词卡片。** 这是玩家第一次见到新词的地方,要给够时间和信息:发音、释义、例句。
-4. **地块多了之后的布局。** 30 块地一屏能放下,扩建到 120 块需要滚动或分区。
-5. **拼写题的输入。** 手机上打字慢,考虑字母块点选等更适合触屏的方式。核心层只要求最终拿到一个字符串。
+3. **答错时和播种时的单词卡片。** 玩家在矿里答错一个词时第一次看到正确答案,播种时再看一次。
+   两处都要给够时间和信息:发音、释义、例句。
+4. **矿洞的答错额度和关门状态。** 玩家要随时看得到还能答错几次,关门时要知道去做什么能重新开门。
+5. **地块多了之后的布局。** 30 块地一屏能放下,扩建到 120 块需要滚动或分区。
+6. **拼写题的输入。** 手机上打字慢,考虑字母块点选等更适合触屏的方式。核心层只要求最终拿到一个字符串。

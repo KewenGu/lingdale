@@ -40,9 +40,10 @@ npx tsx --test tests/farm.test.ts
 
 | 文件 | 覆盖 |
 |---|---|
-| `tests/scheduler.test.ts` | 时间、日历、浇水和休息的状态变化、掌握度规则 |
-| `tests/farm.test.ts` | 播种、浇水、收获、死亡、种子、作物种类、季节、卖作物、地块 |
-| `tests/quiz-session.test.ts` | 三种题型的出题和判分、浇水会话、存档读写 |
+| `tests/scheduler.test.ts` | 时间、日历、挖矿、浇水和休息的状态变化、掌握度规则 |
+| `tests/mine.test.ts` | 矿脉顺序、答对出矿石、答错进词袋、答错的额度、矿洞关门、卖矿石 |
+| `tests/farm.test.ts` | 买种子、兜底种子、播种、浇水、收获、死亡、作物种类、季节、卖作物、地块 |
+| `tests/quiz-session.test.ts` | 三种题型的出题和判分、浇水会话、挖矿会话、存档读写 |
 | `tests/level.test.ts` | 经验、等级、解锁、升级节奏 |
 | `tests/simulation.test.ts` | 长期运行后存档是否自洽、整体节奏的回归 |
 
@@ -52,6 +53,8 @@ npx tsx --test tests/farm.test.ts
   测试列表读起来应该像一份规则清单。
 - **一个测试验证一条规则。**
 - **时间用 `tests/helpers.ts` 里的 `T0`、`hours`、`gameDays`。** 测试里的时区偏移都是 0。
+- **要把词种到田里时用 `missWords` 和 `giveSeeds`。** 词只能从矿里答错得来,`missWords` 替你在矿里答错几个词,
+  `giveSeeds` 直接给种子。矿石运气用 `noLuck`、`lucky` 两个固定的随机函数控制。
 - **不关心浇水间隔的测试可以在同一个时间点连续调用 `answer`。** `answer` 不检查作物是否到了能浇水的时间,
   这个检查在 `needsWater` 和 `thirstyCards` 里,由界面层负责只对能浇的作物开会话。
 - **新规则先写测试。** 规则写进[玩法规则](../design/02-gameplay.md)后,先把它翻译成测试,再改代码。
@@ -97,8 +100,8 @@ npx tsx --test tests/farm.test.ts
 
 1. 在 `types.ts` 的 `QuestionType` 里加名字,需要的话加新的题目类型。
 2. 在 `quiz.ts` 的 `makeQuestion` 和 `isCorrect` 里实现出题和判分。
-3. 在 `crops.ts` 的 `SEED_KINDS` 里加一种种子,在 `CROPS` 里给四个季节各加一种作物。
-4. 在 `save.ts` 的 `createSave` 里给新种子一个初始数量。
+3. 在 `crops.ts` 的 `CROP_KINDS` 里加一种种子(价格、售价倍率、解锁等级),在 `CROPS` 里给四个季节各加一种作物。
+4. 在 `save.ts` 的 `createSave` 里给新种子的数量一个 0。
 5. 补测试,更新玩法规则、学习设计和术语表。
 
 ## 提交
