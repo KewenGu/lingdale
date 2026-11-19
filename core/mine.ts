@@ -11,10 +11,10 @@ import { Deck, QuestionType, SaveData } from './types';
 //
 // 矿负责"筛"和"复习":每条矿脉是一个词,挖一次答一道题。
 //   答对 → 爆出矿石。矿石的品级就是这个词的掌握度,记得越久品级越高。然后这个词去休息,到期再回到矿里。
-//   答错 → 爆出这个词的种子,进背包,拿去田里种。
+//   答错 → 这个词进词袋,等着去商店买种子把它种下。
 //   矿脉先出该复习的旧词(最早到期的在前),没有才出卡组里的下一个新词。
-//   挖新矿没有每日上限,但答错有上限:还能答错的次数 = 空地块数 - 背包里的种子数。
-//   用完了矿洞就关门,要先把种子种下、或等作物收获腾出地来。
+//   挖新矿没有每日上限,但答错有上限:还能答错的次数 = 空地块数 - 词袋里还没种下的词数。
+//   用完了矿洞就关门,要先把词种下、或等作物收获腾出地来。
 
 export type VeinSource = 'review' | 'new';
 
@@ -24,7 +24,7 @@ export interface Vein {
   mastery: number; // 这个词现在的掌握度;新词是 0
 }
 
-/** 矿洞为什么挖不了:田里没地方放新的种子了,或者没有矿脉可挖(没有到期的旧词,卡组也挖完了)。 */
+/** 矿洞为什么挖不了:田里没地方再种新的词了,或者没有矿脉可挖(没有到期的旧词,卡组也挖完了)。 */
 export type MineClosed = 'no_room' | 'exhausted';
 
 export type MineStatus =
@@ -37,7 +37,7 @@ export interface DigResult {
   masteryAfter: number;
   oreGrade: number | null; // 答对时爆出的矿石品级
   lucky: boolean; // 这次是否运气好,多升了一个品级
-  seed: boolean; // 答错时这个词的种子进了背包
+  bagged: boolean; // 答错时这个词进了词袋
   allowance: number; // 这次之后还能再答错几次
   xp: number;
   levelBefore: number;
@@ -45,15 +45,15 @@ export interface DigResult {
   unlocked: Milestone[];
 }
 
-/** 还能再答错几次:空地块数减去背包里还没种下的种子数。到 0 矿洞就关门。 */
+/** 还能再答错几次:空地块数减去词袋里还没种下的词数。到 0 矿洞就关门。 */
 export function mineAllowance(save: SaveData): number {
-  return Math.max(0, emptyPlots(save) - activeProgress(save).seedBag.length);
+  return Math.max(0, emptyPlots(save) - activeProgress(save).wordBag.length);
 }
 
 /** 休息结束、重新出现在矿里的旧词,最早到期的排在前面。 */
 export function dueVeins(save: SaveData, now: number): string[] {
   const progress = activeProgress(save);
-  const elsewhere = new Set<string>(progress.seedBag);
+  const elsewhere = new Set<string>(progress.wordBag);
   for (const plot of save.plots) {
     if (plot.crop) elsewhere.add(plot.crop.cardId);
   }
@@ -105,7 +105,7 @@ export function dig(
   const status = mineStatus(save, deck, now);
   if (!status.open) {
     throw new Error(
-      status.reason === 'no_room' ? '田里没有空位放新的种子,矿洞现在挖不了' : '现在没有矿脉可挖',
+      status.reason === 'no_room' ? '田里没有空位再种新的词,矿洞现在挖不了' : '现在没有矿脉可挖',
     );
   }
   if (status.vein.cardId !== cardId) {
@@ -144,7 +144,7 @@ export function dig(
     oreGrade = after.mastery + (lucky ? 1 : 0);
     save.ore[oreGrade] = (save.ore[oreGrade] || 0) + 1;
   } else {
-    progress.seedBag.push(cardId);
+    progress.wordBag.push(cardId);
   }
 
   const gained = addXp(save, xpForAnswer(before.mastery, correct ? 'good' : 'again'));
@@ -156,7 +156,7 @@ export function dig(
     masteryAfter: after.mastery,
     oreGrade,
     lucky,
-    seed: !correct,
+    bagged: !correct,
     allowance: mineAllowance(save),
     xp: gained.xp,
     levelBefore: gained.levelBefore,

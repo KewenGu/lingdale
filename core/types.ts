@@ -67,7 +67,7 @@ export interface Plot {
 export interface DeckProgress {
   cards: Record<string, CardState>; // 只含学过的词
   cursor: number; // 下一个新词在卡组里的位置
-  seedBag: string[]; // 背包里的种子。每颗种子就是一个在矿里答错的词,种下去长出来的就是它
+  wordBag: string[]; // 词袋:在矿里答错、等着被种下的词。种下时要配一颗商店买的种子
   logs: ReviewLog[];
 }
 
@@ -80,6 +80,7 @@ export interface SaveData {
   plots: Plot[];
   coins: number;
   xp: number; // 累计经验,不分卡组;等级由它算出
+  seeds: Record<QuestionType, number>; // 商店买的种子,按品种分。种子决定长成哪类作物,带上词袋里的一个词
   produce: Record<string, number[]>; // 收获后还没卖的作物:作物 id → 各星级的数量(下标是星数)
   ore: number[]; // 矿石库存,下标是品级,值是数量
   updatedAt: number;

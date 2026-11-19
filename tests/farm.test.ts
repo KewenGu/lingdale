@@ -11,8 +11,9 @@ import {
   createSave,
   cropGrowth,
   cropHealth,
+  buySeeds,
+  claimReliefSeed,
   cropKind,
-  cropOffers,
   cropQuestionType,
   cropStars,
   cropWaterings,
@@ -27,12 +28,14 @@ import {
   plotCost,
   produceCount,
   producePrice,
+  seedOffers,
+  sellAllOre,
   sellAllProduce,
   sellProduce,
   thirstyCards,
   unlockPlot,
 } from '../core/index';
-import { T0, gameDays, hours, makeDeck, seedWords } from './helpers';
+import { T0, digNext, gameDays, giveSeeds, hours, makeDeck, missWords } from './helpers';
 
 function setup(deckSize = 100) {
   const deck = makeDeck(deckSize);
@@ -40,9 +43,10 @@ function setup(deckSize = 100) {
   return { deck, save };
 }
 
-/** 在矿里答错 count 个词拿到种子,然后从第 0 块地开始依次种下。 */
+/** 在矿里答错 count 个词,给够基础种子,然后从第 0 块地开始依次种下。 */
 function plantMany(save: SaveData, deck: Deck, count: number, now: number) {
-  seedWords(save, deck, count, now);
+  missWords(save, deck, count, now);
+  giveSeeds(save, count);
   for (let i = 0; i < count; i++) assert.ok(plant(save, deck, i, now).ok);
 }
 
@@ -56,16 +60,18 @@ function water(save: SaveData, cardId: string, grades: Grade[], now: number) {
 const FIVE_GOOD: Grade[] = ['good', 'good', 'good', 'good', 'good'];
 const state = (save: SaveData, id: string) => getState(activeProgress(save), id)!;
 
-test('播种:种子是哪个词,长出来的就是哪个词', () => {
+test('播种:词来自词袋,种子决定品种,一次用掉一个词和一颗种子', () => {
   const { deck, save } = setup();
-  seedWords(save, deck, 3, T0); // 背包里是 w0、w1、w2
+  missWords(save, deck, 3, T0); // 词袋里是 w0、w1、w2
+  giveSeeds(save, 2);
   const first = plant(save, deck, 0, T0);
   assert.ok(first.ok);
-  assert.deepEqual([first.card.id, first.mastery, first.xp.xp], ['w0', 0, 2]); // 默认种最早得到的那颗
-  const picked = plant(save, deck, 1, T0, { cardId: 'w2' }); // 也可以指定种哪颗
+  assert.deepEqual([first.card.id, first.mastery, first.xp.xp], ['w0', 0, 2]); // 默认种最早进词袋的那个
+  const picked = plant(save, deck, 1, T0, { cardId: 'w2' }); // 也可以指定种哪个词
   assert.ok(picked.ok);
   assert.equal(picked.card.id, 'w2');
-  assert.deepEqual(activeProgress(save).seedBag, ['w1']);
+  assert.deepEqual(activeProgress(save).wordBag, ['w1']);
+  assert.equal(save.seeds.choice, 0);
 
   const crop = save.plots[0].crop!;
   assert.deepEqual([crop.cardId, crop.cropType, cropQuestionType(crop)], ['w0', 'turnip', 'choice']); // 春季的基础作物
@@ -78,14 +84,71 @@ test('播种:种子是哪个词,长出来的就是哪个词', () => {
 
 test('播种失败的原因', () => {
   const { deck, save } = setup();
-  assert.deepEqual(plant(save, deck, 0, T0), { ok: false, reason: 'no_seeds' }); // 种子只能从矿里来
-  seedWords(save, deck, 2, T0);
+  giveSeeds(save, 5);
+  assert.deepEqual(plant(save, deck, 0, T0), { ok: false, reason: 'no_words' }); // 词只能从矿里来
+  missWords(save, deck, 2, T0);
   assert.deepEqual(plant(save, deck, INITIAL_PLOTS, T0), { ok: false, reason: 'plot_locked' });
-  assert.deepEqual(plant(save, deck, 0, T0, { cardId: 'w9' }), { ok: false, reason: 'seed_not_found' });
+  assert.deepEqual(plant(save, deck, 0, T0, { cardId: 'w9' }), { ok: false, reason: 'word_not_found' });
   assert.deepEqual(plant(save, deck, 0, T0, { questionType: 'spell' }), { ok: false, reason: 'crop_locked' });
   assert.ok(plant(save, deck, 0, T0).ok);
   assert.deepEqual(plant(save, deck, 0, T0), { ok: false, reason: 'plot_occupied' });
-  assert.deepEqual(activeProgress(save).seedBag, ['w1']); // 没种成的不扣种子
+  save.seeds.choice = 0;
+  assert.deepEqual(plant(save, deck, 1, T0), { ok: false, reason: 'no_seeds' }); // 种子要去商店买
+  assert.deepEqual(activeProgress(save).wordBag, ['w1']); // 没种成的词还在词袋里
+});
+
+test('开局:没有种子,挖矿卖矿石,再去商店买种子把挖到的生词种下', () => {
+  const { deck, save } = setup();
+  assert.deepEqual(save.seeds, { choice: 0, reverse: 0, spell: 0 });
+  assert.equal(save.coins, 0);
+  assert.equal(buySeeds(save), false); // 没钱
+
+  digNext(save, deck, true, T0); // w0 认识,爆出一块铜矿石
+  digNext(save, deck, false, T0); // w1 不认识,进词袋
+  assert.equal(sellAllOre(save), cropKind('choice').seedPrice); // 一块铜矿石正好买一颗基础种子
+  assert.equal(buySeeds(save), true);
+  assert.deepEqual([save.coins, save.seeds.choice], [0, 1]);
+  const planted = plant(save, deck, 0, T0);
+  assert.ok(planted.ok);
+  assert.equal(planted.card.id, 'w1');
+});
+
+test('种子店:三种种子按等级解锁,越难越贵;钱不够一颗都不买', () => {
+  const { save } = setup();
+  assert.deepEqual(
+    seedOffers(save, T0).map((o) => `${o.cropName}:${o.kind.questionType}:${o.kind.seedPrice}:${o.unlocked}`),
+    ['萝卜:choice:2:true', '土豆:reverse:5:false', '草莓:spell:10:false'],
+  );
+  save.coins = 100;
+  assert.equal(buySeeds(save, 'reverse'), false); // 等级不够
+  assert.equal(buySeeds(save, 'choice', 3), true);
+  assert.deepEqual([save.coins, save.seeds.choice], [94, 3]);
+  assert.equal(buySeeds(save, 'choice', 48), false); // 钱不够,一颗都不买
+  assert.equal(save.seeds.choice, 3);
+
+  save.xp = 10000;
+  assert.deepEqual(
+    seedOffers(save, T0).map((o) => o.unlocked),
+    [true, true, true],
+  );
+  assert.equal(buySeeds(save, 'spell', 2), true);
+  assert.deepEqual([save.coins, save.seeds.spell, seedOffers(save, T0)[2].owned], [74, 2, 2]);
+});
+
+test('兜底:有词要种,却没种子、买不起、也没东西可卖时,商店送一颗基础种子', () => {
+  const { deck, save } = setup();
+  assert.equal(claimReliefSeed(save), false); // 词袋是空的,不需要
+  digNext(save, deck, true, T0);
+  digNext(save, deck, false, T0);
+  assert.equal(claimReliefSeed(save), false); // 手里有矿石可以卖
+  sellAllOre(save);
+  assert.equal(claimReliefSeed(save), false); // 买得起
+  save.coins = 1;
+  assert.equal(claimReliefSeed(save), true);
+  assert.equal(save.seeds.choice, 1);
+  assert.equal(claimReliefSeed(save), false); // 已经有种子了
+  assert.ok(plant(save, deck, 0, T0).ok);
+  assert.equal(claimReliefSeed(save), false); // 词都种下了
 });
 
 test('每个游戏日只能浇一次水', () => {
@@ -130,7 +193,7 @@ test('浇对 5 次水、一次没错:收获五星,掌握度升到 1,3 天后回�
   assert.equal(masteredCount(save), 1);
   assert.deepEqual(dueVeins(save, T0 + gameDays(5)), []);
   assert.deepEqual(dueVeins(save, T0 + gameDays(6)), ['w0']);
-  assert.deepEqual(activeProgress(save).seedBag, []); // 学会的词不会再变回种子,除非在矿里又答错
+  assert.deepEqual(activeProgress(save).wordBag, []); // 学会的词不会再进词袋,除非在矿里又答错
   assert.throws(() => answer(save, 'w0', 'good', T0)); // 不在田里的词不能浇水
 });
 
@@ -192,11 +255,11 @@ test('连续答错三次:作物死亡,种子白费,这个词回到矿里重新�
   assert.deepEqual([fatal.died, fatal.harvest, fatal.clearedPlot, fatal.health], [true, null, 0, null]);
   assert.equal(save.plots[0].crop, null);
   assert.deepEqual(save.produce, {});
-  assert.deepEqual(activeProgress(save).seedBag, []); // 种子不退
+  assert.deepEqual([activeProgress(save).wordBag, save.seeds.choice], [[], 0]); // 种子不退,这个词也不回词袋
   assert.equal(emptyPlots(save), INITIAL_PLOTS - 1);
   assert.equal(nextDueAt(save, T0), nextWaterAt(save, save.plots[1].crop!)); // 提醒只看还在田里的
 
-  // 下个游戏日它重新出现在矿里:答对出矿,答错才又变回种子
+  // 下个游戏日它重新出现在矿里:答对出矿,答错才又进词袋、要再买一颗种子
   assert.deepEqual(dueVeins(save, T0 + gameDays(1)), ['w0']);
 });
 
@@ -210,23 +273,12 @@ test('忘掉的旧词种回去:四星不升不降,三星以下再降一级,死�
   assert.equal(state(save, 'w2').mastery, 1);
 });
 
-test('作物种类:播种时选,决定题型;按等级解锁,越难越值钱', () => {
+test('作物种类:用哪种种子就长成哪类作物,题型跟着变;同样五星,越难的卖得越贵', () => {
   const { deck, save } = setup();
-  seedWords(save, deck, 3, T0);
-  assert.deepEqual(
-    cropOffers(save, T0).map((o) => `${o.cropName}:${o.kind.questionType}:${o.unlocked}`),
-    ['萝卜:choice:true', '土豆:reverse:false', '草莓:spell:false'],
-  );
-  assert.deepEqual(plant(save, deck, 0, T0, { questionType: 'reverse' }), {
-    ok: false,
-    reason: 'crop_locked',
-  });
-
+  missWords(save, deck, 3, T0);
   save.xp = 10000; // 升到足够高的等级
-  assert.deepEqual(
-    cropOffers(save, T0).map((o) => o.unlocked),
-    [true, true, true],
-  );
+  giveSeeds(save, 1, 'spell');
+  giveSeeds(save, 1, 'reverse');
   const spell = plant(save, deck, 0, T0, { questionType: 'spell' });
   assert.ok(spell.ok);
   assert.equal(spell.cropType, 'strawberry');
@@ -234,8 +286,9 @@ test('作物种类:播种时选,决定题型;按等级解锁,越难越值钱', (
   const reverse = plant(save, deck, 1, T0, { questionType: 'reverse' });
   assert.ok(reverse.ok);
   assert.equal(reverse.cropType, 'potato');
+  assert.deepEqual(save.seeds, { choice: 0, reverse: 0, spell: 0 });
+  assert.deepEqual(plant(save, deck, 2, T0, { questionType: 'spell' }), { ok: false, reason: 'no_seeds' });
 
-  // 同样是五星,拼写作物卖得更贵
   water(save, spell.card.id, FIVE_GOOD, T0);
   assert.equal(producePrice('strawberry', 5), PRODUCE_PRICES[5] * cropKind('spell').priceMultiplier);
   assert.equal(sellAllProduce(save), producePrice('strawberry', 5));
@@ -248,10 +301,11 @@ test('季节:每季有自己的作物,规则不变;换季前种下的作物照�
   plantMany(save, deck, 1, T0);
   const summer = T0 + gameDays(28);
   assert.deepEqual(
-    cropOffers(save, summer).map((o) => o.cropName),
+    seedOffers(save, summer).map((o) => o.cropName),
     ['番茄', '玉米', '西瓜'],
   );
-  seedWords(save, deck, 1, summer);
+  missWords(save, deck, 1, summer);
+  giveSeeds(save, 1); // 春天买的种子留到夏天,长成夏季作物
   const result = plant(save, deck, 1, summer);
   assert.ok(result.ok);
   assert.equal(result.cropType, 'tomato');

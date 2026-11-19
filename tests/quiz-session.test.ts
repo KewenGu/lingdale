@@ -15,7 +15,7 @@ import {
   todayStats,
 } from '../core/index';
 import { mulberry32 } from '../sim/run';
-import { T0, makeDeck, noLuck, seedWords } from './helpers';
+import { T0, giveSeeds, makeDeck, missWords, noLuck } from './helpers';
 
 test('看词选义:题面是单词,4 个互不相同的释义里有正确答案', () => {
   const deck = makeDeck(50);
@@ -66,8 +66,11 @@ function fieldOf(types: Array<'choice' | 'reverse' | 'spell'>) {
   const deck = makeDeck(50);
   const save = createSave(deck.id, T0, 0);
   save.xp = 10000; // 解锁全部作物
-  seedWords(save, deck, types.length, T0);
-  types.forEach((type, i) => assert.ok(plant(save, deck, i, T0, { questionType: type }).ok));
+  missWords(save, deck, types.length, T0);
+  types.forEach((type, i) => {
+    giveSeeds(save, 1, type);
+    assert.ok(plant(save, deck, i, T0, { questionType: type }).ok);
+  });
   activeProgress(save).logs.length = 0; // 只看浇水的日志
   return { deck, save };
 }
@@ -104,7 +107,7 @@ test('会话:题型跟着作物走,回答自动判对错', () => {
   assert.throws(() => session.submit(0, T0));
 
   const progress = activeProgress(save);
-  // 累计答错 2 次:在矿里答错 1 次(所以才有这颗种子),浇水又答错 1 次;重复练习不计
+  // 累计答错 2 次:在矿里答错 1 次(所以才进了词袋),浇水又答错 1 次;重复练习不计
   assert.deepEqual([getState(progress, 'w1')?.wrongStreak, getState(progress, 'w1')?.lapses], [1, 2]);
   assert.deepEqual(
     progress.logs.map((log) => log.questionType),
@@ -137,7 +140,7 @@ test('会话:hard 不生长也不扣星;作物死亡或收获后不再排回队�
   );
 });
 
-test('挖矿会话:一题一条矿脉,答对出矿,答错掉种子且不重复练习,额度用完就关门', () => {
+test('挖矿会话:一题一条矿脉,答对出矿,答错进词袋且不重复练习,额度用完就关门', () => {
   const deck = makeDeck(50);
   const save = createSave(deck.id, T0, 0);
   save.plots.forEach((plot, i) => (plot.unlocked = i < 1)); // 只有一块地,只能答错一次
@@ -151,18 +154,18 @@ test('挖矿会话:一题一条矿脉,答对出矿,答错掉种子且不重复�
   assert.equal(mine.current(T0), first); // 重复调用是同一道题
   if (first.question.type === 'spell') return;
   const hit = mine.submit(first.question.correctIndex, T0);
-  assert.deepEqual([hit.correct, hit.oreGrade, hit.seed], [true, 1, false]);
+  assert.deepEqual([hit.correct, hit.oreGrade, hit.bagged], [true, 1, false]);
 
   const second = mine.current(T0)!;
   assert.equal(second.vein.cardId, 'w1');
   if (second.question.type === 'spell') return;
   const miss = mine.submit((second.question.correctIndex + 1) % 4, T0);
-  assert.deepEqual([miss.correct, miss.oreGrade, miss.seed, miss.allowance], [false, null, true, 0]);
+  assert.deepEqual([miss.correct, miss.oreGrade, miss.bagged, miss.allowance], [false, null, true, 0]);
 
   assert.equal(mine.current(T0), null);
   assert.equal(mine.closed(T0), 'no_room');
   assert.throws(() => mine.submit(0, T0));
-  assert.deepEqual(activeProgress(save).seedBag, ['w1']);
+  assert.deepEqual(activeProgress(save).wordBag, ['w1']);
 
   // 用拼写题挖矿也可以
   save.plots[1].unlocked = true;

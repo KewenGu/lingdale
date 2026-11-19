@@ -7,6 +7,8 @@ import {
   ReviewSession,
   SaveData,
   activeProgress,
+  buySeeds,
+  claimReliefSeed,
   createSave,
   dueVeins,
   levelOf,
@@ -46,7 +48,7 @@ export interface DayRow {
   planted: number;
   plotsUsed: number;
   plotsUnlocked: number;
-  bag: number; // 背包里还没种下的种子
+  bag: number; // 词袋里还没种下的词
   seen: number; // 见过的词
   mastered: number; // 掌握度 1 以上
   solid: number; // 掌握度 4 以上(休息期 30 天以上)
@@ -63,9 +65,11 @@ export interface SimTotals {
   wilts: number; // 作物进入枯萎状态的次数
   harvests: number[]; // 下标是星数,值是收获次数
   ore: number[]; // 下标是品级,值是累计挖到的数量
-  seedsFromNew: number; // 新词答错掉的种子
-  seedsFromReview: number; // 旧词答错掉的种子
+  missedNew: number; // 新词答错、进了词袋的次数
+  missedReview: number; // 旧词答错、进了词袋的次数
   closedForRoom: number; // 想挖矿时因为田里没地方而挖不了的次数
+  seedsBought: number;
+  reliefSeeds: number; // 买不起又没东西可卖时,商店送的基础种子
 }
 
 export const DEFAULT_OPTIONS: SimOptions = {
@@ -116,9 +120,11 @@ export function simulate(options: SimOptions): { rows: DayRow[]; totals: SimTota
     wilts: 0,
     harvests: [0, 0, 0, 0, 0, 0],
     ore: [0, 0, 0, 0, 0, 0, 0, 0, 0],
-    seedsFromNew: 0,
-    seedsFromReview: 0,
+    missedNew: 0,
+    missedReview: 0,
     closedForRoom: 0,
+    seedsBought: 0,
+    reliefSeeds: 0,
   };
 
   // 每个词在学习者脑子里的状态:本来就认识、完全不认识、在田里学过。
@@ -184,9 +190,15 @@ export function simulate(options: SimOptions): { rows: DayRow[]; totals: SimTota
   const plantAll = (now: number): number => {
     let planted = 0;
     for (let i = 0; i < save.plots.length; i++) {
-      if (activeProgress(save).seedBag.length === 0) break;
+      if (activeProgress(save).wordBag.length === 0) break;
       const plot = save.plots[i];
       if (!plot.unlocked || plot.crop) continue;
+      // 只种基础作物。没种子就买,买不起又没东西可卖时领一颗救济种子
+      if (save.seeds.choice === 0) {
+        if (buySeeds(save)) totals.seedsBought++;
+        else if (claimReliefSeed(save)) totals.reliefSeeds++;
+        else break;
+      }
       if (!plant(save, deck, i, now).ok) break;
       planted++;
     }
@@ -237,19 +249,21 @@ export function simulate(options: SimOptions): { rows: DayRow[]; totals: SimTota
           if (result.source === 'new') {
             row.newSeen++;
             if (result.correct) row.newKnown++;
-            else totals.seedsFromNew++;
+            else totals.missedNew++;
           } else {
             row.reviews++;
-            if (!result.correct) totals.seedsFromReview++;
+            if (!result.correct) totals.missedReview++;
           }
           if (result.oreGrade !== null) totals.ore[result.oreGrade]++;
         }
-        row.planted += plantAll(now);
         row.earned += sellAllOre(save);
+        row.planted += plantAll(now);
 
         if (options.autoBuy) {
           for (let i = 0; i < save.plots.length; i++) {
-            if (!save.plots[i].unlocked && save.coins >= plotCost(unlockedCount(save))) unlockPlot(save, i);
+            // 留一点钱买种子
+            if (!save.plots[i].unlocked && save.coins >= plotCost(unlockedCount(save)) + 20)
+              unlockPlot(save, i);
           }
         }
       }
@@ -257,7 +271,7 @@ export function simulate(options: SimOptions): { rows: DayRow[]; totals: SimTota
 
     row.plotsUsed = save.plots.filter((p) => p.crop).length;
     row.plotsUnlocked = unlockedCount(save);
-    row.bag = activeProgress(save).seedBag.length;
+    row.bag = activeProgress(save).wordBag.length;
     row.seen = Object.keys(activeProgress(save).cards).length;
     row.mastered = masteredCount(save, 1);
     row.solid = masteredCount(save, 4);

@@ -86,7 +86,7 @@ export interface MineTurn {
 
 /**
  * 一次挖矿会话。每次取下一条矿脉出一道题,答完再取下一条,直到矿洞关门或玩家离开。
- * 和浇水不同,这里答错不会重复练习:答错的词变成种子,到田里去学。
+ * 和浇水不同,这里答错不会重复练习:答错的词进词袋,到田里去学。
  */
 export class MineSession {
   private turn: MineTurn | null = null;

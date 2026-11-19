@@ -18,7 +18,7 @@ import {
   sellAllOre,
   sellOre,
 } from '../core/index';
-import { T0, digNext, gameDays, lucky, makeDeck, noLuck, seedWords } from './helpers';
+import { T0, digNext, gameDays, giveSeeds, lucky, makeDeck, missWords, noLuck } from './helpers';
 
 function setup(deckSize = 100) {
   const deck = makeDeck(deckSize);
@@ -41,13 +41,20 @@ test('新词答对:爆出最低级的矿石,从 1 级开始,3 天后才回到矿
 
   const result = dig(save, deck, 'w0', true, T0, noLuck);
   assert.deepEqual(
-    [result.correct, result.source, result.masteryBefore, result.masteryAfter, result.oreGrade, result.seed],
+    [
+      result.correct,
+      result.source,
+      result.masteryBefore,
+      result.masteryAfter,
+      result.oreGrade,
+      result.bagged,
+    ],
     [true, 'new', 0, 1, 1, false],
   );
   assert.equal(save.ore[1], 1);
   assert.equal(result.xp, 1);
   assert.equal(masteredCount(save), 1);
-  assert.deepEqual(activeProgress(save).seedBag, []);
+  assert.deepEqual(activeProgress(save).wordBag, []);
 
   // 同一个词不能马上再挖:下一条矿脉是下一个新词
   const next = mineStatus(save, deck, T0);
@@ -57,18 +64,18 @@ test('新词答对:爆出最低级的矿石,从 1 级开始,3 天后才回到矿
   assert.deepEqual(dueVeins(save, T0 + gameDays(6)), ['w0']);
 });
 
-test('新词答错:爆出这个词的种子,不出矿石', () => {
+test('新词答错:这个词进词袋,不出矿石', () => {
   const { deck, save } = setup();
   const result = dig(save, deck, 'w0', false, T0, noLuck);
   assert.deepEqual(
-    [result.correct, result.oreGrade, result.seed, result.masteryAfter],
+    [result.correct, result.oreGrade, result.bagged, result.masteryAfter],
     [false, null, true, 0],
   );
-  assert.deepEqual(activeProgress(save).seedBag, ['w0']);
+  assert.deepEqual(activeProgress(save).wordBag, ['w0']);
   assert.deepEqual(save.ore, [0, 0, 0, 0, 0, 0, 0, 0]);
   assert.equal(result.xp, 0);
   assert.equal(masteredCount(save), 0);
-  assert.deepEqual(dueVeins(save, T0 + gameDays(100)), []); // 种子不会出现在矿里
+  assert.deepEqual(dueVeins(save, T0 + gameDays(100)), []); // 词袋里的词不会出现在矿里
 });
 
 test('同一个词隔着休息期连续答对,矿石品级逐级升高', () => {
@@ -102,15 +109,16 @@ test('矿脉顺序:到期的旧词优先,最早到期的在前,然后才是新�
   assert.deepEqual(order, ['w0:review', 'w1:review', 'w2:new']);
 });
 
-test('旧词答错:掌握度降两级,变成种子;种回去收获后再回到矿里', () => {
+test('旧词答错:掌握度降两级,进词袋;种回去收获后再回到矿里', () => {
   const { deck, save } = setup(1);
   digNext(save, deck, true, T0);
   activeProgress(save).cards.w0.mastery = 4; // 直接设成记了很久的词
   const later = T0 + gameDays(200);
   const miss = dig(save, deck, 'w0', false, later, noLuck);
-  assert.deepEqual([miss.source, miss.masteryBefore, miss.masteryAfter, miss.seed], ['review', 4, 2, true]);
-  assert.deepEqual(activeProgress(save).seedBag, ['w0']);
+  assert.deepEqual([miss.source, miss.masteryBefore, miss.masteryAfter, miss.bagged], ['review', 4, 2, true]);
+  assert.deepEqual(activeProgress(save).wordBag, ['w0']);
 
+  giveSeeds(save, 1);
   const planted = plant(save, deck, 0, later);
   assert.ok(planted.ok);
   assert.equal(planted.mastery, 2);
@@ -120,7 +128,7 @@ test('旧词答错:掌握度降两级,变成种子;种回去收获后再回到�
   assert.equal(digNext(save, deck, true, later + gameDays(30)).result.oreGrade, 4);
 });
 
-test('还能答错的次数 = 空地块数 - 背包里的种子数,用完矿洞关门', () => {
+test('还能答错的次数 = 空地块数 - 词袋里的词数,用完矿洞关门', () => {
   const { deck, save } = setup();
   keepPlots(save, 3);
   assert.equal(mineAllowance(save), 3);
@@ -128,13 +136,15 @@ test('还能答错的次数 = 空地块数 - 背包里的种子数,用完矿洞�
   assert.equal(mineAllowance(save), 3);
 
   assert.equal(digNext(save, deck, false, T0).result.allowance, 2);
-  // 种下一颗:空地少一块,背包也少一颗,额度不变
+  // 种下一个:空地少一块,词袋也少一个,额度不变。手里有多少种子不影响额度
+  giveSeeds(save, 5);
+  assert.equal(mineAllowance(save), 2);
   assert.ok(plant(save, deck, 0, T0).ok);
-  assert.deepEqual([emptyPlots(save), activeProgress(save).seedBag.length, mineAllowance(save)], [2, 0, 2]);
+  assert.deepEqual([emptyPlots(save), activeProgress(save).wordBag.length, mineAllowance(save)], [2, 0, 2]);
 
-  // 种子留在背包里不种,同样占额度
-  seedWords(save, deck, 2, T0);
-  assert.deepEqual([emptyPlots(save), activeProgress(save).seedBag.length, mineAllowance(save)], [2, 2, 0]);
+  // 词留在词袋里不种,同样占额度
+  missWords(save, deck, 2, T0);
+  assert.deepEqual([emptyPlots(save), activeProgress(save).wordBag.length, mineAllowance(save)], [2, 2, 0]);
   const closed = mineStatus(save, deck, T0);
   assert.deepEqual([closed.open, closed.open ? '' : closed.reason], [false, 'no_room']);
   assert.throws(() => dig(save, deck, 'w4', true, T0, noLuck));
@@ -198,5 +208,5 @@ test('单词撞上对象原型属性名时也能正常挖', () => {
   assert.equal(digNext(save, deck, true, T0).cardId, 'constructor');
   assert.equal(digNext(save, deck, false, T0).cardId, 'toString');
   assert.equal(digNext(save, deck, true, T0).cardId, 'w2');
-  assert.deepEqual(activeProgress(save).seedBag, ['toString']);
+  assert.deepEqual(activeProgress(save).wordBag, ['toString']);
 });

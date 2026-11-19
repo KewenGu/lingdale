@@ -18,22 +18,23 @@ import { Card, CardState, Crop, Deck, Grade, QuestionType, SaveData } from './ty
 // 这个文件里的函数会直接修改传入的 save。
 //
 // 田只负责"学":种下的都是在矿里答错的词。
-//   种子来自矿洞,每颗种子就是一个具体的词,种下去长出来的就是它。种子不能买。
-//   播种时选一类作物,也就选了这株作物浇水时的题型。
+//   词来自矿洞:答错的词进词袋,等着被种下。
+//   种子来自商店:按品种买,品种决定这株作物浇水时的题型。种下时一颗种子带上词袋里的一个词。
 //   浇水 = 答这个词。每个游戏日(现实 12 小时)可以浇一次,浇对 5 次收获。
-//   答错不生长并扣一星,连错两次枯萎、三次死亡。
+//   答错不生长并扣一星,连错两次枯萎、三次死亡(种子白费)。
 //   收获的作物按种类和星级卖钱;这个词按星级调整掌握度后去休息,之后回到矿里。
 // 作物的生长阶段、品质、健康状态、是否需要浇水都是实时算出来的,不存进存档。
 
-export type PlantFailure = 'plot_locked' | 'plot_occupied' | 'crop_locked' | 'no_seeds' | 'seed_not_found';
+export type PlantFailure =
+  'plot_locked' | 'plot_occupied' | 'crop_locked' | 'no_words' | 'word_not_found' | 'no_seeds';
 
 export type PlantResult =
   | { ok: true; card: Card; mastery: number; cropType: string; xp: XpResult }
   | { ok: false; reason: PlantFailure };
 
 export interface PlantOptions {
-  cardId?: string; // 种背包里的哪颗种子;不指定就种最早得到的那颗
-  questionType?: QuestionType; // 种成哪一类作物,默认是看词选义
+  cardId?: string; // 种词袋里的哪个词;不指定就种最早进词袋的那个
+  questionType?: QuestionType; // 用哪种种子,默认是基础种子(看词选义)
 }
 
 /** 作物的健康状态:答错一次不生长,连续两次枯萎,连续三次死亡(死亡的作物会直接从地里移除)。 */
@@ -57,23 +58,24 @@ export interface AnswerResult {
   clearedPlot: number | null; // 如果这次作答让一块地腾空(收获或死亡),给出地块下标
 }
 
-/** 播种时可以选的一类作物:这个季节它长成什么,玩家现在能不能种。 */
-export interface CropOffer {
+/** 种子店货架上的一种种子:这个季节它长成什么,多少钱,玩家现在能不能买,手里有几颗。 */
+export interface SeedOffer {
   kind: CropKind;
   cropType: string;
   cropName: string;
   unlocked: boolean;
+  owned: number;
 }
 
-// ---------- 播种 ----------
+// ---------- 种子店 ----------
 
-/** 这类作物现在解锁了没有(取决于玩家等级)。 */
-export function cropKindUnlocked(save: SaveData, questionType: QuestionType): boolean {
+/** 这种种子现在解锁了没有(取决于玩家等级)。 */
+export function seedUnlocked(save: SaveData, questionType: QuestionType): boolean {
   return levelOf(save.xp) >= cropKind(questionType).unlockLevel;
 }
 
-/** 播种时的选项:三类作物在这个季节各长成什么。 */
-export function cropOffers(save: SaveData, now: number): CropOffer[] {
+/** 种子店当前的货架:三种种子在这个季节各长成什么作物。 */
+export function seedOffers(save: SaveData, now: number): SeedOffer[] {
   const season = calendar(save.startDay, now, save.tzOffsetMs).season;
   return CROP_KINDS.map((kind) => {
     const crop = seasonCrop(season, kind.questionType);
@@ -81,10 +83,43 @@ export function cropOffers(save: SaveData, now: number): CropOffer[] {
       kind,
       cropType: crop.id,
       cropName: crop.name,
-      unlocked: cropKindUnlocked(save, kind.questionType),
+      unlocked: seedUnlocked(save, kind.questionType),
+      owned: save.seeds[kind.questionType] || 0,
     };
   });
 }
+
+/** 用金币买种子。没解锁或金币不够时一颗都不买,返回 false。 */
+export function buySeeds(save: SaveData, questionType: QuestionType = 'choice', count: number = 1): boolean {
+  if (!seedUnlocked(save, questionType)) return false;
+  const cost = cropKind(questionType).seedPrice * count;
+  if (count <= 0 || save.coins < cost) return false;
+  save.coins -= cost;
+  save.seeds[questionType] = (save.seeds[questionType] || 0) + count;
+  return true;
+}
+
+function hasAnythingToSell(save: SaveData): boolean {
+  for (const count of save.ore) if (count > 0) return true;
+  for (const cropId of Object.keys(save.produce)) {
+    for (const count of save.produce[cropId]) if (count > 0) return true;
+  }
+  return false;
+}
+
+/**
+ * 防止卡死的兜底:词袋里有词要种、有空地,但一颗种子都没有、买不起基础种子、也没有任何东西可卖时,
+ * 商店送一颗基础种子。条件不满足时返回 false。
+ */
+export function claimReliefSeed(save: SaveData): boolean {
+  if (activeProgress(save).wordBag.length === 0 || emptyPlots(save) === 0) return false;
+  for (const kind of CROP_KINDS) if ((save.seeds[kind.questionType] || 0) > 0) return false;
+  if (save.coins >= cropKind('choice').seedPrice || hasAnythingToSell(save)) return false;
+  save.seeds.choice = 1;
+  return true;
+}
+
+// ---------- 播种 ----------
 
 /** 没有种东西的已解锁地块数。 */
 export function emptyPlots(save: SaveData): number {
@@ -94,7 +129,7 @@ export function emptyPlots(save: SaveData): number {
 }
 
 /**
- * 把背包里的一颗种子种到一块空地上。种子是哪个词,长出来的就是哪个词。
+ * 用一颗种子把词袋里的一个词种到一块空地上。种子决定作物的品种,长出来的是这个词。
  * 播种就是学这个词:界面此时展示返回的单词卡片。
  */
 export function plant(
@@ -111,17 +146,19 @@ export function plant(
   const plot = save.plots[plotIndex];
   if (!plot || !plot.unlocked) return { ok: false, reason: 'plot_locked' };
   if (plot.crop) return { ok: false, reason: 'plot_occupied' };
-  if (!cropKindUnlocked(save, questionType)) return { ok: false, reason: 'crop_locked' };
+  if (!seedUnlocked(save, questionType)) return { ok: false, reason: 'crop_locked' };
 
   const progress = activeProgress(save);
-  if (progress.seedBag.length === 0) return { ok: false, reason: 'no_seeds' };
-  const at = options.cardId === undefined ? 0 : progress.seedBag.indexOf(options.cardId);
-  if (at < 0) return { ok: false, reason: 'seed_not_found' };
-  const cardId = progress.seedBag[at];
+  if (progress.wordBag.length === 0) return { ok: false, reason: 'no_words' };
+  const at = options.cardId === undefined ? 0 : progress.wordBag.indexOf(options.cardId);
+  if (at < 0) return { ok: false, reason: 'word_not_found' };
+  if (!((save.seeds[questionType] || 0) > 0)) return { ok: false, reason: 'no_seeds' };
+  const cardId = progress.wordBag[at];
   const state = getState(progress, cardId);
-  if (!state) throw new Error(`种子 ${cardId} 没有对应的状态`);
+  if (!state) throw new Error(`词袋里的 ${cardId} 没有对应的状态`);
 
-  progress.seedBag.splice(at, 1);
+  progress.wordBag.splice(at, 1);
+  save.seeds[questionType]--;
   progress.cards[cardId] = startCycle(state, now, save.tzOffsetMs);
   const season = calendar(save.startDay, now, save.tzOffsetMs).season;
   const crop = seasonCrop(season, questionType);

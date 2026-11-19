@@ -35,7 +35,7 @@ console.log(
 );
 console.log('');
 console.log(
-  ' 天  新词  会的  复习  挖矿题  浇水题  合计  地块(用/有)  背包  见过  掌握  牢固  积压  收入   金币  等级',
+  ' 天  新词  会的  复习  挖矿题  浇水题  合计  地块(用/有)  词袋  见过  掌握  牢固  积压  收入   金币  等级',
 );
 for (const row of rows) {
   console.log(
@@ -80,7 +80,7 @@ console.log(
 );
 console.log(`  每天金币收入  ${average(tail, (r) => r.earned).toFixed(0)}`);
 console.log(
-  `共种 ${totals.cropsPlanted} 株(种子来自新词 ${totals.seedsFromNew},来自旧词答错 ${totals.seedsFromReview}),收获 ${harvested} 株:` +
+  `共种 ${totals.cropsPlanted} 株(词来自新词答错 ${totals.missedNew},旧词答错 ${totals.missedReview};种子买了 ${totals.seedsBought} 颗,商店送了 ${totals.reliefSeeds} 颗),收获 ${harvested} 株:` +
     `五星 ${share(totals.harvests[5])},四星 ${share(totals.harvests[4])},三星及以下 ${share(totals.harvests[1] + totals.harvests[2] + totals.harvests[3])};` +
     `死亡 ${totals.cropsDied} 株,枯萎过 ${totals.wilts} 次`,
 );

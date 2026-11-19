@@ -28,9 +28,14 @@ export function digNext(save: SaveData, deck: Deck, correct: boolean, now: numbe
   return { cardId: status.vein.cardId, result };
 }
 
-/** 在矿里连续答错 count 个词,得到它们的种子。返回这些词的 id。 */
-export function seedWords(save: SaveData, deck: Deck, count: number, now: number): string[] {
+/** 在矿里连续答错 count 个词,让它们进词袋。返回这些词的 id。 */
+export function missWords(save: SaveData, deck: Deck, count: number, now: number): string[] {
   const ids: string[] = [];
   for (let i = 0; i < count; i++) ids.push(digNext(save, deck, false, now).cardId);
   return ids;
+}
+
+/** 直接给几颗种子,让测试专注在被测的规则上。 */
+export function giveSeeds(save: SaveData, count: number, type: 'choice' | 'reverse' | 'spell' = 'choice') {
+  save.seeds[type] += count;
 }

@@ -1,7 +1,7 @@
 import { INITIAL_PLOTS } from './constants';
 import { cropKind, cropType } from './crops';
 
-// 金币有两个来源:卖作物、卖矿石。答题本身不给金币。
+// 金币有两个来源:卖矿石、卖作物。答题本身不给金币。用途是买种子和解锁地块。
 
 export const PLOT_COST_BASE = 40;
 export const PLOT_COST_STEP = 2;

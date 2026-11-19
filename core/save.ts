@@ -18,6 +18,7 @@ export function createSave(deckId: string, now: number, tzOffsetMs: number): Sav
     plots,
     coins: 0,
     xp: 0,
+    seeds: { choice: 0, reverse: 0, spell: 0 },
     produce: {},
     ore,
     updatedAt: now,
@@ -28,7 +29,7 @@ export function createSave(deckId: string, now: number, tzOffsetMs: number): Sav
 export function activeProgress(save: SaveData): DeckProgress {
   const id = save.activeDeckId;
   if (!Object.prototype.hasOwnProperty.call(save.progress, id)) {
-    save.progress[id] = { cards: {}, cursor: 0, seedBag: [], logs: [] };
+    save.progress[id] = { cards: {}, cursor: 0, wordBag: [], logs: [] };
   }
   return save.progress[id];
 }

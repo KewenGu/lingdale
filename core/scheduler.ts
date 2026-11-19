@@ -7,8 +7,8 @@ import { CardState, Grade } from './types';
 // 一个词在三个地方之间流转:
 //   矿里(休息结束后以矿脉的形式出现,答一道题)
 //     答对 → 掌握度升一级,休息更久,之后再回到矿里
-//     答错 → 变成种子进背包
-//   背包(等着被种下)
+//     答错 → 进词袋
+//   词袋(等着配上一颗种子被种下)
 //   田里(浇对 5 次水后收获)→ 按收获的星级调整掌握度,休息,之后回到矿里
 
 /** 这株作物现在的品质:满分 5 星,这一轮每答错一次扣 1 星,最低 1 星。 */
@@ -65,7 +65,7 @@ export function rest(state: CardState, mastery: number, now: number, tzOffsetMs:
   };
 }
 
-/** 在矿里答了一次。答对:升级并去休息。答错:降级,变成种子等着被种下。 */
+/** 在矿里答了一次。答对:升级并去休息。答错:降级,进词袋等着被种下。 */
 export function mined(state: CardState, correct: boolean, now: number, tzOffsetMs: number): CardState {
   const answered: CardState = {
     mastery: state.mastery,
@@ -82,7 +82,7 @@ export function mined(state: CardState, correct: boolean, now: number, tzOffsetM
   return answered;
 }
 
-/** 种子被种下,开始一轮新的生长。品质从五星算起。 */
+/** 词被种下,开始一轮新的生长。品质从五星算起。 */
 export function startCycle(state: CardState, now: number, tzOffsetMs: number): CardState {
   return {
     mastery: state.mastery,

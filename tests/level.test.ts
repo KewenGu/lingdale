@@ -13,7 +13,7 @@ import {
   xpToNext,
 } from '../core/index';
 import { DEFAULT_OPTIONS, simulate } from '../sim/run';
-import { T0, digNext, gameDays, makeDeck } from './helpers';
+import { T0, digNext, gameDays, giveSeeds, makeDeck } from './helpers';
 
 test('等级由累计经验算出', () => {
   assert.deepEqual(levelInfo(0), { level: 1, into: 0, needed: 10 });
@@ -56,7 +56,8 @@ test('一次升多级时返回跨过的全部解锁内容', () => {
 test('一个不会的词从答错、种下到四星收获一共 11 点经验', () => {
   const deck = makeDeck(50);
   const save = createSave(deck.id, T0, 0);
-  assert.equal(digNext(save, deck, false, T0).result.xp, 0); // 答错没有经验,但得到种子
+  assert.equal(digNext(save, deck, false, T0).result.xp, 0); // 答错没有经验,这个词进词袋
+  giveSeeds(save, 1);
   const planted = plant(save, deck, 0, T0);
   assert.ok(planted.ok);
   assert.equal(planted.xp.xp, 2);
