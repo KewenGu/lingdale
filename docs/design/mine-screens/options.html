@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>矿洞画面方案比较</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Noto+Sans+SC:wght@400;500;700;900&family=Noto+Serif+SC:wght@600;900&family=ZCOOL+KuaiLe&display=swap">
+<link rel="stylesheet" href="page.css">
+</head>
+<body>
+<svg id="ld-defs" width="0" height="0" aria-hidden="true" focusable="false"></svg>
+
+<header class="top">
+  <div class="wrap">
+    <p class="eyebrow">灵谷小镇 Lingdale · 矿洞这一边的画面 · 方案比较</p>
+    <h1>先定四件事,再往下画</h1>
+    <p class="lede">
+      矿洞是新玩家看到的第一个画面,也是项目里第一次画答题界面。往下细化之前,有四个取舍要由项目负责人定:
+      矿洞一屏的构图、矿石品级怎么表达(连带蓝色和红色的问题)、农场底部的按钮和两地怎么切换、收获标记留不留。
+    </p>
+    <div class="notice" id="result"></div>
+    <div class="notice">
+      <strong>这些是示意稿,不是成品。</strong>
+      全部用代码绘制(SVG),没有使用图像生成工具。画的是和农场参考图同一个存档:第 1 年夏季第 3 天,
+      田里 4 块空地,词袋里 1 个词,所以还能答错 3 次。词和释义取自 30 词的示例卡组。
+    </div>
+    <nav class="jump" aria-label="页面目录">
+      <a href="#comp">一 构图</a>
+      <a href="#ore">二 矿石品级</a>
+      <a href="#bar">三 底部按钮和切换</a>
+      <a href="#mark">四 收获标记</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <section id="comp" class="band">
+    <div class="wrap">
+      <h2>一 矿洞一屏的构图</h2>
+      <p class="sub">
+        要守的是设计支柱 1:答题就是挖矿这个动作本身。三个方案里,玩家点选项的那一下都直接是那一镐,没有"先答题再挖"的中间步骤;
+        区别在于选项和矿壁离得多近。每个方案两张图:左边是等着被挖的新词,右边是旧词答对的那一下。
+      </p>
+      <div class="opts" id="comp-opts"></div>
+    </div>
+  </section>
+
+  <section id="ore" class="band">
+    <div class="wrap">
+      <h2>二 矿石品级怎么表达</h2>
+      <p class="sub">
+        七个品级要一眼分得出高低,缩到 40 像素也要分得出,而且不能只靠色相。下面每个方案三行:
+        正常大小、每块 40 像素、去掉颜色只看明暗。名称是规则文档里的占位名称,这里没有改。
+      </p>
+      <div class="opts" id="ore-opts"></div>
+
+      <h3>连带的问题:蓝色和红色</h3>
+      <p class="sub">
+        美术规范规定"蓝色只表示水""红色只是果实和屋顶,不当警告色"。钻石容易想画成蓝的,红宝石就是红的,这里有真实的冲突。
+        三种处理都画出来了,由负责人决定。
+      </p>
+      <div class="opts" id="color-opts"></div>
+
+      <h3>这一边新增的颜色</h3>
+      <p class="sub">
+        只新增一组"岩石",三档明度。现有的土色不够用:干土和湿土的明暗在农场里表示"能浇水"和"浇过了",
+        拿来画矿壁会带着这层意思;它们又都偏橙红,铜和铁的矿石放上去分不出来。七种矿石本身用的全是现有色板里的颜色。
+      </p>
+      <div class="swatches" id="rock-swatches"></div>
+    </div>
+  </section>
+
+  <section id="bar" class="band">
+    <div class="wrap">
+      <h2>三 农场底部的按钮,和两地怎么切换</h2>
+      <p class="sub">
+        原来是"种子、商店、仓库"加"浇一轮水"。现在要加矿洞的入口和词袋。三个方案都把"种子"并进了词袋:
+        种子只在种下词袋里的词时用得上,数量显示在词袋和商店里。每个方案两张图:农场和矿洞。
+      </p>
+      <div class="opts" id="bar-opts"></div>
+    </div>
+  </section>
+
+  <section id="mark" class="band">
+    <div class="wrap">
+      <h2>四 收获标记留不留</h2>
+      <p class="sub">
+        加入矿洞之后所有作物都是浇对 5 次收获,开花形态就等于"只差最后一次",左上角的四角星说的是同一件事。
+        下面是同一片田留着和去掉的样子,以及缩到每块地约 28 像素(一屏看 120 块地)时的样子。
+      </p>
+      <div class="opts" id="mark-opts"></div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    示意稿,不是成品。绘制代码:<code>mine-paper.js</code>(矿洞这一边)和
+    <code>../art-exploration/style-paper.js</code>(农场,美术规范的参考实现)。规定见 <code>../07-art-direction.md</code>。
+  </div>
+</footer>
+
+<script src="../art-exploration/scene.js"></script>
+<script src="../art-exploration/style-paper.js"></script>
+<script src="mine-scene.js"></script>
+<script src="mine-paper.js"></script>
+<script src="options.js"></script>
+</body>
+</html>

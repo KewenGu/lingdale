@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>灵谷小镇矿洞画面</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Noto+Sans+SC:wght@400;500;700;900&family=Noto+Serif+SC:wght@600;900&family=ZCOOL+KuaiLe&display=swap">
+<link rel="stylesheet" href="page.css">
+</head>
+<body>
+<svg id="ld-defs" width="0" height="0" aria-hidden="true" focusable="false"></svg>
+
+<header class="top">
+  <div class="wrap">
+    <p class="eyebrow">灵谷小镇 Lingdale · 彩纸拼贴 · 矿洞这一边的画面</p>
+    <h1>矿洞、矿石、词袋、商店和小镇地图</h1>
+    <p class="lede">
+      新玩家开局没有种子也没有金币,第一件事是挖矿。这一页是矿洞这一边的全部画面:矿洞一屏和答题之后、七个品级的矿石、
+      矿洞关门、词袋和商店、小镇地图和底部的按钮,最后是从零开始的那几步。
+    </p>
+    <div class="notice">
+      <strong>示意稿,不是成品。</strong>
+      全部用代码绘制(SVG),没有使用图像生成工具。画面不读取游戏数据,数字是手写的示意;规则以 <code>../02-gameplay.md</code> 为准,
+      画法的规定在 <code>../07-art-direction.md</code>。动效都没有做,下面只有关键帧。
+    </div>
+    <div class="notice">
+      <strong>定下来的六件事</strong>(2026-11-20,项目负责人):矿洞用"岩层"构图;矿石用形状阶梯,不加品级带;
+      钻石的暗面用天空色,红宝石用番茄红;小镇地图是总入口,农场和矿洞之间另有一块直达的路牌;收获标记留着;仓库并进商店的"卖东西"。
+      当时比较过的方案在<a href="options.html">方案比较页</a>。
+    </div>
+    <nav class="jump" aria-label="页面目录">
+      <a href="#mine">矿洞一屏</a>
+      <a href="#after">答题之后</a>
+      <a href="#ore">矿石</a>
+      <a href="#closed">矿洞关门</a>
+      <a href="#bagshop">词袋和商店</a>
+      <a href="#town">小镇和底部按钮</a>
+      <a href="#start">开局的几步</a>
+      <a href="#open">没做的和发现的问题</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <section id="mine" class="band">
+    <div class="wrap">
+      <h2>矿洞一屏</h2>
+      <p class="sub">
+        整屏是矿壁。词写在挂在木梁下的一张纸上,四个选项是四条石板。<strong>玩家点石板的那一下就是那一镐</strong>:
+        没有单独的"挖"按钮,也没有弹出来的答题框。右下角一直显示还能答错几次。
+      </p>
+      <div class="shots wide" id="mine-shots"></div>
+      <ul class="notes" id="mine-notes"></ul>
+    </div>
+  </section>
+
+  <section id="after" class="band">
+    <div class="wrap">
+      <h2>答题之后</h2>
+      <p class="sub">三个关键帧。只有第一次作答算数,所以答错之后不让玩家继续选,直接把正确的那条翻出来。</p>
+      <div class="shots wide" id="after-shots"></div>
+      <ul class="notes" id="after-notes"></ul>
+    </div>
+  </section>
+
+  <section id="ore" class="band">
+    <div class="wrap">
+      <h2>七个品级的矿石</h2>
+      <p class="sub">
+        形状阶梯:圆的是粗矿(铜、铁),方的是贵金属(银、金),尖的是宝石,同时一级比一级大。不加品级带,也不加数字。
+        名称是规则文档里的占位名称,这里没有改。
+      </p>
+      <div class="ore-sheet" id="ore-sheet"></div>
+      <ul class="notes" id="ore-notes"></ul>
+    </div>
+  </section>
+
+  <section id="closed" class="band">
+    <div class="wrap">
+      <h2>矿洞关门</h2>
+      <p class="sub">
+        模拟里默认场景 58% 的打开时矿洞因为田满而关着,学得吃力的人接近九成(模拟数字,不是真人数据),所以这个画面会被看到很多次。
+        它画在洞外:白天的山坡,矿车停在门口,洞口一道矮木门。没有锁、叉、红色和倒计时,标题说的是"田里种满了",不是"你答错太多了"。
+      </p>
+      <div class="shots wide" id="closed-shots"></div>
+      <ul class="notes" id="closed-notes"></ul>
+    </div>
+  </section>
+
+  <section id="bagshop" class="band">
+    <div class="wrap">
+      <h2>词袋和商店</h2>
+      <p class="sub">词袋是从农场下面升上来的一张纸;商店是小镇上的一个地方,分"买种子"和"卖东西"两页,仓库并在"卖东西"里。</p>
+      <div class="shots wide" id="bagshop-shots"></div>
+      <ul class="notes" id="bagshop-notes"></ul>
+    </div>
+  </section>
+
+  <section id="town" class="band">
+    <div class="wrap">
+      <h2>小镇地图和底部的按钮</h2>
+      <p class="sub">
+        小镇地图是所有地方的总入口,每个地方的名牌上写着它现在的状况。农场和矿洞是每天来回最多的两处,
+        所以底部除了"小镇",还有一块直达对面的路牌,位置在两屏上相同。
+      </p>
+      <div class="shots wide" id="town-shots"></div>
+      <ul class="notes" id="town-notes"></ul>
+    </div>
+  </section>
+
+  <section id="start" class="band">
+    <div class="wrap">
+      <h2>开局的几步</h2>
+      <p class="sub">
+        新玩家从零开始:挖矿、出矿石、卖矿石、买种子、种下答错的词。这条路只用到现有的规则,走得通:
+        一块铜矿石卖 2 金币,一颗基础种子 2 金币。
+      </p>
+      <div class="shots" id="start-shots"></div>
+      <ul class="notes" id="start-notes"></ul>
+    </div>
+  </section>
+
+  <section id="open" class="band">
+    <div class="wrap">
+      <h2>没做的,和画的时候发现的问题</h2>
+      <div class="two-col">
+        <div>
+          <h3>画的时候发现的规则问题</h3>
+          <ul class="notes" id="rule-notes"></ul>
+        </div>
+        <div>
+          <h3>没做的</h3>
+          <ul class="notes" id="todo-notes"></ul>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    示意稿,不是成品。绘制代码:<code>mine-paper.js</code>(图形)、<code>screens.js</code>(画面)、<code>mine-scene.js</code>(示意数据),
+    以及 <code>../art-exploration/style-paper.js</code>(农场,美术规范的参考实现)。
+  </div>
+</footer>
+
+<script src="../art-exploration/scene.js"></script>
+<script src="../art-exploration/style-paper.js"></script>
+<script src="mine-scene.js"></script>
+<script src="mine-paper.js"></script>
+<script src="screens.js"></script>
+<script src="index.js"></script>
+</body>
+</html>

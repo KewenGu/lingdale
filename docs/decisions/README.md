@@ -24,6 +24,8 @@
 | [0014](0014-english-name-lingdale.md) | 英文名改为 Lingdale | 生效 |
 | [0015](0015-art-direction-paper-collage.md) | 美术方向:彩纸拼贴 | 生效 |
 | [0016](0016-mine-screens-farm-teaches.md) | 矿洞负责筛选和复习,田负责学会,种子在商店买 | 生效 |
+| [0017](0017-mine-screens-art.md) | 矿洞这一边的画面:岩层构图、形状阶梯的矿石、用色的两处例外 | 生效 |
+| [0018](0018-town-map-as-hub.md) | 小镇地图是总入口,农场和矿洞之间另有直达;仓库并进商店 | 生效 |
 
 ## 什么时候写一条
 
