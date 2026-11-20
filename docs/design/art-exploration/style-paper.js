@@ -1440,4 +1440,47 @@
       return o + '</svg>';
     },
   };
+
+  // 交给矿洞这一边的画面复用(../mine-screens/mine-paper.js):同一套色板、基础图形和农场的各层。
+  // 这里只是把上面的函数递出去,不改变其中任何一个的行为,农场、样张和封面画出来的和以前逐字相同。
+  LD.styles.paper.kit = {
+    C: C,
+    SOIL: SOIL,
+    FONT_UI: FONT_UI,
+    FONT_T: FONT_T,
+    SH: SH,
+    SHT: SHT,
+    SHL: SHL,
+    f: f,
+    pth: pth,
+    circ: circ,
+    ell: ell,
+    rrect: rrect,
+    cutRect: cutRect,
+    g: g,
+    txt: txt,
+    egg: egg,
+    flower: flower,
+    star4: star4,
+    dropShape: dropShape,
+    tree: tree,
+    house: house,
+    cloud: cloud,
+    town: town,
+    tuft: tuft,
+    daisy: daisy,
+    farmBg: farmBg,
+    plotLayers: plotLayers,
+    tileBase: tileBase,
+    cropG: cropG,
+    starTag: starTag,
+    markers: markers,
+    seedOf: seedOf,
+    hud: hud,
+    grain: grain,
+    canIcon: canIcon,
+    shopIcon: shopIcon,
+    crateIcon: crateIcon,
+    coinIcon: coinIcon,
+  };
 })();
