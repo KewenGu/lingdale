@@ -71,7 +71,12 @@ export interface SimTotals {
   flukedNew: number; // 不认识的新词在矿里蒙对的次数
   flukedMastered: number; // 结束时掌握度 1 以上、其实从没学会的词数
   flukedSolid: number; // 结束时掌握度 4 以上、其实从没学会的词数
-  closedForRoom: number; // 想挖矿时因为田里没地方而挖不了的次数
+  sessions: number; // 一共打开了几次
+  closedForRoom: number; // 没挖满就因为田里没地方而停下的次数
+  sessionsNoDig: number; // 其中一题都没挖成的次数
+  digs: number; // 一共挖了几次
+  dueLeft: number; // 每次离开时还没复习的到期旧词,累计
+  bagPeak: number; // 种完之后词袋里还剩的词,最多的一次
   seedsBought: number;
   reliefSeeds: number; // 买不起又没东西可卖时,商店送的基础种子
 }
@@ -132,7 +137,12 @@ export function simulate(options: SimOptions): { rows: DayRow[]; totals: SimTota
     flukedNew: 0,
     flukedMastered: 0,
     flukedSolid: 0,
+    sessions: 0,
     closedForRoom: 0,
+    sessionsNoDig: 0,
+    digs: 0,
+    dueLeft: 0,
+    bagPeak: 0,
     seedsBought: 0,
     reliefSeeds: 0,
   };
@@ -248,12 +258,17 @@ export function simulate(options: SimOptions): { rows: DayRow[]; totals: SimTota
         row.planted += plantAll(now);
 
         const mine = new MineSession(save, deck, rng);
+        totals.sessions++;
         for (let digs = 0; digs < options.digsPerSession; digs++) {
           const turn = mine.current(now);
           if (!turn) {
-            if (mine.closed(now) === 'no_room') totals.closedForRoom++;
+            if (mine.closed(now) === 'no_room') {
+              totals.closedForRoom++;
+              if (digs === 0) totals.sessionsNoDig++;
+            }
             break;
           }
+          totals.digs++;
           const result = mine.submitCorrect(mineCorrect(turn.vein.cardId), now);
           row.mineQuestions++;
           if (result.source === 'new') {
@@ -271,6 +286,8 @@ export function simulate(options: SimOptions): { rows: DayRow[]; totals: SimTota
         }
         row.earned += sellAllOre(save);
         row.planted += plantAll(now);
+        totals.dueLeft += dueVeins(save, now).length;
+        totals.bagPeak = Math.max(totals.bagPeak, activeProgress(save).wordBag.length);
 
         if (options.autoBuy) {
           for (let i = 0; i < save.plots.length; i++) {

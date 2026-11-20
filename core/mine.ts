@@ -13,9 +13,11 @@ import { Deck, QuestionType, SaveData } from './types';
 //   答对 → 爆出矿石。矿石的品级就是这个词的掌握度,记得越久品级越高。然后这个词去休息,到期再回到矿里。
 //   答错 → 这个词进词袋,等着去商店买种子把它种下。
 //   矿脉先出该复习的旧词(最早到期的在前),没有才出卡组里的下一个新词。
-//   挖新矿没有每日上限,但答错有上限:还能答错的次数 = 空地块数 - 词袋里还没种下的词数。
-//   用完了矿洞就关门,要等作物收获或死亡腾出地来,或者开一块新地。
-//   把词袋里的词种下不会让矿洞开门:空地和词袋各少一个,差不变。
+//   挖新矿没有每日上限,但新词答错有上限:新词的额度 = 空地块数 - 词袋里还没种下的词数。
+//   额度用完就不再出新词,要等作物收获或死亡腾出地来,或者开一块新地。
+//   把词袋里的词种下不会恢复额度:空地和词袋各少一个,差不变。
+//   复习不受额度限制:一个到期的旧词记不记得是既成事实,不去考它也不会少一个要学的词,
+//   只会让忘掉的词晚些被发现。田满时旧词答错照样进词袋,排队等空地。
 
 export type VeinSource = 'review' | 'new';
 
@@ -39,14 +41,14 @@ export interface DigResult {
   oreGrade: number | null; // 答对时爆出的矿石品级
   lucky: boolean; // 这次是否运气好,多升了一个品级
   bagged: boolean; // 答错时这个词进了词袋
-  allowance: number; // 这次之后还能再答错几次
+  allowance: number; // 这次之后新词的额度还剩几个
   xp: number;
   levelBefore: number;
   levelAfter: number;
   unlocked: Milestone[];
 }
 
-/** 还能再答错几次:空地块数减去词袋里还没种下的词数。到 0 矿洞就关门。 */
+/** 新词的额度,也就是还能收下几个答错的新词:空地块数减去词袋里还没种下的词数。到 0 就不再出新词,复习不受影响。 */
 export function mineAllowance(save: SaveData): number {
   return Math.max(0, emptyPlots(save) - activeProgress(save).wordBag.length);
 }
@@ -101,7 +103,6 @@ export function mineStatus(save: SaveData, deck: Deck, now: number): MineStatus 
     throw new Error(`卡组 ${deck.id} 不是当前卡组 ${save.activeDeckId}`);
   }
   const allowance = mineAllowance(save);
-  if (allowance <= 0) return { open: false, reason: 'no_room', allowance };
   const due = dueVeins(save, now);
   if (due.length > 0) {
     const mastery = activeProgress(save).cards[due[0]].mastery;
@@ -109,6 +110,7 @@ export function mineStatus(save: SaveData, deck: Deck, now: number): MineStatus 
   }
   const fresh = nextNewCard(save, deck);
   if (!fresh) return { open: false, reason: 'exhausted', allowance };
+  if (allowance <= 0) return { open: false, reason: 'no_room', allowance };
   return { open: true, vein: { cardId: fresh.cardId, source: 'new', mastery: 0 }, allowance };
 }
 
@@ -129,7 +131,7 @@ export function dig(
   const status = mineStatus(save, deck, now);
   if (!status.open) {
     throw new Error(
-      status.reason === 'no_room' ? '田里没有空位再种新的词,矿洞现在挖不了' : '现在没有矿脉可挖',
+      status.reason === 'no_room' ? '田里没有空位再收新词,到期的旧词也挖完了' : '现在没有矿脉可挖',
     );
   }
   if (status.vein.cardId !== cardId) {

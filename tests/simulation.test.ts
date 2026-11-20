@@ -37,7 +37,8 @@ test('长期运行后存档保持自洽(含缺勤、扩建和作物死亡)', () 
     assert.equal(inBag.size, progress.wordBag.length, '词袋里有重复的词');
     for (const id of inBag) assert.ok(!inField.has(id), `${id} 既在田里又在词袋里`);
     // 答错的额度保证了这一点:词袋里的词永远有地方种
-    assert.ok(progress.wordBag.length <= emptyPlots(save), '词袋里的词比空地还多');
+    // 词袋可以比空地多:田满时旧词答错会排队。但只有旧词会排队,所以不会无限增长
+    assert.ok(totals.bagPeak <= save.plots.length / 2, `词袋里排队的词最多到过 ${totals.bagPeak} 个`);
 
     for (const id of Object.keys(progress.cards)) {
       const state = progress.cards[id];
@@ -59,7 +60,10 @@ test('长期运行后存档保持自洽(含缺勤、扩建和作物死亡)', () 
     assert.ok(save.coins >= 0 && save.seeds.choice >= 0);
     for (const row of rows) {
       assert.ok(row.plotsUsed <= row.plotsUnlocked);
-      assert.ok(row.bag <= row.plotsUnlocked - row.plotsUsed);
+      // 词袋里有词排队时,田一定是满的
+      assert.ok(
+        row.bag === 0 || row.plotsUsed === row.plotsUnlocked || row.bag <= row.plotsUnlocked - row.plotsUsed,
+      );
     }
     assert.equal(rows[rows.length - 1].plotsUnlocked, unlockedCount(save));
   }

@@ -81,7 +81,7 @@ export class ReviewSession {
 export interface MineTurn {
   question: Question;
   vein: Vein;
-  allowance: number; // 还能再答错几次
+  allowance: number; // 新词的额度还剩几个;复习不受它限制
 }
 
 /**

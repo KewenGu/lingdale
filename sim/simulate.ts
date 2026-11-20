@@ -66,7 +66,6 @@ const last = rows[rows.length - 1];
 const harvested = totals.harvests.reduce((sum, n) => sum + n, 0);
 const share = (n: number) => (harvested ? `${((n / harvested) * 100).toFixed(0)}%` : '-');
 const firstIncome = rows.filter((r) => r.earned > 0)[0];
-const sessions = options.days * options.sessionHours.length;
 console.log('');
 console.log(`最后 ${tail.length} 天平均:`);
 console.log(
@@ -96,6 +95,8 @@ console.log(
 );
 console.log(
   `见过 ${last.seen} 词,掌握 ${last.mastered} 词,其中牢固 ${last.solid} 词;积压 ${last.backlog} 词;` +
-    `${sessions} 次打开里有 ${totals.closedForRoom} 次因为田里没地方而挖不了矿;` +
+    `${totals.sessions} 次打开里有 ${totals.closedForRoom} 次没挖满就因为田里没地方停下,其中 ${totals.sessionsNoDig} 次一题都没挖成;` +
+    `平均每次挖 ${(totals.digs / Math.max(1, totals.sessions)).toFixed(1)} 题,离开时平均还有 ${(totals.dueLeft / Math.max(1, totals.sessions)).toFixed(1)} 个到期的旧词没复习;` +
+    `种完之后词袋里最多还剩 ${totals.bagPeak} 个词;` +
     `第一次有收入是第 ${firstIncome ? firstIncome.day : '-'} 天;第 ${rows.length} 天 ${last.level} 级`,
 );
