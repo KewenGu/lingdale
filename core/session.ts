@@ -81,12 +81,12 @@ export class ReviewSession {
 export interface MineTurn {
   question: Question;
   vein: Vein;
-  allowance: number; // 新词的额度还剩几个;复习不受它限制
+  allowance: number; // 答错的额度:新词还能答错几次。复习不受它限制
 }
 
 /**
  * 一次挖矿会话。每次取下一条矿脉出一道题,答完再取下一条,直到矿洞关门或玩家离开。
- * 和浇水不同,这里答错不会重复练习:答错的词进词袋,到田里去学。
+ * 和浇水不同,这里答错不会当场重复练习:答错的词进词袋到田里去学,田满时答错的新词半天后再考。
  */
 export class MineSession {
   private turn: MineTurn | null = null;

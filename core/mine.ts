@@ -1,4 +1,4 @@
-import { LUCKY_ORE_CHANCE, MAX_LOGS, MAX_MASTERY } from './constants';
+import { LUCKY_ORE_CHANCE, MAX_LOGS, MAX_MASTERY, WAITING_CAP } from './constants';
 import { orePrice } from './economy';
 import { emptyPlots } from './farm';
 import { Milestone, addXp, xpForAnswer } from './level';
@@ -13,11 +13,16 @@ import { Deck, QuestionType, SaveData } from './types';
 //   答对 → 爆出矿石。矿石的品级就是这个词的掌握度,记得越久品级越高。然后这个词去休息,到期再回到矿里。
 //   答错 → 这个词进词袋,等着去商店买种子把它种下。
 //   矿脉先出该复习的旧词(最早到期的在前),没有才出卡组里的下一个新词。
-//   挖新矿没有每日上限,但新词答错有上限:新词的额度 = 空地块数 - 词袋里还没种下的词数。
-//   额度用完就不再出新词,要等作物收获或死亡腾出地来,或者开一块新地。
-//   把词袋里的词种下不会恢复额度:空地和词袋各少一个,差不变。
-//   复习不受额度限制:一个到期的旧词记不记得是既成事实,不去考它也不会少一个要学的词,
-//   只会让忘掉的词晚些被发现。田满时旧词答错照样进词袋,排队等空地。
+//
+// 负担靠"答错的额度"收敛,它只管新词:
+//   田里还有地方时,答错的新词进词袋,一个词占一块空地。
+//   田满了新词照样能挖。这时答错的新词没地方种,留在矿里,半天后再考一次:
+//   答对就照常升级去休息,不用种;还是答错才进词袋排队。
+//   没地方种的生词(在矿里等着再考的,加上词袋里排队的)最多 WAITING_CAP 个,到了就不再出新词。
+//   没有这个上限,矿里送来的生词会比田能学会的快,词袋会无限堆积。
+//
+// 复习不受额度限制:一个到期的旧词记不记得是既成事实,不去考它也不会少一个要学的词,
+// 只会让忘掉的词晚些被发现。田满时旧词答错照样进词袋,排队等空地。
 
 export type VeinSource = 'review' | 'new';
 
@@ -27,7 +32,7 @@ export interface Vein {
   mastery: number; // 这个词现在的掌握度;新词是 0
 }
 
-/** 矿洞为什么挖不了:田里没地方再种新的词了,或者没有矿脉可挖(没有到期的旧词,卡组也挖完了)。 */
+/** 矿洞为什么挖不了:答错的额度用完、到期的旧词也挖完了,或者没有矿脉可挖(没有到期的旧词,卡组也挖完了)。 */
 export type MineClosed = 'no_room' | 'exhausted';
 
 export type MineStatus =
@@ -40,7 +45,8 @@ export interface DigResult {
   masteryAfter: number;
   oreGrade: number | null; // 答对时爆出的矿石品级
   lucky: boolean; // 这次是否运气好,多升了一个品级
-  bagged: boolean; // 答错时这个词进了词袋
+  bagged: boolean; // 答错,这个词进了词袋
+  deferred: boolean; // 答错的新词没地方种,留在矿里,半天后再考
   allowance: number; // 这次之后新词的额度还剩几个
   xp: number;
   levelBefore: number;
@@ -48,21 +54,40 @@ export interface DigResult {
   unlocked: Milestone[];
 }
 
-/** 新词的额度,也就是还能收下几个答错的新词:空地块数减去词袋里还没种下的词数。到 0 就不再出新词,复习不受影响。 */
-export function mineAllowance(save: SaveData): number {
-  return Math.max(0, emptyPlots(save) - activeProgress(save).wordBag.length);
-}
-
-/** 见过、现在既不在田里也不在词袋里的词,按到期时间从早到晚排。这些词要么在矿里等着挖,要么在休息。 */
-function minedWords(save: SaveData): string[] {
+/** 见过、现在既不在田里也不在词袋里的词。这些词要么在矿里等着挖,要么在休息。 */
+function wordsInMine(save: SaveData): string[] {
   const progress = activeProgress(save);
   const elsewhere = new Set<string>(progress.wordBag);
   for (const plot of save.plots) {
     if (plot.crop) elsewhere.add(plot.crop.cardId);
   }
-  return Object.keys(progress.cards)
-    .filter((id) => !elsewhere.has(id))
-    .sort((a, b) => progress.cards[a].dueAt - progress.cards[b].dueAt);
+  return Object.keys(progress.cards).filter((id) => !elsewhere.has(id));
+}
+
+/** 同上,按到期时间从早到晚排。 */
+function minedWords(save: SaveData): string[] {
+  const cards = activeProgress(save).cards;
+  return wordsInMine(save).sort((x, y) => cards[x].dueAt - cards[y].dueAt);
+}
+
+/** 词袋里的词比空地少几个,也就是还能有几个答错的新词直接进词袋。 */
+function plantingRoom(save: SaveData): number {
+  return Math.max(0, emptyPlots(save) - activeProgress(save).wordBag.length);
+}
+
+/** 没地方种的生词有几个:词袋里比空地多出来的,加上留在矿里、掌握度还是 0 的。 */
+export function waitingWords(save: SaveData): number {
+  const progress = activeProgress(save);
+  const queued = Math.max(0, progress.wordBag.length - emptyPlots(save));
+  return queued + wordsInMine(save).filter((id) => progress.cards[id].mastery === 0).length;
+}
+
+/**
+ * 答错的额度:新词还能答错几次。到 0 就不再出新词,复习不受影响。
+ * 先用田里的空位(答错的词进词袋),空位用完之后还能再攒 WAITING_CAP 个没地方种的生词(答错的词留在矿里再考)。
+ */
+export function mineAllowance(save: SaveData): number {
+  return plantingRoom(save) + Math.max(0, WAITING_CAP - waitingWords(save));
 }
 
 /** 休息结束、重新出现在矿里的旧词,最早到期的排在前面。 */
@@ -130,9 +155,7 @@ export function dig(
 ): DigResult {
   const status = mineStatus(save, deck, now);
   if (!status.open) {
-    throw new Error(
-      status.reason === 'no_room' ? '田里没有空位再收新词,到期的旧词也挖完了' : '现在没有矿脉可挖',
-    );
+    throw new Error(status.reason === 'no_room' ? '答错的额度用完了,到期的旧词也挖完了' : '现在没有矿脉可挖');
   }
   if (status.vein.cardId !== cardId) {
     throw new Error(`现在该挖的是 ${status.vein.cardId},不是 ${cardId}`);
@@ -145,7 +168,9 @@ export function dig(
     const fresh = nextNewCard(save, deck);
     if (fresh) progress.cursor = fresh.cursor + 1;
   }
-  const after = mined(before, correct, now, save.tzOffsetMs);
+  // 田满时答错的新词没地方种:留在矿里,半天后再考。旧词答错总是进词袋,排队等空地
+  const deferred = source === 'new' && !correct && plantingRoom(save) <= 0;
+  const after = mined(before, correct, now, save.tzOffsetMs, deferred);
   progress.cards[cardId] = after;
 
   progress.logs.push({
@@ -169,7 +194,7 @@ export function dig(
     lucky = after.mastery < MAX_MASTERY && rng() < LUCKY_ORE_CHANCE;
     oreGrade = after.mastery + (lucky ? 1 : 0);
     save.ore[oreGrade] = (save.ore[oreGrade] || 0) + 1;
-  } else {
+  } else if (!deferred) {
     progress.wordBag.push(cardId);
   }
 
@@ -182,7 +207,8 @@ export function dig(
     masteryAfter: after.mastery,
     oreGrade,
     lucky,
-    bagged: !correct,
+    bagged: !correct && !deferred,
+    deferred,
     allowance: mineAllowance(save),
     xp: gained.xp,
     levelBefore: gained.levelBefore,

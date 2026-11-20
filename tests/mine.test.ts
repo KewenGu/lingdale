@@ -3,6 +3,7 @@ import { test } from 'node:test';
 import {
   MAX_MASTERY,
   ORE_PRICES,
+  WAITING_CAP,
   WATERINGS_TO_HARVEST,
   SaveData,
   activeProgress,
@@ -11,6 +12,8 @@ import {
   dig,
   dueVeins,
   emptyPlots,
+  gameDay,
+  gameDayStart,
   getState,
   masteredCount,
   mineAllowance,
@@ -19,6 +22,7 @@ import {
   restingVeins,
   sellAllOre,
   sellOre,
+  waitingWords,
 } from '../core/index';
 import { T0, digNext, gameDays, giveSeeds, lucky, makeDeck, missWords, noLuck } from './helpers';
 
@@ -34,6 +38,9 @@ function keepPlots(save: SaveData, count: number) {
 }
 
 const state = (save: SaveData, id: string) => getState(activeProgress(save), id)!;
+
+/** T0 之后第 n 个游戏日的开始。休息的到期时间都对齐到这里。 */
+const dayStart = (n: number) => gameDayStart(gameDay(T0, 0) + n, 0);
 
 test('新词答对:爆出最低级的矿石,从 1 级开始,3 天后才回到矿里', () => {
   const { deck, save } = setup();
@@ -130,31 +137,25 @@ test('旧词答错:掌握度降两级,进词袋;种回去收获后再回到矿�
   assert.equal(digNext(save, deck, true, later + gameDays(30)).result.oreGrade, 4);
 });
 
-test('新词的额度 = 空地块数 - 词袋里的词数,用完就不再出新词', () => {
+test('答错的额度 = 田里的空位 + 还能攒下的生词数;答对不消耗', () => {
   const { deck, save } = setup();
   keepPlots(save, 3);
-  assert.equal(mineAllowance(save), 3);
+  assert.equal(mineAllowance(save), 3 + WAITING_CAP);
   digNext(save, deck, true, T0); // 答对不消耗额度
-  assert.equal(mineAllowance(save), 3);
+  assert.equal(mineAllowance(save), 3 + WAITING_CAP);
 
-  assert.equal(digNext(save, deck, false, T0).result.allowance, 2);
+  const miss = digNext(save, deck, false, T0).result;
+  assert.deepEqual([miss.bagged, miss.deferred, miss.allowance], [true, false, 2 + WAITING_CAP]);
   // 种下一个:空地少一块,词袋也少一个,额度不变。手里有多少种子不影响额度
   giveSeeds(save, 5);
-  assert.equal(mineAllowance(save), 2);
   assert.ok(plant(save, deck, 0, T0).ok);
-  assert.deepEqual([emptyPlots(save), activeProgress(save).wordBag.length, mineAllowance(save)], [2, 0, 2]);
+  assert.deepEqual([emptyPlots(save), activeProgress(save).wordBag.length], [2, 0]);
+  assert.equal(mineAllowance(save), 2 + WAITING_CAP);
 
-  // 词留在词袋里不种,同样占额度
+  // 词留在词袋里不种,同样占着空位
   missWords(save, deck, 2, T0);
-  assert.deepEqual([emptyPlots(save), activeProgress(save).wordBag.length, mineAllowance(save)], [2, 2, 0]);
-  const closed = mineStatus(save, deck, T0);
-  assert.deepEqual([closed.open, closed.open ? '' : closed.reason], [false, 'no_room']);
-  assert.throws(() => dig(save, deck, 'w4', true, T0, noLuck));
-
-  // 作物收获腾出一块地,新词又能挖了
-  for (let i = 0; i < 5; i++) answer(save, 'w1', 'good', T0);
-  assert.equal(mineAllowance(save), 1);
-  assert.equal(mineStatus(save, deck, T0).open, true);
+  assert.deepEqual([emptyPlots(save), activeProgress(save).wordBag.length], [2, 2]);
+  assert.equal(mineAllowance(save), WAITING_CAP);
 });
 
 test('没有到期的旧词、卡组也挖完了:没有矿脉可挖', () => {
@@ -213,22 +214,22 @@ test('单词撞上对象原型属性名时也能正常挖', () => {
   assert.deepEqual(activeProgress(save).wordBag, ['toString']);
 });
 
-test('把词袋里的词种下不会恢复新词的额度;收获腾出地来才会', () => {
+test('把词袋里的词种下不会恢复额度;收获腾出地来才会', () => {
   const { deck, save } = setup();
   keepPlots(save, 2);
   missWords(save, deck, 2, T0);
-  assert.equal(mineAllowance(save), 0);
+  assert.equal(mineAllowance(save), WAITING_CAP);
 
   giveSeeds(save, 2);
   assert.ok(plant(save, deck, 0, T0).ok);
-  assert.equal(mineAllowance(save), 0, '空地和词袋各少一个,差不变');
+  assert.equal(mineAllowance(save), WAITING_CAP, '空地和词袋各少一个,差不变');
   assert.ok(plant(save, deck, 1, T0).ok);
-  assert.equal(mineAllowance(save), 0);
+  assert.equal(mineAllowance(save), WAITING_CAP);
 
   const cardId = save.plots[0].crop!.cardId;
   for (let i = 0; i < WATERINGS_TO_HARVEST; i++) answer(save, cardId, 'good', T0 + gameDays(i + 1));
   assert.equal(save.plots[0].crop, null);
-  assert.equal(mineAllowance(save), 1);
+  assert.equal(mineAllowance(save), 1 + WAITING_CAP);
 });
 
 test('休息中的旧词:按回来的时间排,到期后不再列出,田里和词袋里的词不算', () => {
@@ -254,50 +255,102 @@ test('休息中的旧词:按回来的时间排,到期后不再列出,田里和�
   assert.deepEqual(dueVeins(save, resting[0].dueAt), [first]);
 });
 
-test('田满了也能复习:到期的旧词照常出矿脉,答对出矿石,复习完才关门', () => {
+/** 一块地,种着一个答错的词:田满了。返回之前在矿里答对过的那个旧词。 */
+function fullFarm() {
   const { deck, save } = setup();
   keepPlots(save, 1);
   const known = digNext(save, deck, true, T0).cardId; // 掌握度 1,休息 3 天
-  missWords(save, deck, 1, T0);
-  giveSeeds(save, 1);
+  const planted = missWords(save, deck, 1, T0)[0];
+  giveSeeds(save, 3);
   assert.ok(plant(save, deck, 0, T0).ok);
-  assert.deepEqual([emptyPlots(save), mineAllowance(save)], [0, 0]);
+  assert.equal(emptyPlots(save), 0);
+  return { deck, save, known, planted };
+}
 
-  // 旧词还没到期:田满,没有新词可挖
-  const closed = mineStatus(save, deck, T0);
-  assert.deepEqual([closed.open, closed.open ? '' : closed.reason], [false, 'no_room']);
-
-  const later = T0 + gameDays(6);
-  const status = mineStatus(save, deck, later);
+test('田满了新词照样能挖:答对照常出矿石', () => {
+  const { deck, save } = fullFarm();
+  const status = mineStatus(save, deck, T0);
   assert.ok(status.open);
-  assert.deepEqual([status.vein.cardId, status.vein.source, status.allowance], [known, 'review', 0]);
-  const { result } = digNext(save, deck, true, later);
-  assert.deepEqual([result.correct, result.oreGrade, result.bagged], [true, 2, false]);
-
-  // 复习完了,新词仍然要等空地
-  const after = mineStatus(save, deck, later);
-  assert.deepEqual([after.open, after.open ? '' : after.reason], [false, 'no_room']);
+  assert.deepEqual([status.vein.source, status.allowance], ['new', WAITING_CAP]);
+  const { result } = digNext(save, deck, true, T0);
+  assert.deepEqual([result.oreGrade, result.masteryAfter, result.allowance], [1, 1, WAITING_CAP]);
 });
 
-test('田满时旧词答错:进词袋排队,不占新的地,等有空地才种得下', () => {
-  const { deck, save } = setup();
-  keepPlots(save, 1);
-  const known = digNext(save, deck, true, T0).cardId;
-  const planted = missWords(save, deck, 1, T0)[0];
-  giveSeeds(save, 2);
-  assert.ok(plant(save, deck, 0, T0).ok);
+test('田满时新词答错:不进词袋,留在矿里,下个游戏日再考', () => {
+  const { deck, save } = fullFarm();
+  const { cardId, result } = digNext(save, deck, false, T0);
+  assert.deepEqual([result.bagged, result.deferred, result.oreGrade], [false, true, null]);
+  assert.deepEqual([result.masteryAfter, result.allowance], [0, WAITING_CAP - 1]);
+  assert.deepEqual(activeProgress(save).wordBag, []);
+  assert.equal(waitingWords(save), 1);
 
+  // 同一个游戏日里不会再出现,所以不能看完答案马上再答
+  assert.equal(dueVeins(save, T0).indexOf(cardId), -1);
+  assert.equal(state(save, cardId).dueAt, dayStart(1));
+  const next = mineStatus(save, deck, T0 + gameDays(1));
+  assert.ok(next.open);
+  assert.deepEqual([next.vein.cardId, next.vein.source], [cardId, 'review']);
+});
+
+test('再考时答对:照常升级去休息,不用种', () => {
+  const { deck, save } = fullFarm();
+  const cardId = digNext(save, deck, false, T0).cardId;
+  const again = digNext(save, deck, true, T0 + gameDays(1));
+  assert.equal(again.cardId, cardId);
+  assert.deepEqual([again.result.oreGrade, again.result.masteryAfter, again.result.bagged], [1, 1, false]);
+  assert.equal(waitingWords(save), 0);
+  assert.equal(mineAllowance(save), WAITING_CAP);
+  assert.equal(state(save, cardId).dueAt, dayStart(1 + 6)); // 休息 3 天
+});
+
+test('再考时还是答错:进词袋排队,等有空地才种得下', () => {
+  const { deck, save, planted } = fullFarm();
+  const cardId = digNext(save, deck, false, T0).cardId;
+  const again = digNext(save, deck, false, T0 + gameDays(1));
+  assert.equal(again.cardId, cardId);
+  assert.deepEqual([again.result.bagged, again.result.deferred], [true, false]);
+  assert.deepEqual(activeProgress(save).wordBag, [cardId]);
+  assert.equal(waitingWords(save), 1, '在词袋里排队,仍然算没地方种的生词');
+
+  // 收获腾出一块地:排队的词有地方种了,不再占额度
+  for (let i = 0; i < WATERINGS_TO_HARVEST; i++) answer(save, planted, 'good', T0 + gameDays(i + 2));
+  assert.deepEqual([emptyPlots(save), waitingWords(save), mineAllowance(save)], [1, 0, WAITING_CAP]);
+  assert.ok(plant(save, deck, 0, T0 + gameDays(8)).ok);
+  assert.deepEqual(activeProgress(save).wordBag, []);
+});
+
+test('没地方种的生词攒到上限就不再出新词;复习不受影响', () => {
+  const { deck, save, known } = fullFarm();
+  for (let i = 0; i < WAITING_CAP; i++) {
+    assert.equal(digNext(save, deck, false, T0).result.deferred, true);
+  }
+  assert.deepEqual([waitingWords(save), mineAllowance(save)], [WAITING_CAP, 0]);
+  const closed = mineStatus(save, deck, T0);
+  assert.deepEqual([closed.open, closed.open ? '' : closed.reason], [false, 'no_room']);
+  assert.throws(() => dig(save, deck, 'w50', true, T0, noLuck));
+
+  // 额度是 0,到期的旧词照样能挖;先出最早到期的,也就是那些等着再考的生词
+  const later = T0 + gameDays(6);
+  const reviewed: string[] = [];
+  for (;;) {
+    const status = mineStatus(save, deck, later);
+    assert.ok(status.open);
+    if (status.vein.source === 'new') break; // 再考的生词都答对了,额度恢复,新词又出来了
+    reviewed.push(status.vein.cardId);
+    dig(save, deck, status.vein.cardId, true, later, noLuck);
+  }
+  assert.equal(reviewed.length, WAITING_CAP + 1);
+  assert.equal(reviewed.indexOf(known), WAITING_CAP, '等着再考的生词到期早,排在前面');
+  assert.equal(mineAllowance(save), WAITING_CAP);
+});
+
+test('田满时旧词答错:照样进词袋排队', () => {
+  const { deck, save, known } = fullFarm();
   const later = T0 + gameDays(6);
   const { cardId, result } = digNext(save, deck, false, later);
   assert.equal(cardId, known);
-  assert.deepEqual([result.bagged, result.allowance], [true, 0]);
+  assert.deepEqual([result.bagged, result.deferred], [true, false]);
   assert.deepEqual(activeProgress(save).wordBag, [known]);
   assert.equal(emptyPlots(save), 0, '词袋里的词比空地多,它在排队');
-  assert.equal(mineStatus(save, deck, later).open, false);
-
-  // 收获腾出一块地:空地 1、词袋 1,额度仍是 0;把排队的词种下后田又满了
-  for (let i = 0; i < WATERINGS_TO_HARVEST; i++) answer(save, planted, 'good', later + gameDays(i + 1));
-  assert.deepEqual([emptyPlots(save), mineAllowance(save)], [1, 0]);
-  assert.ok(plant(save, deck, 0, later + gameDays(6)).ok);
-  assert.deepEqual(activeProgress(save).wordBag, []);
+  assert.equal(mineAllowance(save), WAITING_CAP - 1);
 });

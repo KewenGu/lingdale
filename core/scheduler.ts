@@ -65,8 +65,17 @@ export function rest(state: CardState, mastery: number, now: number, tzOffsetMs:
   };
 }
 
-/** 在矿里答了一次。答对:升级并去休息。答错:降级,进词袋等着被种下。 */
-export function mined(state: CardState, correct: boolean, now: number, tzOffsetMs: number): CardState {
+/**
+ * 在矿里答了一次。答对:升级并去休息。答错:降级,进词袋等着被种下。
+ * stays 为真表示答错的词没地方种,留在矿里:按降级后的掌握度休息,到期再考一次。
+ */
+export function mined(
+  state: CardState,
+  correct: boolean,
+  now: number,
+  tzOffsetMs: number,
+  stays: boolean = false,
+): CardState {
   const answered: CardState = {
     mastery: state.mastery,
     stage: 0,
@@ -79,7 +88,7 @@ export function mined(state: CardState, correct: boolean, now: number, tzOffsetM
   };
   if (correct) return rest(answered, masteryAfterHit(state.mastery), now, tzOffsetMs);
   answered.mastery = masteryAfterLapse(state.mastery);
-  return answered;
+  return stays ? rest(answered, answered.mastery, now, tzOffsetMs) : answered;
 }
 
 /** 词被种下,开始一轮新的生长。品质从五星算起。 */

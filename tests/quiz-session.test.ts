@@ -3,6 +3,7 @@ import { test } from 'node:test';
 import {
   MineSession,
   ReviewSession,
+  WAITING_CAP,
   activeProgress,
   answer,
   createSave,
@@ -140,16 +141,16 @@ test('会话:hard 不生长也不扣星;作物死亡或收获后不再排回队�
   );
 });
 
-test('挖矿会话:一题一条矿脉,答对出矿,答错进词袋且不重复练习,额度用完就关门', () => {
+test('挖矿会话:一题一条矿脉,答对出矿,答错进词袋且不重复练习;田满时答错的新词留在矿里', () => {
   const deck = makeDeck(50);
   const save = createSave(deck.id, T0, 0);
-  save.plots.forEach((plot, i) => (plot.unlocked = i < 1)); // 只有一块地,只能答错一次
+  save.plots.forEach((plot, i) => (plot.unlocked = i < 1)); // 只有一块地,词袋只收得下一个词
   const mine = new MineSession(save, deck, noLuck);
 
   const first = mine.current(T0)!;
   assert.deepEqual(
     [first.vein.cardId, first.vein.source, first.question.type, first.allowance],
-    ['w0', 'new', 'choice', 1],
+    ['w0', 'new', 'choice', 1 + WAITING_CAP],
   );
   assert.equal(mine.current(T0), first); // 重复调用是同一道题
   if (first.question.type === 'spell') return;
@@ -160,8 +161,18 @@ test('挖矿会话:一题一条矿脉,答对出矿,答错进词袋且不重复�
   assert.equal(second.vein.cardId, 'w1');
   if (second.question.type === 'spell') return;
   const miss = mine.submit((second.question.correctIndex + 1) % 4, T0);
-  assert.deepEqual([miss.correct, miss.oreGrade, miss.bagged, miss.allowance], [false, null, true, 0]);
+  assert.deepEqual(
+    [miss.correct, miss.oreGrade, miss.bagged, miss.allowance],
+    [false, null, true, WAITING_CAP],
+  );
+  assert.deepEqual(activeProgress(save).wordBag, ['w1']);
 
+  // 词袋里的词把唯一的空地占了。再答错的新词没地方种,留在矿里,直到攒满上限矿洞才关门
+  for (let i = 0; i < WAITING_CAP; i++) {
+    assert.equal(mine.closed(T0), null);
+    const deferred = mine.submitCorrect(false, T0);
+    assert.deepEqual([deferred.bagged, deferred.deferred], [false, true]);
+  }
   assert.equal(mine.current(T0), null);
   assert.equal(mine.closed(T0), 'no_room');
   assert.throws(() => mine.submit(0, T0));
@@ -172,7 +183,7 @@ test('挖矿会话:一题一条矿脉,答对出矿,答错进词袋且不重复�
   const spelling = new MineSession(save, deck, noLuck, 'spell');
   const turn = spelling.current(T0)!;
   assert.equal(turn.question.type, 'spell');
-  assert.equal(spelling.submit('WORD2', T0).correct, true);
+  assert.equal(spelling.submit(turn.vein.cardId.replace('w', 'WORD'), T0).correct, true);
 });
 
 test('存档可以序列化后原样读回', () => {
