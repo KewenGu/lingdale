@@ -28,7 +28,7 @@ export const MAX_MASTERY = REST_DAYS.length - 1;
 // ---------- 矿 ----------
 
 /** 矿石的品级就是这个词答对后的掌握度(1 到 MAX_MASTERY)。名称是占位,等美术和玩法定。 */
-export const ORE_NAMES = ['', '铜矿石', '铁矿石', '银矿石', '金矿石', '翡翠', '红宝石', '钻石'];
+export const ORE_NAMES = ['', '铜矿石', '铁矿石', '银矿石', '金矿石', '绿宝石', '红宝石', '钻石'];
 
 /** 答对时有这个概率多升一个品级(不超过最高品级)。只影响爆出的矿石,不影响掌握度。 */
 export const LUCKY_ORE_CHANCE = 0.1;
