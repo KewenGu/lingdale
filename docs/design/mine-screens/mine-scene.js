@@ -12,7 +12,7 @@
     { name: '铁矿石', price: 5 },
     { name: '银矿石', price: 10 },
     { name: '金矿石', price: 18 },
-    { name: '翡翠', price: 30 },
+    { name: '绿宝石', price: 30 },
     { name: '红宝石', price: 45 },
     { name: '钻石', price: 65 },
   ];

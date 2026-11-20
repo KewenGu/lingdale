@@ -14,7 +14,8 @@ import { Deck, QuestionType, SaveData } from './types';
 //   答错 → 这个词进词袋,等着去商店买种子把它种下。
 //   矿脉先出该复习的旧词(最早到期的在前),没有才出卡组里的下一个新词。
 //   挖新矿没有每日上限,但答错有上限:还能答错的次数 = 空地块数 - 词袋里还没种下的词数。
-//   用完了矿洞就关门,要先把词种下、或等作物收获腾出地来。
+//   用完了矿洞就关门,要等作物收获或死亡腾出地来,或者开一块新地。
+//   把词袋里的词种下不会让矿洞开门:空地和词袋各少一个,差不变。
 
 export type VeinSource = 'review' | 'new';
 
@@ -50,16 +51,39 @@ export function mineAllowance(save: SaveData): number {
   return Math.max(0, emptyPlots(save) - activeProgress(save).wordBag.length);
 }
 
-/** 休息结束、重新出现在矿里的旧词,最早到期的排在前面。 */
-export function dueVeins(save: SaveData, now: number): string[] {
+/** 见过、现在既不在田里也不在词袋里的词,按到期时间从早到晚排。这些词要么在矿里等着挖,要么在休息。 */
+function minedWords(save: SaveData): string[] {
   const progress = activeProgress(save);
   const elsewhere = new Set<string>(progress.wordBag);
   for (const plot of save.plots) {
     if (plot.crop) elsewhere.add(plot.crop.cardId);
   }
   return Object.keys(progress.cards)
-    .filter((id) => !elsewhere.has(id) && progress.cards[id].dueAt <= now)
+    .filter((id) => !elsewhere.has(id))
     .sort((a, b) => progress.cards[a].dueAt - progress.cards[b].dueAt);
+}
+
+/** 休息结束、重新出现在矿里的旧词,最早到期的排在前面。 */
+export function dueVeins(save: SaveData, now: number): string[] {
+  const cards = activeProgress(save).cards;
+  return minedWords(save).filter((id) => cards[id].dueAt <= now);
+}
+
+export interface RestingVein {
+  cardId: string;
+  dueAt: number; // 休息结束、回到矿里的时间
+  mastery: number; // 现在的掌握度;回来时答对,矿石比它高一级
+}
+
+/**
+ * 还在休息的旧词各在什么时候回到矿里,最早回来的排在前面。不修改存档。
+ * "没有矿脉可挖"时界面用它告诉玩家什么时候再来,也可以用第一项来安排提醒。
+ */
+export function restingVeins(save: SaveData, now: number): RestingVein[] {
+  const cards = activeProgress(save).cards;
+  return minedWords(save)
+    .filter((id) => cards[id].dueAt > now)
+    .map((id) => ({ cardId: id, dueAt: cards[id].dueAt, mastery: cards[id].mastery }));
 }
 
 /** 卡组里下一个还没见过的词;挖完了返回 null。不修改存档。 */

@@ -3,6 +3,7 @@ import { test } from 'node:test';
 import {
   MAX_MASTERY,
   ORE_PRICES,
+  WATERINGS_TO_HARVEST,
   SaveData,
   activeProgress,
   answer,
@@ -15,6 +16,7 @@ import {
   mineAllowance,
   mineStatus,
   plant,
+  restingVeins,
   sellAllOre,
   sellOre,
 } from '../core/index';
@@ -209,4 +211,45 @@ test('单词撞上对象原型属性名时也能正常挖', () => {
   assert.equal(digNext(save, deck, false, T0).cardId, 'toString');
   assert.equal(digNext(save, deck, true, T0).cardId, 'w2');
   assert.deepEqual(activeProgress(save).wordBag, ['toString']);
+});
+
+test('把词袋里的词种下不会让矿洞开门;收获腾出地来才会', () => {
+  const { deck, save } = setup();
+  keepPlots(save, 2);
+  missWords(save, deck, 2, T0);
+  assert.equal(mineAllowance(save), 0);
+
+  giveSeeds(save, 2);
+  assert.ok(plant(save, deck, 0, T0).ok);
+  assert.equal(mineAllowance(save), 0, '空地和词袋各少一个,差不变');
+  assert.ok(plant(save, deck, 1, T0).ok);
+  assert.equal(mineAllowance(save), 0);
+
+  const cardId = save.plots[0].crop!.cardId;
+  for (let i = 0; i < WATERINGS_TO_HARVEST; i++) answer(save, cardId, 'good', T0 + gameDays(i + 1));
+  assert.equal(save.plots[0].crop, null);
+  assert.equal(mineAllowance(save), 1);
+});
+
+test('休息中的旧词:按回来的时间排,到期后不再列出,田里和词袋里的词不算', () => {
+  const { deck, save } = setup();
+  const first = digNext(save, deck, true, T0).cardId; // 掌握度 1,休息 3 天
+  const missed = digNext(save, deck, false, T0).cardId; // 进词袋
+  const second = digNext(save, deck, true, T0 + gameDays(2)).cardId;
+
+  const resting = restingVeins(save, T0 + gameDays(2));
+  assert.deepEqual(
+    resting.map((v) => v.cardId),
+    [first, second],
+  );
+  assert.ok(resting[0].dueAt < resting[1].dueAt);
+  assert.equal(resting[0].mastery, 1);
+  assert.equal(resting.map((v) => v.cardId).indexOf(missed), -1);
+
+  const later = restingVeins(save, resting[0].dueAt);
+  assert.deepEqual(
+    later.map((v) => v.cardId),
+    [second],
+  );
+  assert.deepEqual(dueVeins(save, resting[0].dueAt), [first]);
 });
