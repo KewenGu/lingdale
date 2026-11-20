@@ -25,6 +25,11 @@
   // 它们又都偏橙红,铜和铁的矿石放上去分不出来。岩石是一组偏灰的暖褐色,和土、和每一种矿石都拉得开。
   var R = { rockL: '#dccdb8', rock: '#a9967f', rockD: '#705f51' };
 
+  // 方案比较页(options.html)和定稿的画面(index.html)共用这个文件,两处的差别只有这两项:
+  //   band    牌子和爆出的矿石上要不要带品级带。比较页带着,定稿去掉了。
+  //   colors  矿石默认的用色。比较页是 null(钻石纯纸白),定稿是 sky(钻石的暗面用天空色)。
+  var CFG = { band: true, colors: null };
+
   // ---------- 基础图形 ----------
 
   function poly(pts, fill) {
@@ -92,23 +97,24 @@
   }
 
   // ---------- 矿石 ----------
-  // 每种材质三片纸:高光 t、亮面 l、暗面 d。除了岩石色,全部取自现有色板。
-  //   铜 = 南瓜橙,铁 = 湿土(赤铁矿本来就是红褐色),银 = 纸白,金 = 玉米黄,
-  //   第 5 级 = 蓝绿,第 6 级 = 番茄红,第 7 级 = 纸白。蓝色只表示水,所以这里一处蓝色都没有。
+  // 每种材质三片纸:高光 t、亮面 l、暗面 d。除了岩石色,全部取自美术规范色板里已有的颜色。
+  //   铜 = 南瓜橙,铁 = 空地和湿土(赤铁矿本来就是红褐色),银 = 纸白,金 = 玉米黄,
+  //   第 5 级 = 蓝绿,第 6 级 = 番茄红,第 7 级 = 纸白(定稿时暗面换成天空色,见下面的 colors)。
   function materials(colors) {
+    colors = colors || CFG.colors;
     var m = [
       null,
       { t: C.dry, l: C.orange, d: C.orangeD },
       { t: C.dry, l: K.SOIL.empty.s, d: C.wet },
       { t: C.white, l: C.whiteD, d: R.rock },
       { t: C.white, l: C.yellow, d: C.orange },
-      { t: C.pod, l: C.teal, d: C.tealD },
+      { t: C.leafL, l: C.teal, d: C.tealD },
       { t: C.pink, l: C.red, d: C.redD },
       { t: C.white, l: C.white, d: C.whiteD, r: R.rockL },
     ];
     // 两个备选:第 6 级不用红色,改用茄紫;钻石的暗面用天空色(色板里已有,但它偏蓝)。
     if (colors === 'purple') m[6] = { t: C.purpleL, l: C.purple, d: C.purpleD };
-    if (colors === 'sky') m[7] = { t: C.white, l: C.white, d: C.sky, r: '#a9d3de' };
+    if (colors === 'sky') m[7] = { t: C.white, l: C.white, d: C.sky, r: CFG.colors ? C.whiteD : '#a9d3de' };
     return m;
   }
 
@@ -527,8 +533,7 @@
     return {
       shape: rrect(x, y, w, h, h / 2 > 24 ? 24 : h / 2, C.white) + miniPlot(x + 34, y + h / 2, 1.08),
       text:
-        txt(x + 58, y + h / 2 - 6, '还能答错', 12.5, C.ink, { w: 700 }) +
-        txt(x + 58, y + h / 2 + 13, '田里的空位', 11, C.ink, { w: 500 }) +
+        txt(x + 58, y + h / 2 + 4.6, '还能答错', 13, C.ink, { w: 700 }) +
         txt(x + w - 36, y + h / 2 + 12, n, 34, C.ink, { a: 'end' }) +
         txt(x + w - 18, y + h / 2 + 11, '次', 13, C.ink, { a: 'end', w: 700 }),
     };
@@ -642,7 +647,7 @@
       });
     L.add(veinTag(v, x + 40, y - 11));
     // 答对会出哪一级矿石:探出牌子的右上角,和水滴探出地块右上角是同一种说法。
-    if (!opt.noOre) L.s += at(x + w - 10, y + 10, oreChip(v.mastery + 1, { band: true }), 5, 1.12);
+    if (!opt.noOre) L.s += at(x + w - 10, y + 10, oreChip(v.mastery + 1, { band: CFG.band }), 5, 1.12);
     return g(tf, g('', L.s, SH) + L.t);
   }
 
@@ -714,7 +719,7 @@
       // 旧词的石板上露着一点矿:它以前出过矿,答对会出更好的。四块石板上都有,不透露哪一块是对的。
       if (v && v.source === 'review' && st === 'idle') {
         body +=
-          fleck(w - 46, h / 2 + 1, v.mastery + 1, -10, 0.56) + fleck(w - 22, h / 2 + 8, v.mastery + 1, 14, 0.38);
+          fleck(w - 50, h / 2 + 1, v.mastery + 1, -10, 0.7) + fleck(w - 23, h / 2 + 9, v.mastery + 1, 14, 0.46);
       }
       if (st === 'miss') body += ell(w - 62, h / 2, 15, 8, -12, R.rock) + ell(w - 60, h / 2 + 1, 8, 4, -12, R.rockD);
       if (st === 'answer') body += check(w - 34, h / 2, 13);
@@ -837,7 +842,8 @@
       ly = y + 15 * s;
     L.s += at(x, y, ore(grade), -6, s);
     if (lucky) L.s += clover(x + 14 * s, y - 15 * s, 1.5, 16);
-    L.s += rrect(x - w / 2, ly, w, 40, 14, C.white) + at(x, ly + 30, gradeBand(grade, 0, false));
+    L.s += rrect(x - w / 2, ly, w, CFG.band ? 40 : 27, CFG.band ? 14 : 13.5, C.white);
+    if (CFG.band) L.s += at(x, ly + 30, gradeBand(grade, 0, false));
     L.t += txt(x, ly + 18.4, name, 15, C.ink, { a: 'middle' });
     return L;
   }
@@ -1167,6 +1173,7 @@
         '</filter></defs>'
       );
     },
+    cfg: CFG,
     compA: compA,
     compB: compB,
     compC: compC,
@@ -1180,6 +1187,13 @@
       at: at,
       Layer: Layer,
       pick: pick,
+      post: post,
+      beam: beam,
+      fleck: fleck,
+      optionState: optionState,
+      crystal: crystal,
+      lump: lump,
+      block: block,
       lantern: lantern,
       cart: cart,
       clover: clover,

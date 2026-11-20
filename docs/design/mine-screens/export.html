@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>矿洞画面参考图导出</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Noto+Sans+SC:wght@400;500;700;900&family=ZCOOL+KuaiLe&display=swap">
+<style>
+/*
+  美术规范里的参考图(../art-direction/*.png)从这一页导出。每个带 id 的 .sheet 或 .solo 是一张图,id 就是文件名。
+  版式沿用规范的"社交媒体画面":草地色的底、纸白的纸片、硬边投影、站酷快乐体的标题,页脚写明是示意稿。
+  导出方法见 README。
+*/
+:root {
+  --grass: #cfe6a6;
+  --paper: #fffaf0;
+  --ink: #27402f;
+  --shadow: rgba(31, 61, 43, 0.3);
+  --title: 'ZCOOL KuaiLe', 'Noto Sans SC', sans-serif;
+  --ui: 'Baloo 2', 'Noto Sans SC', sans-serif;
+}
+body {
+  margin: 0;
+  padding: 30px;
+  background: #5c6670;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 30px;
+}
+#ld-defs {
+  position: absolute;
+}
+svg {
+  display: block;
+  width: 100%;
+}
+.solo {
+  flex: none;
+  width: 390px;
+}
+.sheet {
+  flex: none;
+  box-sizing: border-box;
+  padding: 30px 32px 22px;
+  background: var(--grass);
+  color: var(--ink);
+  font: 700 15px/1.45 var(--ui);
+}
+.sheet h1 {
+  margin: 0 0 20px;
+  font: 400 38px/1.1 var(--title);
+}
+.row {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 300px;
+  gap: 26px;
+}
+.row.wrap5 {
+  grid-auto-flow: row;
+  grid-template-columns: repeat(5, 300px);
+}
+.p .frame {
+  border-radius: 26px;
+  overflow: hidden;
+  box-shadow: 5px 8px 0 var(--shadow);
+}
+.p b {
+  display: block;
+  margin-top: 14px;
+  font-size: 18px;
+}
+.p span {
+  display: block;
+  font-weight: 500;
+  font-size: 13.5px;
+}
+.no {
+  display: inline-grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  margin-right: 8px;
+  border-radius: 50%;
+  background: #ffd24a;
+  font: 800 15px/1 var(--ui);
+}
+.ore {
+  width: 728px;
+}
+.ore .paper {
+  padding: 10px 12px;
+  border-radius: 20px;
+  background: var(--paper);
+  box-shadow: 5px 8px 0 var(--shadow);
+}
+.ore .names {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  margin: 12px 12px 22px;
+  text-align: center;
+  font-size: 15px;
+}
+.ore .names span {
+  display: block;
+  font-weight: 500;
+  font-size: 13px;
+}
+.ore .small {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin-bottom: 22px;
+}
+.ore .small .paper {
+  padding: 4px 6px;
+  border-radius: 12px;
+}
+.ore .small .s40 {
+  width: 316px;
+}
+.foot {
+  margin-top: 20px;
+  display: flex;
+  justify-content: space-between;
+  font: 700 13px/1 var(--ui);
+  opacity: 0.8;
+}
+</style>
+</head>
+<body>
+<svg id="ld-defs" width="0" height="0" aria-hidden="true" focusable="false"></svg>
+<script src="../art-exploration/scene.js"></script>
+<script src="../art-exploration/style-paper.js"></script>
+<script src="mine-scene.js"></script>
+<script src="mine-paper.js"></script>
+<script src="screens.js"></script>
+<script>
+(function () {
+  'use strict';
+  var LD = window.LD, M = LD.mine, S = LD.screens, sc = LD.mineScene, V = LD.veins, esc = LD.esc;
+  document.getElementById('ld-defs').innerHTML = LD.styles.paper.defs() + M.defs();
+
+  function solo(id, markup) {
+    var d = document.createElement('div');
+    d.className = 'solo';
+    d.id = id;
+    d.innerHTML = markup;
+    document.body.appendChild(d);
+  }
+  function foot() {
+    return '<div class="foot"><span>灵谷小镇 Lingdale · 示意稿,不是成品</span><span>代码绘制</span></div>';
+  }
+  function sheet(id, title, items, wrap) {
+    var d = document.createElement('div');
+    d.className = 'sheet';
+    d.id = id;
+    d.innerHTML =
+      '<h1>' + esc(title) + '</h1><div class="row' + (wrap ? ' wrap5' : '') + '">' +
+      items.map(function (it) {
+        return '<div class="p"><div class="frame">' + it.svg + '</div><b>' +
+          (it.no ? '<i class="no">' + esc(it.no) + '</i>' : '') + esc(it.name) + '</b><span>' + esc(it.note || '') + '</span></div>';
+      }).join('') + '</div>' + foot();
+    document.body.appendChild(d);
+  }
+
+  solo('mine', S.mine(sc, V.old, 'idle'));
+  solo('town', S.town(sc));
+  solo('farm', S.farm(LD.scene, sc, 2));
+
+  sheet('mine-answer', '答题之后', [
+    { name: '答对', note: '点的那条石板裂开,爆出矿石', svg: S.mine(sc, V.old, 'hit') },
+    { name: '答对,而且运气好', note: '矿石多升一级;掌握度不变', svg: S.mine(sc, V.old, 'lucky') },
+    { name: '答错', note: '正确的那条翻出来,这个词进词袋', svg: S.mine(sc, V.fresh, 'miss') },
+  ]);
+  sheet('mine-closed', '矿洞关门', [
+    { name: '田里没地方了', note: '现在能做的事排在最上面', svg: S.closedRoom(LD.closedScene) },
+    { name: '田里没地方了,水也浇过了', note: '只能等,或者开一块地', svg: S.closedWait() },
+    { name: '没有矿脉可挖', note: '旧词什么时候回来', svg: S.closedOut(LD.outScene) },
+  ]);
+  var farmWithSeed = {};
+  for (var key in LD.scene) farmWithSeed[key] = LD.scene[key];
+  farmWithSeed.plots = LD.scene.plots.slice();
+  farmWithSeed.plots[7] = LD.plot('tomato', 0);
+  sheet('bag-shop', '词袋和商店', [
+    { name: '词袋', note: '等着被种下的词,和手里的种子', svg: S.bag(LD.scene, LD.closedScene, { empty: 4 }) },
+    { name: '商店:买种子', note: '三种种子,按等级解锁', svg: S.shopBuy(LD.shopScene) },
+    { name: '商店:卖东西', note: '矿石和作物,仓库并在这里', svg: S.shopSell(LD.shopScene) },
+    { name: '种下时的单词卡片', note: '只画到够表达"种下"这一步', svg: S.card(farmWithSeed, LD.closedScene.bag[0], 'tomato', '下午 4 点以后浇第一次水') },
+  ]);
+  sheet('start', '开局的几步', S.onboarding().map(function (st, i) {
+    return { name: st.name, note: st.note, svg: st.svg, no: st.branch ? '岔' : String(i + 1) };
+  }), true);
+
+  // 矿石
+  var d = document.createElement('div');
+  d.className = 'sheet ore';
+  d.id = 'ore';
+  d.innerHTML =
+    '<h1>七个品级的矿石</h1><div class="paper">' + M.oreRow({}) + '</div><div class="names">' +
+    LD.ORES.slice(1).map(function (o, i) { return '<div>' + (i + 1) + ' ' + esc(o.name) + '<span>卖 ' + o.price + ' 金币</span></div>'; }).join('') +
+    '</div><div class="small"><div class="paper"><div class="s40">' + M.oreRow({}) + '</div></div><div>每块 40 像素</div></div>' +
+    '<div class="paper">' + M.oreRow({ gray: true }) + '</div><div style="margin-top:10px">去掉颜色,只看明暗</div>' + foot();
+  document.body.appendChild(d);
+})();
+</script>
+</body>
+</html>

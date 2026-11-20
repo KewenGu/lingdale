@@ -13,7 +13,10 @@
   $('ld-defs').innerHTML = LD.styles.paper.defs() + M.defs();
 
   // 负责人选定之后把结果写在这里,页面顶部会显示出来。null 表示还没定。
-  var DECIDED = null;
+  var DECIDED =
+    '2026-11-20 项目负责人定了:构图用 A 岩层;品级用方案 2(形状阶梯,不加标记);用色用丙(钻石的暗面用天空色,红宝石用番茄红);' +
+    '底部按钮三个方案都没有选,改为做一张小镇地图当总入口,农场和矿洞之间另加一块直达的路牌;收获标记留着;仓库并进商店。' +
+    '定稿的画面在 <a href="index.html">index.html</a>。本页保留为当时的记录,画面没有再改。';
   $('result').innerHTML = DECIDED
     ? '<strong>结果:</strong>' + DECIDED
     : '<strong>还没定。</strong>每一节里标着"建议"的是绘制者的推荐,理由写在旁边。';

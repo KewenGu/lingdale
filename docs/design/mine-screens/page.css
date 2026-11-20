@@ -317,3 +317,51 @@ footer {
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+/* ---------- 定稿页:一排手机 ---------- */
+.shots {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 22px 18px;
+  margin-top: 6px;
+}
+.shots.wide {
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+}
+.shots figcaption b {
+  display: block;
+  color: var(--ink);
+  font-size: 14px;
+}
+.step-no {
+  display: inline-grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  margin-right: 6px;
+  border-radius: 50%;
+  background: var(--pick);
+  color: var(--bg);
+  font: 700 12px/1 var(--font-body);
+}
+.notes {
+  max-width: 48em;
+  padding-left: 1.2em;
+}
+.notes li {
+  margin: 6px 0;
+}
+.two-col {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 10px 40px;
+}
+.ore-sheet {
+  display: grid;
+  gap: 12px;
+  max-width: 382px;
+}
+.ore-sheet .ore-names {
+  max-width: none;
+  padding: 0 9px;
+}
