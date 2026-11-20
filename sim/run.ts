@@ -21,7 +21,17 @@ import {
   unlockPlot,
   unlockedCount,
 } from '../core/index';
-import { FSRS5, FSRS6, Memory, firstExposure, knownWord, recallProbability, restudy, review } from './memory';
+import {
+  FSRS5,
+  FSRS6,
+  Memory,
+  firstExposure,
+  glance,
+  knownWord,
+  recallProbability,
+  restudy,
+  review,
+} from './memory';
 
 export interface SimOptions {
   days: number; // 现实天数
@@ -31,6 +41,7 @@ export interface SimOptions {
   hardWordSpeed: number; // 难词忘得比别的词快多少倍
   knownShare: number; // 卡组里学习者本来就认识的词的比例
   knownStability: number; // 本来就认识的词的记忆强度(天)
+  glanceRecall: number | null; // 不认识的词只看过一眼答案,半天后还想得起来的概率。null 表示用记忆模型自己的初始值(FSRS-5 是 88%)
   guessRate: number; // 想不起来时蒙对的概率(四选一是 0.25)
   slip: number; // 明明记得却答错的概率
   cramGain: boolean; // 同一天内反复答对,记忆强度涨不涨。false 用来看"当场练习完全没用"时结论还成不成立
@@ -120,6 +131,7 @@ export const DEFAULT_OPTIONS: SimOptions = {
   hardWordSpeed: 3,
   knownShare: 0.4,
   knownStability: 365,
+  glanceRecall: null,
   guessRate: 0.25,
   slip: 0.03,
   cramGain: true,
@@ -226,7 +238,11 @@ export function simulate(options: SimOptions): { rows: DayRow[]; totals: SimTota
       if (recalled) knownBefore.add(cardId);
       memory.set(
         cardId,
-        recalled ? knownWord(params, options.knownStability, t) : firstExposure(params, false, t),
+        recalled
+          ? knownWord(params, options.knownStability, t)
+          : options.glanceRecall === null
+            ? firstExposure(params, false, t)
+            : glance(params, options.glanceRecall, t),
       );
     } else {
       recalled = rng() < recallOf(cardId, m, t);

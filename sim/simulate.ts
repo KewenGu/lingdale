@@ -13,6 +13,7 @@ function parseArgs(argv: string[]): SimOptions {
     else if (key === 'forget') options.forgetSpeed = Number(value);
     else if (key === 'model') options.model = value === 'fsrs6' ? 'fsrs6' : 'fsrs5';
     else if (key === 'nocram') options.cramGain = false;
+    else if (key === 'glance') options.glanceRecall = Number(value);
     else if (key === 'digs') options.digsPerSession = Number(value);
     else if (key === 'nodrill') options.drills = false;
     else if (key === 'nofarm') options.plants = false;

@@ -69,6 +69,16 @@ export function firstExposure(p: FsrsParams, recalled: boolean, now: number): Me
   return { stability: p.w[grade - 1], difficulty: initialDifficulty(p, grade), last: now };
 }
 
+/**
+ * 第一次见到一个不认识的词,只看了一眼答案。recallAfterHalfDay 是半天后还想得起来的概率,
+ * 由它反推出初始的记忆强度。模型的默认参数给出的是 88%(FSRS-5),这多半偏乐观:
+ * 那是 Anki 用户认真学过一张新卡片之后的水平,不是在游戏里扫一眼答案的水平。
+ */
+export function glance(p: FsrsParams, recallAfterHalfDay: number, now: number): Memory {
+  const stability = (p.factor * 0.5) / (Math.pow(recallAfterHalfDay, 1 / p.decay) - 1);
+  return { stability: Math.max(MIN_STABILITY, stability), difficulty: initialDifficulty(p, 1), last: now };
+}
+
 /** 一个本来就认识的词:强度直接给定。 */
 export function knownWord(p: FsrsParams, stability: number, now: number): Memory {
   return { stability, difficulty: initialDifficulty(p, 4), last: now };
