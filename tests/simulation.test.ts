@@ -15,7 +15,7 @@ test('长期运行后存档保持自洽(含缺勤、扩建和作物死亡)', () 
     const { rows, totals, save } = simulate({
       ...DEFAULT_OPTIONS,
       days: 90,
-      pGood: 0.7,
+      forgetSpeed: 3,
       skipProb: 0.25,
       autoBuy: true,
       seed,
@@ -82,10 +82,11 @@ test('默认参数下的节奏:第一天就有收入,不扩建也一直在见新
   assert.ok(Math.max(...tail.map((r) => r.backlog)) <= 60, '旧词不应该大量积压');
 });
 
-test('本来就认识的词越多,同样的时间能过的词越多', () => {
+test('本来就认识的词越多,同样的时间见到的词越多,但真正新学会的越少', () => {
   const few = simulate({ ...DEFAULT_OPTIONS, knownShare: 0.2 });
   const many = simulate({ ...DEFAULT_OPTIONS, knownShare: 0.8 });
-  assert.ok(many.rows[59].seen > few.rows[59].seen * 1.3);
+  assert.ok(many.rows[59].seen > few.rows[59].seen);
+  assert.ok(many.totals.gainedIn30 < few.totals.gainedIn30);
 });
 
 test('一天只打开一次也能玩', () => {
@@ -100,19 +101,22 @@ test('一个词都不认识的学习者也不会卡死:买不起种子时商店�
   assert.ok(rows[rows.length - 1].mastered > 100);
 });
 
-test('第一次就蒙对的词会被之后的复习筛出来,不会一直算作掌握', () => {
+test('游戏算作掌握的词,学习者大多真的想得起来;蒙对的词会被之后的复习筛出来', () => {
   const { rows, totals } = simulate(DEFAULT_OPTIONS);
+  const last = rows[rows.length - 1];
   assert.ok(totals.flukedNew > 50, `蒙对 ${totals.flukedNew} 次`);
-  assert.ok(totals.flukedMastered <= totals.flukedNew * 0.2, `还剩 ${totals.flukedMastered} 个`);
-  assert.ok(totals.flukedMastered <= rows[rows.length - 1].mastered * 0.05);
-  assert.ok(totals.flukedSolid <= 3);
+  assert.ok(totals.masteredRecall > 0.85, `掌握的词平均把握 ${totals.masteredRecall}`);
+  assert.ok(totals.shakyMastered <= last.mastered * 0.05, `把握不到一半的有 ${totals.shakyMastered} 个`);
+  assert.ok(totals.shakySolid <= last.solid * 0.05);
+  // 记忆模型认为想得起来的词数,不会比见过的多
+  assert.ok(totals.rememberedIn30 <= totals.rememberedNow && totals.rememberedNow <= last.seen);
 });
 
 test('挖得多、学得吃力也不会堆积:词袋始终有限', () => {
   for (const options of [
     { digsPerSession: 100 },
     { knownShare: 0, digsPerSession: 100 },
-    { pGood: 0.7, retryRecall: 0.3, digsPerSession: 100 },
+    { forgetSpeed: 3, digsPerSession: 100 },
   ]) {
     const { rows, totals } = simulate({ ...DEFAULT_OPTIONS, ...options });
     assert.ok(totals.bagPeak <= BAG_EXTRA * 4, `离开时词袋里最多剩过 ${totals.bagPeak} 个词`);
@@ -125,12 +129,21 @@ test('田满了也一直有题可做:词袋装满就练词袋里的词,一部分
   assert.equal(totals.stoppedEarly, 0);
   assert.equal(totals.digs, totals.sessions * 60);
   assert.ok(totals.graduated > 50, `练到离开词袋 ${totals.graduated} 次`);
-  assert.ok(totals.checksPassed > 0 && totals.checksFailed > 0);
+  assert.ok(totals.checksPassed > totals.checksFailed, '练出去的词隔天再考,多数答得对');
 });
 
-test('只在矿里练、从不种田,学得比种田慢得多', () => {
+test('只在矿里练、从不种田也学得会,只是学得少;词袋不会无限堆积', () => {
   const farming = simulate(DEFAULT_OPTIONS);
   const mining = simulate({ ...DEFAULT_OPTIONS, plants: false });
-  assert.ok(mining.rows[59].solid * 3 < farming.rows[59].solid);
+  assert.ok(mining.totals.gainedIn30 < farming.totals.gainedIn30);
+  assert.ok(mining.totals.gainedIn30 > farming.totals.gainedIn30 * 0.2);
   assert.ok(mining.totals.bagPeak <= 30 + BAG_EXTRA * 4);
+});
+
+test('忘得越快的学习者,同样的时间教会的词越少,作物也更容易答错', () => {
+  const normal = simulate(DEFAULT_OPTIONS);
+  const forgetful = simulate({ ...DEFAULT_OPTIONS, forgetSpeed: 3 });
+  assert.ok(forgetful.totals.gainedIn30 < normal.totals.gainedIn30);
+  const fiveStar = (t: typeof normal.totals) => t.harvests[5] / t.harvests.reduce((sum, n) => sum + n, 0);
+  assert.ok(fiveStar(forgetful.totals) < fiveStar(normal.totals));
 });
