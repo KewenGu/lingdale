@@ -44,6 +44,7 @@ export function blankState(now: number): CardState {
     dueAt: now,
     wrongStreak: 0,
     cycleWrongs: 0,
+    drillStreak: 0,
     reps: 0,
     lapses: 0,
     lastReviewAt: now,
@@ -59,36 +60,62 @@ export function rest(state: CardState, mastery: number, now: number, tzOffsetMs:
     dueAt: gameDayStart(gameDay(now, tzOffsetMs) + restGameDays, tzOffsetMs),
     wrongStreak: 0,
     cycleWrongs: 0,
+    drillStreak: 0,
     reps: state.reps,
     lapses: state.lapses,
     lastReviewAt: state.lastReviewAt,
   };
 }
 
-/**
- * 在矿里答了一次。答对:升级并去休息。答错:降级,进词袋等着被种下。
- * stays 为真表示答错的词没地方种,留在矿里:按降级后的掌握度休息,到期再考一次。
- */
-export function mined(
-  state: CardState,
-  correct: boolean,
-  now: number,
-  tzOffsetMs: number,
-  stays: boolean = false,
-): CardState {
+/** 在矿里答了一次。答对:升级并去休息。答错:降级,进词袋等着被种下。 */
+export function mined(state: CardState, correct: boolean, now: number, tzOffsetMs: number): CardState {
   const answered: CardState = {
     mastery: state.mastery,
     stage: 0,
     dueAt: now,
     wrongStreak: 0,
     cycleWrongs: 0,
+    drillStreak: 0,
     reps: state.reps + 1,
     lapses: state.lapses + (correct ? 0 : 1),
     lastReviewAt: now,
   };
   if (correct) return rest(answered, masteryAfterHit(state.mastery), now, tzOffsetMs);
   answered.mastery = masteryAfterLapse(state.mastery);
-  return stays ? rest(answered, answered.mastery, now, tzOffsetMs) : answered;
+  return answered;
+}
+
+/**
+ * 词袋里的词在矿里练了一次。只记连续答对的次数,不改掌握度,也不计入累计作答:
+ * 几分钟内的连对靠的是短期记忆,不能当成记住了。
+ */
+export function drilled(state: CardState, correct: boolean, now: number): CardState {
+  return {
+    mastery: state.mastery,
+    stage: 0,
+    dueAt: state.dueAt,
+    wrongStreak: 0,
+    cycleWrongs: 0,
+    drillStreak: correct ? state.drillStreak + 1 : 0,
+    reps: state.reps,
+    lapses: state.lapses,
+    lastReviewAt: now,
+  };
+}
+
+/** 练够了,离开词袋:下一个游戏日(至少隔 6 小时)回到矿里再考一次,那一次才算数。掌握度不变。 */
+export function graduate(state: CardState, now: number, tzOffsetMs: number): CardState {
+  return {
+    mastery: state.mastery,
+    stage: 0,
+    dueAt: nextWaterTime(now, tzOffsetMs),
+    wrongStreak: 0,
+    cycleWrongs: 0,
+    drillStreak: 0,
+    reps: state.reps,
+    lapses: state.lapses,
+    lastReviewAt: now,
+  };
 }
 
 /** 词被种下,开始一轮新的生长。品质从五星算起。 */
@@ -99,6 +126,7 @@ export function startCycle(state: CardState, now: number, tzOffsetMs: number): C
     dueAt: nextWaterTime(now, tzOffsetMs),
     wrongStreak: 0,
     cycleWrongs: 0,
+    drillStreak: 0,
     reps: state.reps,
     lapses: state.lapses,
     lastReviewAt: now,
@@ -118,6 +146,7 @@ export function water(state: CardState, grade: Grade, now: number, tzOffsetMs: n
     dueAt: nextWaterTime(now, tzOffsetMs),
     wrongStreak: wrong ? state.wrongStreak + 1 : 0,
     cycleWrongs: state.cycleWrongs + (wrong ? 1 : 0),
+    drillStreak: 0,
     reps: state.reps + 1,
     lapses: state.lapses + (wrong ? 1 : 0),
     lastReviewAt: now,

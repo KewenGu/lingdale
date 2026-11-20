@@ -127,7 +127,7 @@ Crop { id, deckId, cardId, plantedAt, cropType }
 | 作物的生长形态、品质、健康状态 | 这个词的 `CardState` |
 | 作物能不能浇水 | `dueAt` 和当前时间 |
 | 哪些旧词回到了矿里 | 所有词的 `dueAt`,去掉正在田里的和词袋里的 |
-| 答错的额度、没地方种的生词有几个、矿洞开没开门 | 空地块数、词袋里的词数、矿里掌握度是 0 的词、有没有到期的旧词和没见过的新词 |
+| 答错的额度、下一条矿脉是复习、新词还是练习 | 空地块数、词袋里的词数和顺序、有没有到期的旧词和没见过的新词 |
 | 矿石的品级 | 答对后这个词的掌握度 |
 | 玩家等级 | `xp` |
 | 现在是哪个季节 | `startDay` 和当前时间 |
@@ -180,22 +180,23 @@ gameDay(now, tz) = floor((now + tz - 4 小时) / 12 小时)
 界面:玩家进矿洞
   → new MineSession(save, deck, rng)
   → session.current(now)                     mineStatus → 下一条矿脉 → makeQuestion
-      矿洞关门时返回 null,session.closed(now) 给出原因
+      没有矿脉可挖时返回 null
 界面:展示题目,玩家作答
   → session.submit(response, now, elapsedMs)
       → isCorrect                            判对错
       → dig(save, deck, cardId, correct, now, rng)
-          → scheduler.mined                  算出答题后的状态
+          → scheduler.mined                  算出答题后的状态(练习是 scheduler.drilled)
           → 写作答日志
           → 答对:矿石进库存,词去休息
           → 答错:词进词袋
+          → 练习:记连对几次;练够了离开词袋,隔天再考
           → addXp                            结算经验和升级
 界面:按返回值播放爆矿、运气好、进词袋、升级
   → 循环直到 session.current(now) 返回 null 或玩家离开
   → serialize(save) 存档
 ```
 
-矿里答错不会当场重复练习,所以挖矿会话没有队列,每次都重新问 `mineStatus` 要下一条矿脉。
+挖矿会话自己没有队列,每次都重新问 `mineStatus` 要下一条矿脉。
 
 ## 一次浇水的数据流
 

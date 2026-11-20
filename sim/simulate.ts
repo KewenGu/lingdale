@@ -13,6 +13,8 @@ function parseArgs(argv: string[]): SimOptions {
     else if (key === 'accuracy') options.pGood = Number(value);
     else if (key === 'digs') options.digsPerSession = Number(value);
     else if (key === 'recall') options.retryRecall = Number(value);
+    else if (key === 'nodrill') options.drills = false;
+    else if (key === 'nofarm') options.plants = false;
     else if (key === 'skip') options.skipProb = Number(value);
     else if (key === 'seed') options.seed = Number(value);
     else if (key === 'buy') options.autoBuy = true;
@@ -97,9 +99,9 @@ console.log(
 );
 console.log(
   `见过 ${last.seen} 词,掌握 ${last.mastered} 词,其中牢固 ${last.solid} 词;积压 ${last.backlog} 词;` +
-    `${totals.sessions} 次打开里有 ${totals.closedForRoom} 次没挖满就因为田里没地方停下,其中 ${totals.sessionsNoDig} 次一题都没挖成;` +
+    `${totals.sessions} 次打开里有 ${totals.stoppedEarly} 次没挖满就停下,其中 ${totals.sessionsNoDig} 次一题都没挖成;` +
     `平均每次挖 ${(totals.digs / Math.max(1, totals.sessions)).toFixed(1)} 题,离开时平均还有 ${(totals.dueLeft / Math.max(1, totals.sessions)).toFixed(1)} 个到期的旧词没复习;` +
-    `田满时新词答错、留在矿里再考 ${totals.deferredNew} 次,其中 ${totals.deferredPassed} 个再考时答对、不用种;` +
-    `没地方种的生词最多攒到 ${totals.waitingPeak} 个,种完之后词袋里最多还剩 ${totals.bagPeak} 个词;` +
+    `练词袋里的词 ${totals.drills} 题,${totals.graduated} 次练到离开词袋,隔天再考答对 ${totals.checksPassed} 次、答错回词袋 ${totals.checksFailed} 次;` +
+    `离开时词袋里最多还剩 ${totals.bagPeak} 个词;` +
     `第一次有收入是第 ${firstIncome ? firstIncome.day : '-'} 天;第 ${rows.length} 天 ${last.level} 级`,
 );

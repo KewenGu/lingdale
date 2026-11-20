@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import {
   MAX_MASTERY,
-  WAITING_CAP,
+  BAG_EXTRA,
   WATERINGS_TO_HARVEST,
   activeProgress,
   getState,
@@ -36,8 +36,11 @@ test('长期运行后存档保持自洽(含缺勤、扩建和作物死亡)', () 
     const inBag = new Set(progress.wordBag);
     assert.equal(inBag.size, progress.wordBag.length, '词袋里有重复的词');
     for (const id of inBag) assert.ok(!inField.has(id), `${id} 既在田里又在词袋里`);
-    // 没地方种的生词有上限。新词到上限就停;旧词答错还会排队,所以会超出一些,但不会无限增长
-    assert.ok(totals.waitingPeak <= WAITING_CAP * 4, `没地方种的生词最多攒到过 ${totals.waitingPeak} 个`);
+    // 词袋有上限。新词到上限就停;旧词答错还会进来,所以会超出一些,但不会无限增长
+    assert.ok(totals.bagPeak <= BAG_EXTRA * 4, `离开时词袋里最多剩过 ${totals.bagPeak} 个词`);
+    for (const id of Object.keys(progress.cards)) {
+      if (!inBag.has(id)) assert.equal(progress.cards[id].drillStreak, 0, `${id} 不在词袋里却带着练习的进度`);
+    }
 
     for (const id of Object.keys(progress.cards)) {
       const state = progress.cards[id];
@@ -52,7 +55,11 @@ test('长期运行后存档保持自洽(含缺勤、扩建和作物死亡)', () 
 
     const harvested = totals.harvests.reduce((sum, n) => sum + n, 0);
     assert.equal(harvested + totals.cropsDied + inField.size, totals.cropsPlanted);
-    assert.equal(totals.missedNew + totals.missedReview, totals.cropsPlanted + progress.wordBag.length);
+    // 进过词袋的词:要么种下了,要么还在词袋里,要么在矿里练到离开了
+    assert.equal(
+      totals.missedNew + totals.missedReview,
+      totals.cropsPlanted + progress.wordBag.length + totals.graduated,
+    );
     // 每株作物用掉一颗种子:要么是买的,要么是商店送的
     assert.equal(totals.seedsBought + totals.reliefSeeds, totals.cropsPlanted + save.seeds.choice);
     assert.ok(totals.cropsDied > 0, '这组参数下应该有作物死亡');
@@ -101,20 +108,29 @@ test('第一次就蒙对的词会被之后的复习筛出来,不会一直算作�
   assert.ok(totals.flukedSolid <= 3);
 });
 
-test('挖得多、学得吃力也不会堆积:没地方种的生词始终有限', () => {
+test('挖得多、学得吃力也不会堆积:词袋始终有限', () => {
   for (const options of [
     { digsPerSession: 100 },
     { knownShare: 0, digsPerSession: 100 },
     { pGood: 0.7, retryRecall: 0.3, digsPerSession: 100 },
   ]) {
     const { rows, totals } = simulate({ ...DEFAULT_OPTIONS, ...options });
-    assert.ok(totals.waitingPeak <= WAITING_CAP * 4, `没地方种的生词最多攒到过 ${totals.waitingPeak} 个`);
-    assert.ok(rows[rows.length - 1].bag <= WAITING_CAP * 4);
+    assert.ok(totals.bagPeak <= BAG_EXTRA * 4, `离开时词袋里最多剩过 ${totals.bagPeak} 个词`);
+    assert.ok(rows[rows.length - 1].bag <= BAG_EXTRA * 4);
   }
 });
 
-test('田满时留在矿里再考的新词:一部分再考时答对,省掉一次种植', () => {
-  const { totals } = simulate(DEFAULT_OPTIONS);
-  assert.ok(totals.deferredNew > 50, `留在矿里再考 ${totals.deferredNew} 次`);
-  assert.ok(totals.deferredPassed > 0 && totals.deferredPassed < totals.deferredNew);
+test('田满了也一直有题可做:词袋装满就练词袋里的词,一部分练出去之后隔天再考能答对', () => {
+  const { totals } = simulate({ ...DEFAULT_OPTIONS, digsPerSession: 60 });
+  assert.equal(totals.stoppedEarly, 0);
+  assert.equal(totals.digs, totals.sessions * 60);
+  assert.ok(totals.graduated > 50, `练到离开词袋 ${totals.graduated} 次`);
+  assert.ok(totals.checksPassed > 0 && totals.checksFailed > 0);
+});
+
+test('只在矿里练、从不种田,学得比种田慢得多', () => {
+  const farming = simulate(DEFAULT_OPTIONS);
+  const mining = simulate({ ...DEFAULT_OPTIONS, plants: false });
+  assert.ok(mining.rows[59].solid * 3 < farming.rows[59].solid);
+  assert.ok(mining.totals.bagPeak <= 30 + BAG_EXTRA * 4);
 });

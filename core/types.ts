@@ -31,6 +31,7 @@ export interface CardState {
   dueAt: number; // 在田里:下次可以浇水的时间;在休息:休息结束、重新出现在矿里的时间
   wrongStreak: number; // 这一轮里连续答错的次数,答对或 hard 后清零
   cycleWrongs: number; // 这一轮里答错的总次数,决定收获品质
+  drillStreak: number; // 在词袋里:在矿里练习时连续答对了几次;不在词袋里时为 0
   reps: number; // 累计作答次数
   lapses: number; // 累计答错次数
   lastReviewAt: number;
@@ -41,7 +42,7 @@ export interface ReviewLog {
   cardId: string;
   at: number;
   grade: Grade;
-  place: 'mine' | 'farm'; // 在矿里挖的,还是在田里浇水
+  place: 'mine' | 'farm' | 'drill'; // 在矿里挖的,在田里浇水,还是在矿里练词袋里的词(练习不改变掌握度)
   fresh: boolean; // 是不是第一次见到这个词(只可能出现在矿里)
   mastery: number; // 作答时的掌握度
   stage: number; // 作答前这一轮已浇对的次数;矿里的是 0

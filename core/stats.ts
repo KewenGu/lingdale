@@ -11,11 +11,11 @@ export interface ReviewStats {
   accuracy: number | null; // 没答错的比例;没有记录时为 null
 }
 
-/** 统计 [from, to) 时间段内、作答时掌握度不低于 minMastery 的首次作答。 */
+/** 统计 [from, to) 时间段内、作答时掌握度不低于 minMastery 的首次作答。矿里的练习不算:它可以反复答同一个词。 */
 export function statsBetween(save: SaveData, from: number, to: number, minMastery: number = 0): ReviewStats {
   const stats: ReviewStats = { reviews: 0, good: 0, hard: 0, again: 0, accuracy: null };
   for (const log of activeProgress(save).logs) {
-    if (log.at < from || log.at >= to || log.mastery < minMastery) continue;
+    if (log.at < from || log.at >= to || log.mastery < minMastery || log.place === 'drill') continue;
     stats.reviews++;
     stats[log.grade]++;
   }

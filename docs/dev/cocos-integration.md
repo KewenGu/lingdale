@@ -55,21 +55,23 @@ const session = new MineSession(save, deck, Math.random);
 
 let turn = session.current(platform.now());
 while (turn) {
-  // turn.vein.source     'new' 或 'review',可以用不同的矿脉外观
-  // turn.vein.mastery    旧词的掌握度,决定答对会出哪一级矿石
-  // turn.allowance       答错的额度:新词还能答错几次。复习不受它限制,它是 0 时也可能在挖旧词
+  // turn.vein.source       'review' 复习旧词,'new' 新词,'drill' 练词袋里的词。三种要长得不一样
+  // turn.vein.mastery      旧词的掌握度,决定答对会出哪一级矿石
+  // turn.vein.drillStreak  练习矿脉:这个词已经连续答对了几次(满 5 次离开词袋)
+  // turn.allowance         答错的额度:词袋还装得下几个词。到 0 就不出新词,改成练习
   const response = await askPlayer(turn.question);
   const result = session.submit(response, platform.now(), elapsedMs);
 
   // result.correct                  答对了没有
-  // result.oreGrade / .lucky        爆出的矿石品级;运气好时多升了一级
+  // result.oreGrade / .lucky        爆出的矿石品级;运气好时多升了一级。练习不出矿石
   // result.bagged                   答错,这个词进了词袋
-  // result.deferred                 答错的新词没地方种,留在矿里,下一个游戏日再考
+  // result.drillStreak              练习:这次之后连续答对了几次
+  // result.graduated                练习:练够了,这个词离开词袋,下一个游戏日再考
   // result.allowance                这次之后答错的额度
   // result.levelAfter / .unlocked   升级和新解锁的内容
   turn = session.current(platform.now());
 }
-session.closed(platform.now());   // 'no_room':田里没地方了;'exhausted':没有矿脉可挖;null:玩家自己离开
+session.closed(platform.now());   // 'exhausted':没有矿脉可挖;null:玩家自己离开
 await platform.save(serialize(save));
 
 save.ore;                 // 各品级矿石的数量,下标是品级
@@ -77,18 +79,18 @@ sellOre(save, 3, 2);      // 卖 2 块 3 级矿石
 sellAllOre(save);         // 全卖
 ```
 
-田满了新词照样能挖。这时答错的新词不进词袋(`result.deferred`),下一个游戏日作为旧词回到矿里再考;
-没地方种的生词攒到 `WAITING_CAP` 个,额度才到 0。额度是 0 也能复习:只要有到期的旧词,`current` 就会一直给出矿脉,
-答错的旧词进词袋排队。到期的旧词挖完之后才是 `no_room`。`waitingWords(save)` 给出现在有几个没地方种的生词。
+矿洞不会因为田满而关门。矿脉的顺序是:到期的旧词、新词(词袋还装得下的时候)、词袋里的词(练习)。
+词袋最多比空地多装 `BAG_EXTRA` 个词;答错的旧词不受这个限制。
 
-矿洞关门时要告诉玩家怎么重新开门:`no_room` 时引导他去浇水收获,`exhausted` 时告诉他旧词什么时候回来。
-模拟里学得吃力的人经常挖到一半就停(见[数值与平衡](../design/04-economy-balance.md#2-田满之后还能做什么)),这个提示不是可有可无的。
-画法见[美术规范](../design/07-art-direction.md#矿洞关门)。三点要注意:
+接界面时要注意:
 
-- 额度是 0、矿脉是旧词的时候,界面不能再写"还能答错 0 次":这时答错是允许的。答错的词去了哪里也要说清楚:
-  进了词袋,还是留在矿里明天再考。怎么表达还没有设计,见美术规范的"还没定的"。
-- 种下词袋里的词不会恢复额度:种下一个词,空地和词袋各减一。能恢复的是收获、作物死亡、`unlockPlot`,以及等着再考的生词答对。
-  词袋里的词仍然要引导玩家种下,否则它们永远不会收获。
+- **三种矿脉要分得清。** 尤其是练习:它不出矿石、不给经验,玩家要知道现在是在练词袋里的词,
+  以及这个词连对了几次、还差几次。答错时连对清零,也要让他看见。
+- **练够了要交代去向:** "这个词离开词袋了,明天矿里再考一次,答对才算数"。
+- **"还能答错几次"到 0 不是坏消息**,只是换成练习了。不要写成"次数用完了"。
+- 种下词袋里的词不会恢复额度:种下一个词,空地和词袋各减一。能恢复的是收获、作物死亡、`unlockPlot`,以及词袋里的词练到离开。
+  词袋里的词仍然要引导玩家种下:练习比种田慢得多(见[数值与平衡](../design/04-economy-balance.md#2-田满之后还能做什么))。
+- 这些画面还没有设计,见[美术规范](../design/07-art-direction.md#还没定的)。
 - `exhausted` 的画面需要旧词各在什么时候到期,用 `restingVeins(save, now)`:返回还在休息的旧词,最早回来的在前,
   每项有到期时间和现在的掌握度(回来时答对,矿石比它高一级)。不要在界面层自己算。
 
@@ -226,8 +228,7 @@ interface Platform {
 2. **答题的手感。** 答对时的生长、答错时的反馈、收获时的星级展示,决定了每天几十次答题是享受还是忍受。
 3. **答错时和播种时的单词卡片。** 玩家在矿里答错一个词时第一次看到正确答案,播种时再看一次。
    两处都要给够时间和信息:发音、释义、例句。
-4. **矿洞的答错额度和关门状态。** 玩家要随时看得到新词还能答错几次,关门时要知道去做什么能重新开门。
-   田满了只剩复习的时候也要说清楚:现在挖的是旧词,答错不要紧。
+4. **矿洞的答错额度和三种矿脉。** 玩家要随时看得到新词还能答错几次,以及现在挖的是旧词、新词,还是在练词袋里的词。
    示意稿见[矿洞画面的页面](../design/mine-screens/index.html)。
 5. **地块多了之后的布局。** 30 块地一屏能放下,扩建到 120 块需要滚动或分区。
 6. **拼写题的输入。** 手机上打字慢,考虑字母块点选等更适合触屏的方式。核心层只要求最终拿到一个字符串。
