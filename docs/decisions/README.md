@@ -13,9 +13,9 @@
 | [0003](0003-single-player-level.md) | 所有经验汇总成一个玩家等级,小镇的繁荣跟着等级走 | 生效 |
 | [0004](0004-one-crop-one-word.md) | 一株作物就是一个词 | 生效 |
 | [0005](0005-cost-of-wrong-answers.md) | 答错的代价:不生长、扣星、枯萎、死亡 | 生效 |
-| [0006](0006-mastery-cycle-and-generic-seeds.md) | 种子不绑定单词,词按掌握度循环 | 生效 |
+| [0006](0006-mastery-cycle-and-generic-seeds.md) | 种子不绑定单词,词按掌握度循环 | 部分被 0016 取代 |
 | [0007](0007-twelve-hour-game-day.md) | 游戏里的一天是现实里的 12 小时 | 生效 |
-| [0008](0008-coins-only-from-selling.md) | 金币只来自卖作物 | 生效 |
+| [0008](0008-coins-only-from-selling.md) | 金币只来自卖作物 | 生效,被 0016 扩展到矿石 |
 | [0009](0009-seasons-change-crops-not-rules.md) | 季节只换作物,不改规则 | 生效 |
 | [0010](0010-crop-type-sets-question-type.md) | 作物种类决定题型,全部用客观题 | 生效 |
 | [0011](0011-name.md) | 名称:Lingu Town / 灵谷小镇 | 英文名已被 0014 取代 |
@@ -23,6 +23,7 @@
 | [0013](0013-content-voice-art-and-budget.md) | 对外内容的口吻、美术来源和投入上限 | 生效 |
 | [0014](0014-english-name-lingdale.md) | 英文名改为 Lingdale | 生效 |
 | [0015](0015-art-direction-paper-collage.md) | 美术方向:彩纸拼贴 | 生效 |
+| [0016](0016-mine-screens-farm-teaches.md) | 矿洞负责筛选和复习,田负责学会,种子在商店买 | 生效 |
 
 ## 什么时候写一条
 

@@ -1,20 +1,21 @@
 import { QuestionType } from './types';
 
-// 作物种类决定题型。种子按题型分三种,不绑定单词;
-// 同一种题型在不同季节长成不同的作物,规则完全一样,只是外观和名字不同。
+// 作物种类决定题型。种子在商店按品种买,种哪种种子,这株作物浇水时就出哪种题;
+// 同一类作物在不同季节外观和名字不同,规则完全一样。
+// 种子不决定种的是哪个词:词来自矿洞,种下时种子带上词袋里的一个词。
 
-export interface SeedKind {
+export interface CropKind {
   questionType: QuestionType;
   label: string;
-  seedPrice: number;
-  priceMultiplier: number; // 这种作物的售价是基础售价的几倍
+  seedPrice: number; // 一颗种子的价格
+  priceMultiplier: number; // 这类作物的售价是基础售价的几倍
   unlockLevel: number; // 玩家到这个等级才能买和种
 }
 
-/** 三种种子,从易到难。越难的种子越贵,长出的作物也越值钱。 */
-export const SEED_KINDS: SeedKind[] = [
-  { questionType: 'choice', label: '看词选义', seedPrice: 4, priceMultiplier: 1, unlockLevel: 1 },
-  { questionType: 'reverse', label: '看义选词', seedPrice: 6, priceMultiplier: 1.5, unlockLevel: 4 },
+/** 三类作物,从易到难。越难的种子越贵,长出的作物也越值钱。基础种子的价格等于一块最低级的矿石。 */
+export const CROP_KINDS: CropKind[] = [
+  { questionType: 'choice', label: '看词选义', seedPrice: 2, priceMultiplier: 1, unlockLevel: 1 },
+  { questionType: 'reverse', label: '看义选词', seedPrice: 5, priceMultiplier: 1.5, unlockLevel: 4 },
   { questionType: 'spell', label: '拼写', seedPrice: 10, priceMultiplier: 2.5, unlockLevel: 8 },
 ];
 
@@ -41,9 +42,9 @@ export const CROPS: CropType[] = [
   { id: 'snowpea', name: '雪豆', season: 3, questionType: 'spell' },
 ];
 
-export function seedKind(questionType: QuestionType): SeedKind {
-  for (const kind of SEED_KINDS) if (kind.questionType === questionType) return kind;
-  throw new Error(`没有这种种子: ${questionType}`);
+export function cropKind(questionType: QuestionType): CropKind {
+  for (const kind of CROP_KINDS) if (kind.questionType === questionType) return kind;
+  throw new Error(`没有这类作物: ${questionType}`);
 }
 
 export function cropType(id: string): CropType {

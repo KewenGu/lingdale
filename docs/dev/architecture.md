@@ -32,21 +32,24 @@
 | 文件 | 职责 | 依赖 |
 |---|---|---|
 | `types.ts` | 所有数据类型 | 无 |
-| `constants.ts` | 时间、掌握度、作物相关的规则常量 | 无 |
+| `constants.ts` | 时间、掌握度、矿石、作物相关的规则常量 | 无 |
 | `time.ts` | 游戏日、下次浇水时间、日历 | constants |
 | `crops.ts` | 种子种类表和作物表 | types |
-| `economy.ts` | 种子供应、地块价格、作物售价 | constants、crops |
+| `economy.ts` | 地块价格、作物售价、矿石售价 | constants、crops |
 | `level.ts` | 经验来源、升级曲线、等级解锁、`addXp` | types |
-| `scheduler.ts` | 一个词的状态怎么随浇水、收获、死亡变化。全是纯函数 | constants、time |
+| `scheduler.ts` | 一个词的状态怎么随挖矿、浇水、收获、死亡变化。全是纯函数 | constants、time |
 | `deck.ts` | 按 id 查卡片 | types |
 | `save.ts` | 创建存档、序列化、读取词的状态 | constants、economy、time |
-| `farm.ts` | 游戏操作:领种子、买种子、播种、浇水、卖作物、解锁地块,以及所有查询 | 以上全部 |
+| `farm.ts` | 田和商店:买种子、兜底种子、播种、浇水、卖作物、解锁地块,以及作物的所有查询 | 以上全部 |
+| `mine.ts` | 矿洞:下一条矿脉、答错的额度、挖矿、卖矿石 | farm、scheduler、economy、level、save |
 | `quiz.ts` | 按题型出题、判对错 | constants、deck |
-| `session.ts` | 一次浇水会话:出题顺序、首次作答、重复练习 | farm、quiz |
+| `session.ts` | 一次浇水会话(出题顺序、首次作答、重复练习)和一次挖矿会话 | farm、mine、quiz |
 | `stats.ts` | 从作答日志算统计 | constants、save、time |
 | `index.ts` | 统一导出 | |
 
-依赖方向是单向的,从上到下。`scheduler.ts` 不知道地块和金币的存在,`farm.ts` 不知道题目长什么样。
+依赖方向是单向的,从上到下。`scheduler.ts` 不知道地块和金币的存在,`farm.ts` 和 `mine.ts` 不知道题目长什么样。
+
+矿洞和田只通过两样东西相连:词袋(矿里答错的词进去,播种时取出来)和词的休息时间(收获或死亡后到期,词回到矿里)。
 
 ## 数据模型
 
@@ -65,13 +68,15 @@ Card { id, front, back, phonetic?, example?, exampleTranslation?, audioKey? }
 CardState {
   mastery       掌握度,0 是新词
   stage         这一轮已经浇对几次水
-  dueAt         在田里:下次能浇水的时间;不在田里:休息结束的时间
+  dueAt         在田里:下次能浇水的时间;不在田里:休息结束、回到矿里的时间
   wrongStreak   这一轮连续答错的次数
   cycleWrongs   这一轮答错的总次数,决定品质
   reps, lapses  累计作答和答错次数
   lastReviewAt
 }
-ReviewLog { cardId, at, grade, mastery, stage, questionType, elapsedMs }
+ReviewLog { cardId, at, grade, place, fresh, mastery, stage, questionType, elapsedMs }
+  place         'mine' 或 'farm'
+  fresh         是不是第一次见到这个词
 ```
 
 **游戏层**:
@@ -79,12 +84,13 @@ ReviewLog { cardId, at, grade, mastery, stage, questionType, elapsedMs }
 ```
 SaveData {
   schemaVersion, tzOffsetMs, startDay, activeDeckId
-  progress: { [deckId]: DeckProgress { cards, cursor, logs } }
+  progress: { [deckId]: DeckProgress { cards, cursor, wordBag, logs } }
+                                       wordBag 是矿里答错、还没种下的词
   plots: Plot[] { unlocked, crop: Crop | null }
   coins, xp
-  seeds: { choice, reverse, spell }
-  seedGiftDay, shopDay, shopBought
+  seeds: { choice, reverse, spell }    各品种种子的数量
   produce: { [cropId]: number[] }      各星级的库存数量
+  ore: number[]                        各品级矿石的数量
   updatedAt
 }
 Crop { id, deckId, cardId, plantedAt, cropType }
@@ -120,7 +126,9 @@ Crop { id, deckId, cardId, plantedAt, cropType }
 |---|---|
 | 作物的生长形态、品质、健康状态 | 这个词的 `CardState` |
 | 作物能不能浇水 | `dueAt` 和当前时间 |
-| 哪些词该复习 | 所有词的 `dueAt`,去掉正在田里的 |
+| 哪些旧词回到了矿里 | 所有词的 `dueAt`,去掉正在田里的和词袋里的 |
+| 还能在矿里答错几次、矿洞开没开门 | 空地块数、词袋里的词数、有没有矿脉 |
+| 矿石的品级 | 答对后这个词的掌握度 |
 | 玩家等级 | `xp` |
 | 现在是哪个季节 | `startDay` 和当前时间 |
 
@@ -136,9 +144,9 @@ Crop { id, deckId, cardId, plantedAt, cropType }
 ### 5. 修改状态的函数和纯函数分开
 
 - `scheduler.ts`、`time.ts`、`economy.ts`、`quiz.ts` 里是纯函数,返回新值,不修改参数。
-- `farm.ts` 和 `session.ts` 里的函数直接修改传入的 `save`,并在注释里写明。
+- `farm.ts`、`mine.ts` 和 `session.ts` 里的函数直接修改传入的 `save`,并在注释里写明。
 
-界面层调用 `farm.ts` 的函数后,存档已经是新状态,返回值描述的是"刚才发生了什么",用来驱动动画。
+界面层调用 `farm.ts`、`mine.ts` 的函数后,存档已经是新状态,返回值描述的是"刚才发生了什么",用来驱动动画。
 
 ### 6. 存档版本
 
@@ -148,8 +156,8 @@ Crop { id, deckId, cardId, plantedAt, cropType }
 
 ### 7. 多卡组的预留
 
-目前只有一个当前卡组(`activeDeckId`),但存档结构已经按多卡组设计:学习进度按卡组分开存(`progress[deckId]`),
-`Crop` 记录了自己属于哪个卡组。经验、金币、地块、种子是全局的,不分卡组。
+目前只有一个当前卡组(`activeDeckId`),但存档结构已经按多卡组设计:学习进度和词袋按卡组分开存(`progress[deckId]`),
+`Crop` 记录了自己属于哪个卡组。经验、金币、地块、种子、矿石是全局的,不分卡组。
 
 函数接口目前只操作当前卡组。真要做多卡组时改函数签名即可,存档不用迁移。
 
@@ -165,6 +173,29 @@ gameDay(now, tz) = floor((now + tz - 4 小时) / 12 小时)
 - 浇水后的下次可浇时间是 `max(下个游戏日开始, 现在 + 6 小时)`。
 - 休息的到期时间对齐到游戏日的开始,所以词总是在换日时"回来"。
 - 玩家跨时区旅行时,`tzOffsetMs` 更新后游戏日边界随之移动,不需要特殊处理。
+
+## 一次挖矿的数据流
+
+```
+界面:玩家进矿洞
+  → new MineSession(save, deck, rng)
+  → session.current(now)                     mineStatus → 下一条矿脉 → makeQuestion
+      矿洞关门时返回 null,session.closed(now) 给出原因
+界面:展示题目,玩家作答
+  → session.submit(response, now, elapsedMs)
+      → isCorrect                            判对错
+      → dig(save, deck, cardId, correct, now, rng)
+          → scheduler.mined                  算出答题后的状态
+          → 写作答日志
+          → 答对:矿石进库存,词去休息
+          → 答错:词进词袋
+          → addXp                            结算经验和升级
+界面:按返回值播放爆矿、运气好、进词袋、升级
+  → 循环直到 session.current(now) 返回 null 或玩家离开
+  → serialize(save) 存档
+```
+
+矿里答错不会当场重复练习,所以挖矿会话没有队列,每次都重新问 `mineStatus` 要下一条矿脉。
 
 ## 一次浇水的数据流
 

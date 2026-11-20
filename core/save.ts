@@ -1,5 +1,4 @@
-import { INITIAL_PLOTS, SCHEMA_VERSION, TOTAL_PLOTS } from './constants';
-import { STARTING_SEEDS } from './economy';
+import { INITIAL_PLOTS, MAX_MASTERY, SCHEMA_VERSION, TOTAL_PLOTS } from './constants';
 import { gameDay } from './time';
 import { CardState, DeckProgress, Plot, SaveData } from './types';
 
@@ -8,21 +7,20 @@ export function createSave(deckId: string, now: number, tzOffsetMs: number): Sav
   for (let i = 0; i < TOTAL_PLOTS; i++) {
     plots.push({ unlocked: i < INITIAL_PLOTS, crop: null });
   }
-  const today = gameDay(now, tzOffsetMs);
+  const ore: number[] = [];
+  for (let grade = 0; grade <= MAX_MASTERY; grade++) ore.push(0);
   return {
     schemaVersion: SCHEMA_VERSION,
     tzOffsetMs,
-    startDay: today,
+    startDay: gameDay(now, tzOffsetMs),
     activeDeckId: deckId,
     progress: {},
     plots,
     coins: 0,
     xp: 0,
-    seeds: { choice: STARTING_SEEDS, reverse: 0, spell: 0 },
-    seedGiftDay: today - 1,
-    shopDay: today,
-    shopBought: 0,
+    seeds: { choice: 0, reverse: 0, spell: 0 },
     produce: {},
+    ore,
     updatedAt: now,
   };
 }
@@ -31,7 +29,7 @@ export function createSave(deckId: string, now: number, tzOffsetMs: number): Sav
 export function activeProgress(save: SaveData): DeckProgress {
   const id = save.activeDeckId;
   if (!Object.prototype.hasOwnProperty.call(save.progress, id)) {
-    save.progress[id] = { cards: {}, cursor: 0, logs: [] };
+    save.progress[id] = { cards: {}, cursor: 0, wordBag: [], logs: [] };
   }
   return save.progress[id];
 }

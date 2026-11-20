@@ -3,13 +3,13 @@ import { SaveData, Grade } from './types';
 // 玩家等级是所有学习活动的汇总:不管经验来自哪个卡组、哪种玩法,都通过 addXp 进到同一个数字里。
 // 等级本身不存档,由累计经验实时算出。
 
-/** 每种下一个新词的经验。 */
+/** 每种下一颗种子的经验。 */
 export const XP_PLANT = 2;
 
 export const XP_LEVEL_BASE = 10;
 export const XP_LEVEL_STEP = 15;
 
-/** 浇水答对的经验随掌握度增长:奖励的是长期记住,而不是刷新词。 */
+/** 答对的经验随掌握度增长,挖矿和浇水都一样:奖励的是长期记住,而不是刷新词。 */
 export function xpForAnswer(mastery: number, grade: Grade): number {
   if (grade === 'again') return 0;
   const full = mastery + 1;
