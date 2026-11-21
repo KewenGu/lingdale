@@ -165,7 +165,7 @@ if (result.ok) {
 
 ```ts
 import {
-  FeedSession, GrassSession, animalCondition, animalType, breed, buyLivestock, buyMedicine, canBreed, cureAnimal,
+  FeedSession, GrassSession, animalCondition, animalType, breed, buyHay, buyLivestock, buyMedicine, canBreed, cureAnimal,
   feedStatus, goodPrice, grassField, grassStatus, houseCount, isGrown, livestockCost, livestockSellPrice,
   rationOf, sellGoods, sellHay, sellLivestock, settlePasture,
 } from './core/index';
@@ -191,7 +191,7 @@ save.herd.forEach((animal, index) => {
   animalCondition(animal);    // 'well' 好好的 / 'hungry' 饿着 / 'sick' 病了
   animal.hungryDays;          // 连续饿了几个游戏日。到 HUNGRY_DAYS_TO_SICK 生病
   animal.sickDays;            // 病了几个游戏日。到 SICK_DAYS_TO_DIE 死亡
-  animal.pregnantDays;        // 怀了(鸡是抱窝)几个游戏日,没怀是 null
+  animal.pregnantDays;        // 怀了(鸡是抱窝)几个游戏日,没怀是 null。到 type.gestationDays 生;怀着的时候没有产出
   canBreed(save, index);      // 能不能让它生小的
 });
 
@@ -225,6 +225,7 @@ while (turn) {
 }
 
 sellHay(save, now, 10);     // 卖 10 捆牧草;不传数量就全卖
+buyHay(save, 10);           // 在商店买 10 捆牧草,直接进草垛。钱不够返回 false
 sellGoods(save, 'milk');    // 牛奶全卖;'wool'、'eggs' 同理,goodPrice('eggs') 是单价
 ```
 
@@ -240,7 +241,7 @@ sellGoods(save, 'milk');    // 牛奶全卖;'wool'、'eggs' 同理,goodPrice('eg
 - **羊毛三个游戏日才有一份**,可以画出"毛长到哪了":`(animal.fedDays - type.growthDays) % type.yieldDays`。
 - **饿着、病了要画得出来**,病了的牛旁边要有"去买药"的入口。药只治病不管饱,用药之前最好提醒草垛是不是空的。
 - **牛快死的时候要提前说**(比如病了一周以上)。牛死了要有交代,不能悄悄少一头。
-- 怀小牛之前要让玩家知道多一头牛每天多吃多少草。
+- 怀小的之前要让玩家知道两件事:多一只每天多吃多少;怀着的这段时间它没有产出。
 - **卖牛的入口要好找。** 养几头牛是玩家自己选的学习量,觉得累了要能随时少养几头,不该等牛饿病了才发现可以卖。
 - 卖牧草之前牛会先吃当天的口粮(`sellHay` 自己会结算),但不会替以后的日子留。卖的时候提醒会不会把明天的口粮卖掉。
 

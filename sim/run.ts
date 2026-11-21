@@ -3,6 +3,8 @@ import {
   HOUR_MS,
   Deck,
   FEED_PER_CROP,
+  HAY_BUY_PRICE,
+  buyHay,
   FeedSession,
   GrassSession,
   animalType,
@@ -72,6 +74,7 @@ export interface SimOptions {
   digsPerSession: number; // 每次打开最多在矿里答几道题(新词、复习、练习都算)。规则上没有上限,这是学习者自己的耐心
   skipProb: number; // 每天整天不打开的概率
   keepsCows: boolean; // 种田放牧的学习者养不养牛。false 表示割的草全部卖掉,用来看养牛到底划不划算
+  buysHay: number; // 大于 0 时,学习者不管割了多少草,有钱就买牛(最多这么多头),草不够就去商店买。用来看"牧草能买"之后养牛还靠不靠复习
   chickens: boolean; // 种田放牧的学习者要不要养鸡:拿星级最低的作物做饲料,做饲料用掉的是本来要去割草的复习
   away: [number, number] | null; // 连续缺席:[从第几天开始, 一共几天]。用来看牲畜挨饿、生病、死亡的规则实际会怎样
   autoBuy: boolean; // 金币够了就解锁地块
@@ -128,6 +131,7 @@ export interface SimTotals {
   flockGrown: number; // 其中长大了的
   hayMowed: number; // 一共割了几捆牧草
   haySold: number; // 其中直接卖掉的
+  hayBought: number; // 在商店买的牧草
   herd: number; // 结束时养了几头牛
   grown: number; // 其中长大了的
   bought: number; // 买过几头小牛
@@ -192,6 +196,7 @@ export const DEFAULT_OPTIONS: SimOptions = {
   digsPerSession: 30,
   skipProb: 0,
   keepsCows: true,
+  buysHay: 0,
   chickens: false,
   away: null,
   autoBuy: false,
@@ -254,6 +259,7 @@ export function simulate(options: SimOptions): { rows: DayRow[]; totals: SimTota
     flockGrown: 0,
     hayMowed: 0,
     haySold: 0,
+    hayBought: 0,
     herd: 0,
     grown: 0,
     bought: 0,
@@ -563,13 +569,18 @@ export function simulate(options: SimOptions): { rows: DayRow[]; totals: SimTota
           while (recentHay[0].day <= day - HERD_WINDOW_DAYS) recentHay.shift();
           // 按最近几天平均每个游戏日割到的草来定养几头:够多养一头吃的才添。
           // 只看当次割了多少会养多:积了几天的草一次割完,看上去养得起很多头,其实平时喂不饱。
-          // 添的时候先让长大的牛怀小牛(不花钱),没有能怀的才买。
+          // 添的时候看哪样便宜:让长大的牛怀小牛(不花钱,但怀着的时候不出奶),还是买一头。
           const hayPerGameDay = recentHay.reduce((sum, r) => sum + r.hay, 0) / (HERD_WINDOW_DAYS * 2);
           const isCow = (i: number) => save.herd[i].kind === 'cow';
           let cows = houseCount(save, 'barn');
           let expecting = save.herd.filter((a) => a.kind === 'cow' && a.pregnantDays !== null).length;
           while (options.keepsCows && hayPerGameDay >= (cows + expecting + 1) * COW.ration) {
-            const mother = save.herd.findIndex((_, i) => isCow(i) && canBreed(save, i));
+            // 怀小牛的那段时间不出奶。少卖的奶比买一头小牛还贵,就直接买
+            const lostMilk = (COW.gestationDays / COW.yieldDays) * COW.goodPrice;
+            const mother =
+              lostMilk < livestockCost('cow', cows)
+                ? save.herd.findIndex((_, i) => isCow(i) && canBreed(save, i))
+                : -1;
             if (mother >= 0 && breed(save, mother, now)) {
               expecting++;
               continue;
@@ -577,6 +588,20 @@ export function simulate(options: SimOptions): { rows: DayRow[]; totals: SimTota
             if (save.coins < livestockCost('cow', cows) + 50 || !buyLivestock(save, now)) break;
             cows++;
             totals.bought++;
+          }
+          if (options.buysHay > 0) {
+            while (
+              cows < options.buysHay &&
+              save.coins >= livestockCost('cow', cows) + 500 &&
+              buyLivestock(save, now)
+            ) {
+              cows++;
+              totals.bought++;
+            }
+            // 草垛里不够这群牛吃两天的,差多少买多少
+            const short = Math.ceil(cows * COW.ration * 4 - save.hay);
+            const buying = Math.min(short, Math.floor(save.coins / HAY_BUY_PRICE));
+            if (buying > 0 && buyHay(save, buying)) totals.hayBought += buying;
           }
           // 留两天的口粮,多的牧草卖掉;还没有牛时全卖
           const spare = Math.max(0, Math.floor(save.hay - cows * COW.ration * 4));

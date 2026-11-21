@@ -1,5 +1,5 @@
 import { HUNGRY_DAYS_TO_SICK, MAX_LOGS, MAX_MASTERY, RELAPSE_DAYS, SICK_DAYS_TO_DIE } from './constants';
-import { HAY_PRICE, MEDICINE_PRICE, animalType, hayBundles, livestockCost } from './economy';
+import { HAY_BUY_PRICE, HAY_PRICE, MEDICINE_PRICE, animalType, hayBundles, livestockCost } from './economy';
 import { Milestone, addXp, xpForAnswer } from './level';
 import { activeProgress, getState } from './save';
 import { mined } from './scheduler';
@@ -21,7 +21,7 @@ import { Animal, AnimalGood, AnimalKind, Deck, QuestionType, SaveData } from './
 //
 // 牲畜:小屋里养牛和羊,吃草垛里的牧草;鸡舍里养鸡,吃用作物做的饲料(见 feed.ts)。三种的规则一样,只有吃什么、出什么不同。
 //   小的用金币买,吃饱两个季节长大,长大了才有产出(牛奶、羊毛、鸡蛋)、才能再生小的。
-//   每个游戏日开始时,每只吃一份口粮。吃不用玩家动手,但牧草和饲料都只能靠复习得来。
+//   每个游戏日开始时,每只吃一份口粮。吃不用玩家动手。牧草靠复习割来,也可以在商店买;饲料只能靠复习做。
 //   没吃上的那天:不长、没有产出。连着一周没吃上:生病,要用商店买的动物药才治得好。病了半个月还没治:死。
 //   这是有意的:玩家不回来复习,牲畜就挨饿。负责人的判断是有合理的奖励和惩罚,玩家才会持续回来。
 //   受罚的只是牲畜。词的进度不会因为缺席变差,田里的作物也只是等着。
@@ -188,7 +188,8 @@ export interface PastureReport {
  * - 病着的不吃,病情加一天,到 SICK_DAYS_TO_DIE 就死。
  * - 其余的轮流吃,最饿的先吃:牛羊分草垛里的牧草,鸡分饲料。不够所有牲畜吃的时候,它们轮着挨饿,
  *   而不是总饿着同一只:买多了的玩家每天都来复习,不该眼看着固定的几只病死。
- * - 吃上了:没长大的长一天;长大了的每吃饱 yieldDays 天出一份产出(牛和鸡天天出,羊三天一份),怀着的离生小的近一天。
+ * - 吃上了:没长大的长一天;长大了的每吃饱 yieldDays 天出一份产出(牛和鸡天天出,羊三天一份);
+ *   怀着的不产出,离生小的近一天。
  *   吃饱的天数一直往上记,产出的节奏就是从它算出来的,不另外存。
  * - 没吃上:连续挨饿加一天,到 HUNGRY_DAYS_TO_SICK 就生病。
  */
@@ -233,16 +234,19 @@ export function settlePasture(save: SaveData, now: number): PastureReport {
       const wasGrown = isGrown(a);
       a.fedDays++;
       if (!wasGrown) continue;
+      if (a.pregnantDays !== null) {
+        // 怀着(鸡是抱窝)的时候不出奶、不产毛、不下蛋
+        a.pregnantDays++;
+        if (a.pregnantDays >= type.gestationDays) {
+          a.pregnantDays = null;
+          save.herd.push(newborn(a.kind));
+          report.born++;
+        }
+        continue;
+      }
       if ((a.fedDays - type.growthDays) % type.yieldDays === 0) {
         save.goods[type.good]++;
         report[type.good]++;
-      }
-      if (a.pregnantDays === null) continue;
-      a.pregnantDays++;
-      if (a.pregnantDays >= type.growthDays) {
-        a.pregnantDays = null;
-        save.herd.push(newborn(a.kind));
-        report.born++;
       }
     }
   }
@@ -318,7 +322,7 @@ export function canBreed(save: SaveData, index: number): boolean {
 }
 
 /**
- * 让第 index 只怀上(鸡是抱窝)。之后吃饱的天数和它自己长大用的一样多(growthDays),生一只同种的小的。
+ * 让第 index 只怀上(鸡是抱窝)。吃饱 gestationDays 个游戏日后生一只同种的小的,这期间它没有产出。
  * 要玩家自己决定,不会自己怀上:多一只就多一张要靠复习喂的嘴。
  */
 export function breed(save: SaveData, index: number, now: number): boolean {
@@ -338,6 +342,16 @@ export function sellHay(save: SaveData, now: number, count?: number): number {
   const earned = selling * HAY_PRICE;
   save.coins += earned;
   return earned;
+}
+
+/** 在商店买牧草,直接进草垛。金币不够返回 false。 */
+export function buyHay(save: SaveData, count: number): boolean {
+  const n = Math.max(0, Math.floor(count));
+  const cost = n * HAY_BUY_PRICE;
+  if (n === 0 || save.coins < cost) return false;
+  save.coins -= cost;
+  save.hay += n;
+  return true;
 }
 
 /** 这种产出一份卖多少金币。 */

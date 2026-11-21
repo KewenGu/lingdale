@@ -37,7 +37,10 @@ export function hayBundles(masteryAfter: number): number {
 }
 
 /** 一捆牧草的售价。 */
-export const HAY_PRICE = 10;
+export const HAY_PRICE = 5;
+
+/** 在商店买一捆牧草的价格。和卖价一样。 */
+export const HAY_BUY_PRICE = 5;
 
 /** 一份动物药的价格。生病的牲畜要用它才能治好。 */
 export const MEDICINE_PRICE = 50;
@@ -55,7 +58,8 @@ export interface AnimalType {
   food: 'hay' | 'feed'; // 吃什么:草垛里的牧草,还是鸡饲料
   ration: number; // 长大的一个游戏日吃几份
   youngRation: number; // 没长大的一个游戏日吃几份,是长大的一半
-  growthDays: number; // 吃饱这么多个游戏日才长大;怀上(鸡是抱窝)之后也是吃饱这么多个游戏日生下一只。没吃上的日子不算
+  growthDays: number; // 吃饱这么多个游戏日才长大。没吃上的日子不算
+  gestationDays: number; // 怀上(鸡是抱窝)之后吃饱这么多个游戏日生下一只。这期间没有产出
   good: AnimalGood; // 长大后的产出
   yieldDays: number; // 长大后每吃饱这么多个游戏日出一份产出
   goodPrice: number; // 这份产出的售价
@@ -69,7 +73,7 @@ export interface AnimalType {
  * 三种牲畜的规则一样,数值不同。数值是负责人定的,"天"是游戏日。
  * 牛:一天吃 6 捆牧草,每天一份牛奶。羊:吃得少一些,一天 4 捆,三天一份羊毛。都是两个季节长大。
  * 鸡:14 天就下蛋,一个蛋和一份五星作物一个价。
- * 没长大的都吃大的一半。
+ * 没长大的都吃大的一半。怀小的:牛羊一个季节,鸡抱窝 14 天,这期间不出奶、不产毛、不下蛋。
  */
 export const ANIMAL_TYPES: AnimalType[] = [
   {
@@ -80,6 +84,7 @@ export const ANIMAL_TYPES: AnimalType[] = [
     ration: 6,
     youngRation: 3,
     growthDays: 2 * DAYS_PER_SEASON,
+    gestationDays: DAYS_PER_SEASON,
     good: 'milk',
     yieldDays: 1,
     goodPrice: 40,
@@ -96,6 +101,7 @@ export const ANIMAL_TYPES: AnimalType[] = [
     ration: 4,
     youngRation: 2,
     growthDays: 2 * DAYS_PER_SEASON,
+    gestationDays: DAYS_PER_SEASON,
     good: 'wool',
     yieldDays: 3,
     goodPrice: 100,
@@ -112,6 +118,7 @@ export const ANIMAL_TYPES: AnimalType[] = [
     ration: 2,
     youngRation: 1,
     growthDays: 14,
+    gestationDays: 14,
     good: 'eggs',
     yieldDays: 1,
     goodPrice: 30,

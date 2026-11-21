@@ -203,18 +203,20 @@ test('鸡和牛一样会饿、会病、要用药、会死', () => {
   assert.ok(save.herd.indexOf(sick) < 0);
 });
 
-test('长大就能抱窝:抱窝和小鸡长大用的是同一个数,14 个游戏日孵出一只小鸡', () => {
-  const GESTATION_DAYS = CHICKEN.growthDays;
+test('长大就能抱窝:抱 14 个游戏日孵出一只小鸡;抱窝的时候不下蛋', () => {
+  assert.equal(CHICKEN.gestationDays, 14);
   const { save } = setup();
-  save.feed = CHICKEN.ration * GESTATION_DAYS;
-  grown(save, 'chicken');
+  save.feed = CHICKEN.ration * (CHICKEN.gestationDays + 1);
+  const hen = grown(save, 'chicken');
   assert.equal(breed(save, 0, T0), true);
-  const report = settlePasture(save, dayStart(GESTATION_DAYS));
-  assert.deepEqual(report, { ...NOTHING, eggs: GESTATION_DAYS, born: 1 });
+  assert.deepEqual(settlePasture(save, dayStart(CHICKEN.gestationDays)), { ...NOTHING, born: 1 });
   assert.deepEqual(
     save.herd.map((a) => a.kind),
     ['chicken', 'chicken'],
   );
+  assert.deepEqual([save.goods.eggs, hen.pregnantDays], [0, null]);
+  // 孵完接着下蛋
+  assert.equal(settlePasture(save, dayStart(CHICKEN.gestationDays + 1)).eggs, 1);
 });
 
 // ---------- 羊 ----------
@@ -252,16 +254,17 @@ test('羊和牛一样养,不同的是数值:羊吃得少,羊毛三个游戏日�
   assert.equal(sheep.fedDays, SHEEP.growthDays + 9);
 });
 
-test('羊生的是小羊,小羊吃大羊的一半', () => {
-  const GESTATION_DAYS = SHEEP.growthDays;
+test('羊怀一个季节生小羊,怀着的时候不产毛;小羊吃大羊的一半', () => {
+  const days = SHEEP.gestationDays;
+  assert.deepEqual([days, COW.gestationDays], [28, 28]);
   const { save } = setup();
-  save.hay = SHEEP.ration * GESTATION_DAYS + SHEEP.youngRation;
+  save.hay = SHEEP.ration * days + SHEEP.youngRation;
   grown(save, 'sheep');
   breed(save, 0, T0);
-  assert.equal(settlePasture(save, dayStart(GESTATION_DAYS)).born, 1);
-  assert.equal(save.herd[1].kind, 'sheep');
+  assert.deepEqual(settlePasture(save, dayStart(days)), { ...NOTHING, born: 1 });
+  assert.deepEqual([save.herd[1].kind, save.goods.wool], ['sheep', 0]);
   // 剩下的半份口粮够小羊吃,不够大羊吃
-  settlePasture(save, dayStart(GESTATION_DAYS + 1));
+  settlePasture(save, dayStart(days + 1));
   assert.deepEqual([save.herd[0].hungryDays, save.herd[1].fedDays, save.hay], [1, 1, 0]);
 });
 

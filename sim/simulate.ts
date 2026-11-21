@@ -22,6 +22,7 @@ function parseArgs(argv: string[]): SimOptions {
     else if (key === 'skip') options.skipProb = Number(value);
     else if (key === 'chickens') options.chickens = true;
     else if (key === 'nocows') options.keepsCows = false;
+    else if (key === 'buyhay') options.buysHay = Number(value) || 30;
     else if (key === 'away') options.away = value.split(',').map(Number) as [number, number];
     else if (key === 'seed') options.seed = Number(value);
     else if (key === 'buy') options.autoBuy = true;
@@ -113,7 +114,7 @@ console.log(
 );
 if (totals.grassAnswers.asked > 0) {
   console.log(
-    `牧场:割到牧草 ${totals.hayMowed} 捆,直接卖掉 ${totals.haySold} 捆;买过 ${totals.bought} 头小牛,生了 ${totals.born} 只;` +
+    `牧场:割到牧草 ${totals.hayMowed} 捆,直接卖掉 ${totals.haySold} 捆,买了 ${totals.hayBought} 捆;买过 ${totals.bought} 头小牛,生了 ${totals.born} 只;` +
       `结束时有 ${totals.herd} 头牛,其中长大的 ${totals.grown} 头,一共出奶 ${totals.milk} 份;` +
       `饿病 ${totals.fellSick} 只次,治好 ${totals.cured} 只次,病死 ${totals.died} 只;` +
       `因为没钱买种子去了矿里 ${totals.mineVisits} 次`,
