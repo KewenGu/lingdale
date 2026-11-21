@@ -6,8 +6,6 @@ import {
   AnimalKind,
   FEED_PER_CROP,
   FeedSession,
-  GESTATION_DAYS,
-  HAY_PRICE,
   HUNGRY_DAYS_TO_SICK,
   MEDICINE_PRICE,
   PRODUCE_PRICES,
@@ -205,7 +203,8 @@ test('鸡和牛一样会饿、会病、要用药、会死', () => {
   assert.ok(save.herd.indexOf(sick) < 0);
 });
 
-test('母鸡抱窝,吃饱一个季节后孵出一只小鸡', () => {
+test('长大就能抱窝:抱窝和小鸡长大用的是同一个数,14 个游戏日孵出一只小鸡', () => {
+  const GESTATION_DAYS = CHICKEN.growthDays;
   const { save } = setup();
   save.feed = CHICKEN.ration * GESTATION_DAYS;
   grown(save, 'chicken');
@@ -220,12 +219,10 @@ test('母鸡抱窝,吃饱一个季节后孵出一只小鸡', () => {
 
 // ---------- 羊 ----------
 
-test('羊和牛一样养,不同的是产出:羊毛三个游戏日一份,一份顶三份牛奶还多一点', () => {
+test('羊和牛一样养,不同的是数值:羊吃得少,羊毛三个游戏日一份', () => {
   const same: (keyof typeof COW)[] = [
     'house',
     'food',
-    'ration',
-    'youngRation',
     'growthDays',
     'costBase',
     'costStep',
@@ -235,10 +232,12 @@ test('羊和牛一样养,不同的是产出:羊毛三个游戏日一份,一份�
   for (const key of same) assert.equal(SHEEP[key], COW[key], key);
   assert.deepEqual([COW.good, SHEEP.good, CHICKEN.good], ['milk', 'wool', 'eggs']);
   assert.deepEqual([COW.yieldDays, SHEEP.yieldDays], [1, 3]);
-  assert.ok(SHEEP.goodPrice > COW.goodPrice * 3);
+  assert.deepEqual([COW.ration, COW.youngRation, SHEEP.ration, SHEEP.youngRation], [6, 3, 4, 2]);
+  assert.deepEqual([COW.goodPrice, SHEEP.goodPrice], [40, 100]);
 
   const { save } = setup();
-  save.hay = COW.ration * 2 * 6;
+  const daily = COW.ration + SHEEP.ration;
+  save.hay = daily * 6;
   grown(save, 'cow');
   const sheep = grown(save, 'sheep');
   assert.deepEqual(settlePasture(save, dayStart(2)), { ...NOTHING, milk: 2 }, '头两天羊还没有毛可剪');
@@ -247,13 +246,14 @@ test('羊和牛一样养,不同的是产出:羊毛三个游戏日一份,一份�
 
   // 没吃上的日子不算:羊毛的节奏按吃饱的天数走
   assert.equal(settlePasture(save, dayStart(8)).wool, 0);
-  save.hay = COW.ration * 2 * 3;
+  save.hay = daily * 3;
   assert.equal(settlePasture(save, dayStart(10)).wool, 0);
   assert.equal(settlePasture(save, dayStart(11)).wool, 1);
   assert.equal(sheep.fedDays, SHEEP.growthDays + 9);
 });
 
-test('羊生的是小羊,小羊和小牛一样吃一半', () => {
+test('羊生的是小羊,小羊吃大羊的一半', () => {
+  const GESTATION_DAYS = SHEEP.growthDays;
   const { save } = setup();
   save.hay = SHEEP.ration * GESTATION_DAYS + SHEEP.youngRation;
   grown(save, 'sheep');
@@ -304,7 +304,7 @@ test('买牲畜:小屋和鸡舍各算各的价,越买越贵', () => {
   assert.equal(buyLivestock(save, T0, 'chicken'), false, '第三只要贵两档,钱不够');
 });
 
-test('牛奶、羊毛、鸡蛋各卖各的价;牛奶和羊毛比牛羊吃掉的牧草值钱;牲畜卖价低于买价', () => {
+test('牛奶、羊毛、鸡蛋各卖各的价;牲畜卖价低于买价', () => {
   const { save } = setup();
   save.goods = { milk: 2, wool: 3, eggs: 4 };
   assert.equal(sellGoods(save, 'milk', 1), goodPrice('milk'));
@@ -313,9 +313,6 @@ test('牛奶、羊毛、鸡蛋各卖各的价;牛奶和羊毛比牛羊吃掉的�
   assert.deepEqual(save.goods, { milk: 1, wool: 0, eggs: 0 });
   assert.equal(save.coins, goodPrice('milk') + goodPrice('wool') * 3 + goodPrice('eggs') * 4);
 
-  for (const type of [COW, SHEEP]) {
-    assert.ok(type.goodPrice > type.ration * type.yieldDays * HAY_PRICE, `养${type.label}比直接卖草划算`);
-  }
   for (const type of ANIMAL_TYPES) {
     assert.ok(type.youngSellPrice < type.costBase, `${type.label}买来再卖是亏的`);
     assert.equal(goodPrice(type.good), type.goodPrice);
@@ -326,16 +323,13 @@ test('牛奶、羊毛、鸡蛋各卖各的价;牛奶和羊毛比牛羊吃掉的�
   assert.equal(sellLivestock(save, 0, T0), CHICKEN.grownSellPrice);
 });
 
-test('一个鸡蛋和一份五星作物一个价;蛋鸡一个蛋要吃两份饲料,所以三星及以下的作物喂鸡划算,四星以上不如直接卖', () => {
+test('一份作物做两份饲料,蛋鸡一天吃两份,所以一份作物换一个蛋;四星及以下的作物喂鸡划算,五星的打平', () => {
   assert.deepEqual(PRODUCE_PRICES, [0, 1, 5, 10, 20, 30]);
+  assert.equal(FEED_PER_CROP, 2);
+  assert.equal(CHICKEN.ration / FEED_PER_CROP, 1);
   const egg = goodPrice('eggs');
   assert.equal(egg, PRODUCE_PRICES[5]);
-  for (let stars = 1; stars <= 3; stars++) {
-    assert.ok(PRODUCE_PRICES[stars] * CHICKEN.ration < egg, `${stars} 星`);
-  }
-  for (let stars = 4; stars <= 5; stars++) {
-    assert.ok(PRODUCE_PRICES[stars] * CHICKEN.ration > egg, `${stars} 星`);
-  }
+  for (let stars = 1; stars <= 4; stars++) assert.ok(PRODUCE_PRICES[stars] < egg, `${stars} 星`);
 });
 
 test('有饲料、羊毛或鸡蛋可卖的时候,商店不送兜底种子', () => {

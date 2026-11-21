@@ -2,6 +2,7 @@ import {
   DAY_MS,
   HOUR_MS,
   Deck,
+  FEED_PER_CROP,
   FeedSession,
   GrassSession,
   animalType,
@@ -70,6 +71,7 @@ export interface SimOptions {
   sessionHours: number[]; // 每天在哪些整点打开游戏。8 点和 20 点分属两个游戏日
   digsPerSession: number; // 每次打开最多在矿里答几道题(新词、复习、练习都算)。规则上没有上限,这是学习者自己的耐心
   skipProb: number; // 每天整天不打开的概率
+  keepsCows: boolean; // 种田放牧的学习者养不养牛。false 表示割的草全部卖掉,用来看养牛到底划不划算
   chickens: boolean; // 种田放牧的学习者要不要养鸡:拿星级最低的作物做饲料,做饲料用掉的是本来要去割草的复习
   away: [number, number] | null; // 连续缺席:[从第几天开始, 一共几天]。用来看牲畜挨饿、生病、死亡的规则实际会怎样
   autoBuy: boolean; // 金币够了就解锁地块
@@ -189,6 +191,7 @@ export const DEFAULT_OPTIONS: SimOptions = {
   sessionHours: [8, 20],
   digsPerSession: 30,
   skipProb: 0,
+  keepsCows: true,
   chickens: false,
   away: null,
   autoBuy: false,
@@ -404,7 +407,7 @@ export function simulate(options: SimOptions): { rows: DayRow[]; totals: SimTota
   /** 用牧草复习到期的旧词,每次打开最多 digsPerSession 个。返回答了几题。 */
   /**
    * 库存里最便宜的一份作物。worthOnly 为真时只要拿去喂鸡不亏的:蛋鸡下一个蛋要吃 ration 份饲料,
-   * 这么多份作物直接卖的钱要是不比一个蛋少,就不算。
+   * 做这些饲料用掉的作物直接卖的钱要是不比一个蛋少,就不算。
    */
   const cheapestCrop = (worthOnly: boolean): { cropId: string; stars: number; worth: boolean } | null => {
     let best: { cropId: string; stars: number; worth: boolean; price: number } | null = null;
@@ -413,7 +416,7 @@ export function simulate(options: SimOptions): { rows: DayRow[]; totals: SimTota
       for (let stars = 1; stars < counts.length; stars++) {
         if (!(counts[stars] > 0)) continue;
         const price = producePrice(cropId, stars);
-        const worth = price * CHICKEN.ration < CHICKEN.goodPrice;
+        const worth = (price * CHICKEN.ration) / FEED_PER_CROP < CHICKEN.goodPrice;
         if (worthOnly && !worth) continue;
         if (!best || price < best.price) best = { cropId, stars, worth, price };
       }
@@ -565,7 +568,7 @@ export function simulate(options: SimOptions): { rows: DayRow[]; totals: SimTota
           const isCow = (i: number) => save.herd[i].kind === 'cow';
           let cows = houseCount(save, 'barn');
           let expecting = save.herd.filter((a) => a.kind === 'cow' && a.pregnantDays !== null).length;
-          while (hayPerGameDay >= (cows + expecting + 1) * COW.ration) {
+          while (options.keepsCows && hayPerGameDay >= (cows + expecting + 1) * COW.ration) {
             const mother = save.herd.findIndex((_, i) => isCow(i) && canBreed(save, i));
             if (mother >= 0 && breed(save, mother, now)) {
               expecting++;

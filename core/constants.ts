@@ -79,9 +79,6 @@ export const MAX_LOGS = 20000;
 
 // ---------- 牧场 ----------
 
-/** 怀上之后(鸡是抱窝)要吃饱这么多个游戏日才生下一只(一个季节)。 */
-export const GESTATION_DAYS = DAYS_PER_SEASON;
-
 /** 连续这么多个游戏日没吃上草,牲畜生病(现实 7 天)。 */
 export const HUNGRY_DAYS_TO_SICK = 14;
 

@@ -4,7 +4,6 @@ import {
   Animal,
   animalType,
   sellGoods,
-  GESTATION_DAYS,
   GrassSession,
   HAY_PRICE,
   HAY_BUNDLES,
@@ -53,6 +52,8 @@ const LIVESTOCK_COST_STEP = COW.costStep;
 const CALF_SELL_PRICE = COW.youngSellPrice;
 const COW_SELL_PRICE = COW.grownSellPrice;
 const COW_GROWTH_DAYS = COW.growthDays;
+// 怀小牛要吃饱的天数,和小牛长大用的是同一个数
+const GESTATION_DAYS = COW.growthDays;
 const CALF_RATION = COW.youngRation;
 
 function setup(deckSize = 100) {
@@ -329,7 +330,7 @@ test('长大的牛每个游戏日吃一份口粮,出一份奶;同一个游戏日
 });
 
 test('没吃上草的那天:牛饿着,不出奶,小牛不长', () => {
-  const short = CALF_RATION - 0.5; // 连小牛的一顿都不够
+  const short = CALF_RATION - 1; // 连小牛的一顿都不够
   const { save } = ranch(0, short);
   const cow = grownCow(save);
   const calf = addCow(save, { fedDays: 10 });
@@ -454,7 +455,7 @@ test('完全不来:一周后牛生病,再过半个月死光;受罚的只是牛,�
   assert.equal(grassStatus(save, deck, dayStart(total)).due, 1, '到期的词还在草地上等着');
 });
 
-test('长大的牛才能怀小牛;吃饱一个季节后生下一头,怀着的时候照常出奶', () => {
+test('长大的牛才能怀小牛;怀上之后吃饱的天数和小牛长大一样多,生下一头,怀着的时候照常出奶', () => {
   const { save } = ranch(0, RATION * (GESTATION_DAYS + 1));
   const cow = grownCow(save);
   assert.equal(canBreed(save, 0), true);
@@ -530,7 +531,7 @@ test('今天割的草,牛明天才吃到', () => {
   assert.deepEqual([save.goods.milk, save.hay], [1, result.hay]);
 });
 
-test('卖牧草和牛奶:喂了牛再卖奶,比直接卖草多卖一半', () => {
+test('卖牧草和牛奶', () => {
   const { save } = ranch(0, RATION * 2);
   assert.equal(sellHay(save, T0, 2), HAY_PRICE * 2);
   assert.deepEqual([save.coins, save.hay], [HAY_PRICE * 2, RATION * 2 - 2]);
@@ -541,13 +542,6 @@ test('卖牧草和牛奶:喂了牛再卖奶,比直接卖草多卖一半', () => 
   assert.equal(sellGoods(save, 'milk', 1), MILK_PRICE);
   assert.equal(sellGoods(save, 'milk'), MILK_PRICE * 2);
   assert.equal(save.goods.milk, 0);
-  assert.ok(MILK_PRICE > RATION * HAY_PRICE, '喂了牛再卖要比直接卖草划算');
-});
-
-test('草垛里有半捆的零头时,卖只卖整捆', () => {
-  const { save } = ranch(0, RATION + 0.5);
-  assert.equal(sellHay(save, T0), HAY_PRICE * RATION);
-  assert.equal(save.hay, 0.5);
 });
 
 test('卖牧草之前牛先吃:不会把它们今天的口粮卖掉', () => {

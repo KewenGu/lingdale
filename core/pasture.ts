@@ -1,11 +1,4 @@
-import {
-  GESTATION_DAYS,
-  HUNGRY_DAYS_TO_SICK,
-  MAX_LOGS,
-  MAX_MASTERY,
-  RELAPSE_DAYS,
-  SICK_DAYS_TO_DIE,
-} from './constants';
+import { HUNGRY_DAYS_TO_SICK, MAX_LOGS, MAX_MASTERY, RELAPSE_DAYS, SICK_DAYS_TO_DIE } from './constants';
 import { HAY_PRICE, MEDICINE_PRICE, animalType, hayBundles, livestockCost } from './economy';
 import { Milestone, addXp, xpForAnswer } from './level';
 import { activeProgress, getState } from './save';
@@ -246,7 +239,7 @@ export function settlePasture(save: SaveData, now: number): PastureReport {
       }
       if (a.pregnantDays === null) continue;
       a.pregnantDays++;
-      if (a.pregnantDays >= GESTATION_DAYS) {
+      if (a.pregnantDays >= type.growthDays) {
         a.pregnantDays = null;
         save.herd.push(newborn(a.kind));
         report.born++;
@@ -325,7 +318,7 @@ export function canBreed(save: SaveData, index: number): boolean {
 }
 
 /**
- * 让第 index 只怀上(鸡是抱窝)。吃饱 GESTATION_DAYS 个游戏日后生一只同种的小的。
+ * 让第 index 只怀上(鸡是抱窝)。之后吃饱的天数和它自己长大用的一样多(growthDays),生一只同种的小的。
  * 要玩家自己决定,不会自己怀上:多一只就多一张要靠复习喂的嘴。
  */
 export function breed(save: SaveData, index: number, now: number): boolean {
@@ -339,9 +332,7 @@ export function breed(save: SaveData, index: number, now: number): boolean {
 /** 卖牧草(默认全部),返回得到的金币。卖之前牲畜先把到今天为止该吃的吃了。 */
 export function sellHay(save: SaveData, now: number, count?: number): number {
   settlePasture(save, now);
-  // 小牛小羊一顿吃一捆半,草垛里会有半捆的零头;卖只卖整捆
-  const whole = Math.floor(save.hay);
-  const selling = Math.min(whole, count === undefined ? whole : Math.max(0, Math.floor(count)));
+  const selling = Math.min(save.hay, count === undefined ? save.hay : Math.max(0, Math.floor(count)));
   if (selling <= 0) return 0;
   save.hay -= selling;
   const earned = selling * HAY_PRICE;

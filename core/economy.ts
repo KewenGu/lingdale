@@ -42,8 +42,11 @@ export const HAY_PRICE = 10;
 /** 一份动物药的价格。生病的牲畜要用它才能治好。 */
 export const MEDICINE_PRICE = 50;
 
-/** 一份作物做成几份鸡饲料。不看星级:卖不上价的低星作物正好拿来喂鸡。 */
-export const FEED_PER_CROP = 1;
+/**
+ * 一份作物做成几份鸡饲料。不看星级:卖不上价的低星作物正好拿来喂鸡。
+ * 蛋鸡一天吃两份,所以一份作物换一个蛋;四星及以下的作物(卖 20 以内)做成蛋(卖 30)划算,五星的打平。
+ */
+export const FEED_PER_CROP = 2;
 
 export interface AnimalType {
   kind: AnimalKind;
@@ -52,7 +55,7 @@ export interface AnimalType {
   food: 'hay' | 'feed'; // 吃什么:草垛里的牧草,还是鸡饲料
   ration: number; // 长大的一个游戏日吃几份
   youngRation: number; // 没长大的一个游戏日吃几份,是长大的一半
-  growthDays: number; // 吃饱这么多个游戏日才长大。没吃上的日子不长
+  growthDays: number; // 吃饱这么多个游戏日才长大;怀上(鸡是抱窝)之后也是吃饱这么多个游戏日生下一只。没吃上的日子不算
   good: AnimalGood; // 长大后的产出
   yieldDays: number; // 长大后每吃饱这么多个游戏日出一份产出
   goodPrice: number; // 这份产出的售价
@@ -63,9 +66,10 @@ export interface AnimalType {
 }
 
 /**
- * 三种牲畜的规则一样,数值不同。
- * 牛和羊:两个季节长大。牛每个游戏日一份牛奶;羊三个游戏日一份羊毛,一份顶三份牛奶还多一点。
- * 鸡:14 个游戏日就下蛋,一个蛋和一份五星作物一个价;蛋鸡一个游戏日吃两份饲料,所以拿四星以上的作物喂鸡不如直接卖。
+ * 三种牲畜的规则一样,数值不同。数值是负责人定的,"天"是游戏日。
+ * 牛:一天吃 6 捆牧草,每天一份牛奶。羊:吃得少一些,一天 4 捆,三天一份羊毛。都是两个季节长大。
+ * 鸡:14 天就下蛋,一个蛋和一份五星作物一个价。
+ * 没长大的都吃大的一半。
  */
 export const ANIMAL_TYPES: AnimalType[] = [
   {
@@ -73,12 +77,12 @@ export const ANIMAL_TYPES: AnimalType[] = [
     label: '牛',
     house: 'barn',
     food: 'hay',
-    ration: 3,
-    youngRation: 1.5,
+    ration: 6,
+    youngRation: 3,
     growthDays: 2 * DAYS_PER_SEASON,
     good: 'milk',
     yieldDays: 1,
-    goodPrice: 50,
+    goodPrice: 40,
     costBase: 200,
     costStep: 100,
     youngSellPrice: 100,
@@ -89,12 +93,12 @@ export const ANIMAL_TYPES: AnimalType[] = [
     label: '羊',
     house: 'barn',
     food: 'hay',
-    ration: 3,
-    youngRation: 1.5,
+    ration: 4,
+    youngRation: 2,
     growthDays: 2 * DAYS_PER_SEASON,
     good: 'wool',
     yieldDays: 3,
-    goodPrice: 160,
+    goodPrice: 100,
     costBase: 200,
     costStep: 100,
     youngSellPrice: 100,

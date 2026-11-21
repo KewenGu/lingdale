@@ -187,7 +187,7 @@ save.medicine;                      // 手里的动物药
 save.herd.forEach((animal, index) => {
   const type = animalType(animal.kind);   // kind 是 'cow'、'sheep'、'chicken';type.house 是 'barn' 或 'coop'
   isGrown(animal);            // 小的还是大的。没长大时 animal.fedDays / type.growthDays 是长到哪了
-  rationOf(animal);           // 它一个游戏日吃几份,小的吃一半(小牛小羊是 1.5 捆,草垛会有半捆的零头)
+  rationOf(animal);           // 它一个游戏日吃几份,小的吃一半
   animalCondition(animal);    // 'well' 好好的 / 'hungry' 饿着 / 'sick' 病了
   animal.hungryDays;          // 连续饿了几个游戏日。到 HUNGRY_DAYS_TO_SICK 生病
   animal.sickDays;            // 病了几个游戏日。到 SICK_DAYS_TO_DIE 死亡
@@ -208,7 +208,7 @@ const feeding = new FeedSession(save, deck, Math.random);
 feeding.closed(now);                  // 'no_crops' 没有作物 / 'nothing_due' 没有到期的旧词 / null 可以做
 const feedTurn = feeding.current(now);   // 这次考的是哪个旧词。feedTurn.crops 是库存里还有几份作物
 const fed = feeding.submit(await askPlayer(feedTurn.question), cropId, stars, now, elapsedMs);
-// fed.feed     答对做成了几份饲料,那份作物从库存里拿走了
+// fed.feed     答对做成了几份饲料(一份作物两份),那份作物从库存里拿走了
 // fed.bagged   答错:没做成,作物还在,这个词进了词袋。之后的重复练习不要再提交
 
 // 割草
@@ -236,7 +236,7 @@ sellGoods(save, 'milk');    // 牛奶全卖;'wool'、'eggs' 同理,goodPrice('eg
 - **要让玩家一眼看出够不够吃**:草垛里的草够小屋里的牛羊吃几天、饲料够鸡吃几天(每只的口粮用 `rationOf`,小的和大的不一样),
   以及今天割的草、做的饲料够几只吃。牲畜会饿病、会死,玩家得能提前看到。
 - **做饲料和割草、挖旧矿脉用的是同一批到期的词。** 界面上要让玩家看得出:到期的词是有数的,拿去做饲料就少割一株草。
-  做饲料时让玩家自己挑用哪份作物,默认挑星级最低的。四星、五星的作物拿去喂鸡不如直接卖,玩家挑了这样的作物时提醒一句。
+  做饲料时让玩家自己挑用哪份作物,默认挑星级最低的。五星作物和鸡蛋一个价,拿去喂鸡不划算,玩家挑了五星的时候提醒一句。
 - **羊毛三个游戏日才有一份**,可以画出"毛长到哪了":`(animal.fedDays - type.growthDays) % type.yieldDays`。
 - **饿着、病了要画得出来**,病了的牛旁边要有"去买药"的入口。药只治病不管饱,用药之前最好提醒草垛是不是空的。
 - **牛快死的时候要提前说**(比如病了一周以上)。牛死了要有交代,不能悄悄少一头。
