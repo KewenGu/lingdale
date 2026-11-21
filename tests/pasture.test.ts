@@ -1,21 +1,17 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import {
+  ANIMAL_GROWTH_DAYS,
   Animal,
-  COW_GROWTH_DAYS,
+  animalType,
+  sellGoods,
   GESTATION_DAYS,
   GrassSession,
   HAY_PRICE,
   HAY_BUNDLES,
   HUNGRY_DAYS_TO_SICK,
-  CALF_SELL_PRICE,
-  COW_SELL_PRICE,
-  LIVESTOCK_COST_BASE,
-  LIVESTOCK_COST_STEP,
   MEDICINE_PRICE,
   MAX_MASTERY,
-  MILK_PRICE,
-  RATION,
   RELAPSE_DAYS,
   SICK_DAYS_TO_DIE,
   SaveData,
@@ -43,12 +39,21 @@ import {
   plantCandidate,
   sellHay,
   sellLivestock,
-  sellMilk,
   setAside,
   settlePasture,
   statsBetween,
 } from '../core/index';
 import { T0, digNext, gameDays, giveSeeds, makeDeck, missWords, noLuck } from './helpers';
+
+// 这个文件里养的都是牛。羊和鸡的规则一样,它们不同的地方在 coop.test.ts 里测
+const COW = animalType('cow');
+const RATION = COW.ration;
+const MILK_PRICE = COW.goodPrice;
+const LIVESTOCK_COST_BASE = COW.costBase;
+const LIVESTOCK_COST_STEP = COW.costStep;
+const CALF_SELL_PRICE = COW.youngSellPrice;
+const COW_SELL_PRICE = COW.grownSellPrice;
+const COW_GROWTH_DAYS = ANIMAL_GROWTH_DAYS;
 
 function setup(deckSize = 100) {
   const deck = makeDeck(deckSize);
@@ -274,7 +279,7 @@ const grownCow = (save: SaveData, fields: Partial<Animal> = {}) =>
 
 test('买小牛:越买越贵,钱不够买不了', () => {
   const { save } = ranch(LIVESTOCK_COST_BASE * 2 + LIVESTOCK_COST_STEP - 1, 0);
-  assert.equal(livestockCost(0), LIVESTOCK_COST_BASE);
+  assert.equal(livestockCost('cow', 0), LIVESTOCK_COST_BASE);
   assert.equal(buyLivestock(save, T0), true);
   assert.deepEqual([save.herd.length, save.coins], [1, LIVESTOCK_COST_BASE + LIVESTOCK_COST_STEP - 1]);
   assert.deepEqual(save.herd[0], {
@@ -284,7 +289,7 @@ test('买小牛:越买越贵,钱不够买不了', () => {
     sickDays: null,
     pregnantDays: null,
   });
-  assert.equal(livestockCost(1), LIVESTOCK_COST_BASE + LIVESTOCK_COST_STEP);
+  assert.equal(livestockCost('cow', 1), LIVESTOCK_COST_BASE + LIVESTOCK_COST_STEP);
   assert.equal(buyLivestock(save, T0), false);
   assert.equal(save.herd.length, 1);
 });
@@ -294,18 +299,21 @@ test('小牛吃饱两个季节才长大,长大之前不出奶', () => {
   buyLivestock(save, T0);
   assert.deepEqual(
     settlePasture(save, T0),
-    { milk: 0, born: 0, fellSick: 0, died: 0 },
+    { milk: 0, wool: 0, eggs: 0, born: 0, fellSick: 0, died: 0 },
     '今天刚买,还没到吃草的时候',
   );
 
   settlePasture(save, dayStart(COW_GROWTH_DAYS - 1));
-  assert.deepEqual([save.herd[0].fedDays, isGrown(save.herd[0]), save.milk], [COW_GROWTH_DAYS - 1, false, 0]);
+  assert.deepEqual(
+    [save.herd[0].fedDays, isGrown(save.herd[0]), save.goods.milk],
+    [COW_GROWTH_DAYS - 1, false, 0],
+  );
 
   settlePasture(save, dayStart(COW_GROWTH_DAYS));
-  assert.deepEqual([isGrown(save.herd[0]), save.milk], [true, 0], '长大的那一天还不出奶');
+  assert.deepEqual([isGrown(save.herd[0]), save.goods.milk], [true, 0], '长大的那一天还不出奶');
 
   assert.equal(settlePasture(save, dayStart(COW_GROWTH_DAYS + 2)).milk, 2);
-  assert.deepEqual([save.milk, save.hay], [2, RATION]);
+  assert.deepEqual([save.goods.milk, save.hay], [2, RATION]);
 });
 
 test('长大的牛每个游戏日吃一份口粮,出一份奶;同一个游戏日重复结算没有效果', () => {
@@ -313,9 +321,9 @@ test('长大的牛每个游戏日吃一份口粮,出一份奶;同一个游戏日
   grownCow(save);
   grownCow(save);
   assert.equal(settlePasture(save, dayStart(1)).milk, 2);
-  assert.deepEqual([save.milk, save.hay], [2, RATION * 3]);
+  assert.deepEqual([save.goods.milk, save.hay], [2, RATION * 3]);
   assert.equal(settlePasture(save, dayStart(1) + 1000).milk, 0);
-  assert.deepEqual([save.milk, save.hay], [2, RATION * 3]);
+  assert.deepEqual([save.goods.milk, save.hay], [2, RATION * 3]);
 });
 
 test('没吃上草的那天:牛饿着,不出奶,小牛不长', () => {
@@ -323,7 +331,7 @@ test('没吃上草的那天:牛饿着,不出奶,小牛不长', () => {
   const cow = grownCow(save);
   const calf = addCow(save, { fedDays: 10 });
   settlePasture(save, dayStart(3));
-  assert.deepEqual([save.milk, save.hay], [0, RATION - 1], '不够一份口粮就不吃,草垛里剩下的不会坏');
+  assert.deepEqual([save.goods.milk, save.hay], [0, RATION - 1], '不够一份口粮就不吃,草垛里剩下的不会坏');
   assert.deepEqual([cow.hungryDays, animalCondition(cow)], [3, 'hungry']);
   assert.deepEqual([calf.fedDays, calf.hungryDays], [10, 3]);
 
@@ -331,7 +339,7 @@ test('没吃上草的那天:牛饿着,不出奶,小牛不长', () => {
   save.hay = RATION * 2;
   settlePasture(save, dayStart(4));
   assert.deepEqual(
-    [animalCondition(cow), animalCondition(calf), calf.fedDays, save.milk],
+    [animalCondition(cow), animalCondition(calf), calf.fedDays, save.goods.milk],
     ['well', 'well', 11, 1],
   );
 });
@@ -343,7 +351,7 @@ test('草不够所有牛吃:最饿的先吃,轮流挨饿,不会总饿着同一�
     save.hay = RATION; // 每天只够一头吃
     settlePasture(save, dayStart(day));
   }
-  assert.equal(save.milk, 6);
+  assert.equal(save.goods.milk, 6);
   assert.ok(
     cows.every((c) => c.hungryDays <= 2),
     '三头轮着吃,谁都没有连着饿三天',
@@ -355,8 +363,15 @@ test('玩家几天没来:牛先吃草垛里的存草;吃完了开始挨饿', () 
   const a = grownCow(save);
   const b = grownCow(save);
   // 过了 5 个游戏日,两头牛要吃 10 份,草垛只有 7 份
-  assert.deepEqual(settlePasture(save, dayStart(5)), { milk: 7, born: 0, fellSick: 0, died: 0 });
-  assert.deepEqual([save.milk, save.hay], [7, 0]);
+  assert.deepEqual(settlePasture(save, dayStart(5)), {
+    milk: 7,
+    wool: 0,
+    eggs: 0,
+    born: 0,
+    fellSick: 0,
+    died: 0,
+  });
+  assert.deepEqual([save.goods.milk, save.hay], [7, 0]);
   assert.deepEqual([a.hungryDays + b.hungryDays, save.herd.length], [3, 2]);
 });
 
@@ -415,8 +430,22 @@ test('完全不来:一周后牛生病,再过半个月死光;受罚的只是牛,�
   grownCow(save);
   addCow(save);
   const total = HUNGRY_DAYS_TO_SICK + SICK_DAYS_TO_DIE;
-  assert.deepEqual(settlePasture(save, dayStart(total - 1)), { milk: 0, born: 0, fellSick: 2, died: 0 });
-  assert.deepEqual(settlePasture(save, dayStart(total)), { milk: 0, born: 0, fellSick: 0, died: 2 });
+  assert.deepEqual(settlePasture(save, dayStart(total - 1)), {
+    milk: 0,
+    wool: 0,
+    eggs: 0,
+    born: 0,
+    fellSick: 2,
+    died: 0,
+  });
+  assert.deepEqual(settlePasture(save, dayStart(total)), {
+    milk: 0,
+    wool: 0,
+    eggs: 0,
+    born: 0,
+    fellSick: 0,
+    died: 2,
+  });
   assert.equal(save.herd.length, 0);
   assert.deepEqual(state(save, word), before);
   assert.equal(grassStatus(save, deck, dayStart(total)).due, 1, '到期的词还在草地上等着');
@@ -430,7 +459,7 @@ test('长大的牛才能怀小牛;吃饱一个季节后生下一头,怀着的时
   assert.equal(breed(save, 0, T0), false, '已经怀着了');
 
   const report = settlePasture(save, dayStart(GESTATION_DAYS));
-  assert.deepEqual(report, { milk: GESTATION_DAYS, born: 1, fellSick: 0, died: 0 });
+  assert.deepEqual(report, { milk: GESTATION_DAYS, wool: 0, eggs: 0, born: 1, fellSick: 0, died: 0 });
   assert.equal(save.herd.length, 2);
   assert.deepEqual(save.herd[1], {
     kind: 'cow',
@@ -495,7 +524,7 @@ test('今天割的草,牛明天才吃到', () => {
   grownCow(save);
   const result = mowGrass(save, deck, word, true, LATER);
   // 割草之前先结算:从 T0 到 LATER 过了 6 个游戏日,草垛里原有的一份被吃了
-  assert.deepEqual([save.milk, save.hay], [1, result.hay]);
+  assert.deepEqual([save.goods.milk, save.hay], [1, result.hay]);
 });
 
 test('卖牧草和牛奶:喂了牛再卖奶,比直接卖草多卖一半', () => {
@@ -505,10 +534,10 @@ test('卖牧草和牛奶:喂了牛再卖奶,比直接卖草多卖一半', () => 
   assert.equal(sellHay(save, T0), HAY_PRICE * (RATION * 2 - 2));
   assert.equal(save.hay, 0);
 
-  save.milk = 3;
-  assert.equal(sellMilk(save, 1), MILK_PRICE);
-  assert.equal(sellMilk(save), MILK_PRICE * 2);
-  assert.equal(save.milk, 0);
+  save.goods.milk = 3;
+  assert.equal(sellGoods(save, 'milk', 1), MILK_PRICE);
+  assert.equal(sellGoods(save, 'milk'), MILK_PRICE * 2);
+  assert.equal(save.goods.milk, 0);
   assert.ok(MILK_PRICE > RATION * HAY_PRICE, '喂了牛再卖要比直接卖草划算');
 });
 
@@ -516,5 +545,5 @@ test('卖牧草之前牛先吃:不会把它们今天的口粮卖掉', () => {
   const { save } = ranch(0, RATION * 3);
   grownCow(save);
   assert.equal(sellHay(save, dayStart(1)), HAY_PRICE * RATION * 2);
-  assert.deepEqual([save.milk, save.hay], [1, 0]);
+  assert.deepEqual([save.goods.milk, save.hay], [1, 0]);
 });

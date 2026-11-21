@@ -11,6 +11,7 @@ export * from './words';
 export * from './farm';
 export * from './mine';
 export * from './pasture';
+export * from './feed';
 export * from './quiz';
 export * from './session';
 export * from './stats';

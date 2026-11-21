@@ -20,6 +20,7 @@ function parseArgs(argv: string[]): SimOptions {
     else if (key === 'nomine') options.mines = false;
     else if (key === 'bagonly') options.plantsNew = false;
     else if (key === 'skip') options.skipProb = Number(value);
+    else if (key === 'chickens') options.chickens = true;
     else if (key === 'away') options.away = value.split(',').map(Number) as [number, number];
     else if (key === 'seed') options.seed = Number(value);
     else if (key === 'buy') options.autoBuy = true;
@@ -111,11 +112,17 @@ console.log(
 );
 if (totals.grassAnswers.asked > 0) {
   console.log(
-    `牧场:割到牧草 ${totals.hayMowed} 捆,直接卖掉 ${totals.haySold} 捆;买过 ${totals.bought} 头小牛,生了 ${totals.born} 头;` +
+    `牧场:割到牧草 ${totals.hayMowed} 捆,直接卖掉 ${totals.haySold} 捆;买过 ${totals.bought} 头小牛,生了 ${totals.born} 只;` +
       `结束时有 ${totals.herd} 头牛,其中长大的 ${totals.grown} 头,一共出奶 ${totals.milk} 份;` +
-      `饿病 ${totals.fellSick} 头次,治好 ${totals.cured} 头次,病死 ${totals.died} 头;` +
+      `饿病 ${totals.fellSick} 只次,治好 ${totals.cured} 只次,病死 ${totals.died} 只;` +
       `因为没钱买种子去了矿里 ${totals.mineVisits} 次`,
   );
+  if (totals.feedAnswers.asked > 0) {
+    console.log(
+      `鸡舍:做饲料 ${pct(totals.feedAnswers)}(${totals.feedAnswers.asked} 题),做成 ${totals.feedMade} 份;买过 ${totals.boughtChicks} 只小鸡;` +
+        `结束时有 ${totals.flock} 只鸡,其中长大的 ${totals.flockGrown} 只,一共下蛋 ${totals.eggs} 个`,
+    );
+  }
 }
 console.log('');
 console.log('按记忆模型核对(期望值):');

@@ -35,7 +35,7 @@
 | `constants.ts` | 时间、掌握度、矿石、作物相关的规则常量 | 无 |
 | `time.ts` | 游戏日、下次浇水时间、日历 | constants |
 | `crops.ts` | 种子种类表和作物表 | types |
-| `economy.ts` | 地块、小牛和动物药的价格,作物、矿石、牧草、牛奶的售价 | constants、crops |
+| `economy.ts` | 地块和动物药的价格,作物、矿石、牧草的售价,三种牲畜的数值表(吃什么、吃多少、出什么、买卖的价格) | constants、crops |
 | `level.ts` | 经验来源、升级曲线、等级解锁、`addXp` | types |
 | `scheduler.ts` | 一个词的状态怎么随挖矿、浇水、收获、死亡变化。全是纯函数 | constants、time |
 | `deck.ts` | 按 id 查卡片 | types |
@@ -43,9 +43,10 @@
 | `words.ts` | 哪些旧词到期了、哪些还在休息。矿洞、牧场和"复习优先于新词"都用它 | save |
 | `farm.ts` | 田和商店:买种子、兜底种子、候选词、播种、放到一边、浇水、卖作物、解锁地块,以及作物的所有查询 | 以上全部 |
 | `mine.ts` | 矿洞:下一条矿脉、答错的额度、挖矿、练习、卖矿石 | farm、scheduler、economy、level、save |
-| `pasture.ts` | 牧场:草地上有几株草、割牧草;牛吃草、长大、出奶、挨饿、生病、死亡、怀小牛;买小牛和药、卖牧草和牛奶 | scheduler、economy、level、save、words、time |
+| `pasture.ts` | 牧场:草地上有几株草、割牧草;牛、羊、鸡吃东西、长大、产出、挨饿、生病、死亡、生小的;买卖牲畜和药、卖牧草和产出 | scheduler、economy、level、save、words、time |
+| `feed.ts` | 做鸡饲料:用一份作物、答一个到期的旧词 | farm、pasture、scheduler、economy、level、save、words |
 | `quiz.ts` | 按题型出题、判对错 | constants、deck |
-| `session.ts` | 一次浇水会话(出题顺序、首次作答、重复练习)、一次挖矿会话、一次割草会话 | farm、mine、pasture、quiz |
+| `session.ts` | 一次浇水会话(出题顺序、首次作答、重复练习)、一次挖矿会话、一次割草会话、一次做饲料的会话 | farm、mine、pasture、feed、quiz |
 | `stats.ts` | 从作答日志算统计 | constants、save、time |
 | `index.ts` | 统一导出 | |
 
@@ -55,7 +56,7 @@
 
 - **卡组里还没见过的词**(`nextUnseen`)。矿里挖新矿脉和田里种新词取的是同一个顺序。
 - **词袋**。在哪里答错的词都进词袋;种下或在矿里练出去都算离开。
-- **每个词的掌握度和到期时间**(`CardState`)。到期的旧词由 `words.ts` 的 `dueVeins` 给出,矿里的旧矿脉和牧场草地上的草用的是同一份;
+- **每个词的掌握度和到期时间**(`CardState`)。到期的旧词由 `words.ts` 的 `dueVeins` 给出,矿里的旧矿脉、牧场草地上的草、做鸡饲料时考的词用的是同一份;
   矿洞和农场也都用它来守"有旧词没复习就不给新词"。
 
 以后新增一种玩法,也应该只通过这三样东西和别的玩法相连。检验的办法是它的测试里不需要先去别的地方做任何事。
@@ -84,7 +85,7 @@ CardState {
   lastReviewAt
 }
 ReviewLog { cardId, at, grade, place, fresh, mastery, stage, questionType, elapsedMs }
-  place         'mine' 挖矿、'farm' 浇水、'drill' 在矿里练习、'grass' 在牧场割草
+  place         'mine' 挖矿、'farm' 浇水、'drill' 在矿里练习、'grass' 在牧场割草、'feed' 做鸡饲料
   fresh         是不是第一次见到这个词
 ```
 
@@ -100,10 +101,11 @@ SaveData {
   seeds: { choice, reverse, spell }    各品种种子的数量
   produce: { [cropId]: number[] }      各星级的库存数量
   ore: number[]                        各品级矿石的数量
-  hay, milk, medicine                  草垛里有几捆牧草、还没卖的牛奶、手里的动物药
-  herd: Animal[]                       牧场里的牛。每头:fedDays 吃饱过几个游戏日、hungryDays 连续饿了几个、
+  hay, feed, medicine                  草垛里有几捆牧草、几份鸡饲料、手里的动物药
+  goods: { milk, wool, eggs }          还没卖的牛奶、羊毛、鸡蛋
+  herd: Animal[]                       所有牲畜。每只:kind 是牛、羊还是鸡,fedDays 吃饱过几个游戏日、hungryDays 连续饿了几个、
                                        sickDays 病了几个(没病是 null)、pregnantDays 怀了几个(没怀是 null)
-  pastureDay                           牛吃草吃到了哪个游戏日
+  pastureDay                           牲畜吃到了哪个游戏日
   updatedAt
 }
 Crop { id, deckId, cardId, plantedAt, cropType }

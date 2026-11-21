@@ -165,38 +165,50 @@ if (result.ok) {
 
 ```ts
 import {
-  GrassSession, animalCondition, breed, buyLivestock, buyMedicine, canBreed, cureAnimal,
-  grassStatus, isGrown, livestockCost, sellHay, sellMilk, settlePasture,
+  FeedSession, GrassSession, animalCondition, animalType, breed, buyLivestock, buyMedicine, canBreed, cureAnimal,
+  feedStatus, goodPrice, grassField, grassStatus, houseCount, isGrown, livestockCost, livestockSellPrice,
+  sellGoods, sellHay, sellLivestock, settlePasture,
 } from './core/index';
 
-// 每次打开游戏、进牧场、进商店时先结算:把牛从上次到现在的日子一天天过完
+// 每次打开游戏、进牧场、进商店时先结算:把所有牲畜从上次到现在的日子一天天过完
 const report = settlePasture(save, now);
-// report.milk / born / fellSick / died   这段时间出了几份奶、生了几头、饿病了几头、病死了几头。
+// report.milk / wool / eggs       这段时间出了几份牛奶、羊毛、鸡蛋
+// report.born / fellSick / died   生了几只、饿病了几只、病死了几只
 // 玩家几天没来再打开时,要把后三项告诉他。这个结果只在这一次调用里有,不会再给第二次,所以要接住。
 
 grassField(save, now);              // 草地上高矮各几株:下标是能割下的捆数(1 到 3),值是株数。画草地用它
 grassStatus(save, deck, now).due;   // 一共有几株,也就是有几个旧词该复习了
-save.hay;                           // 草垛里有几捆牧草
-save.milk;                          // 还没卖的牛奶
+save.hay;                           // 草垛里有几捆牧草(牛和羊吃)
+save.feed;                          // 有几份鸡饲料
+save.goods;                         // 还没卖的 { milk, wool, eggs }
 save.medicine;                      // 手里的动物药
 
-// 画牛
-save.herd.forEach((cow, index) => {
-  isGrown(cow);            // 小牛还是大牛。cow.fedDays / COW_GROWTH_DAYS 是长到哪了
-  animalCondition(cow);    // 'well' 好好的 / 'hungry' 饿着 / 'sick' 病了
-  cow.hungryDays;          // 连续饿了几个游戏日。到 HUNGRY_DAYS_TO_SICK 生病
-  cow.sickDays;            // 病了几个游戏日。到 SICK_DAYS_TO_DIE 死亡
-  cow.pregnantDays;        // 怀了几个游戏日,没怀是 null
-  canBreed(save, index);   // 能不能让它怀小牛
+// 画牲畜。小屋里画牛和羊,鸡舍里画鸡;index 是它在 save.herd 里的位置,下面的操作都用它
+save.herd.forEach((animal, index) => {
+  const type = animalType(animal.kind);   // kind 是 'cow'、'sheep'、'chicken';type.house 是 'barn' 或 'coop'
+  isGrown(animal);            // 小的还是大的。animal.fedDays / ANIMAL_GROWTH_DAYS 是长到哪了
+  animalCondition(animal);    // 'well' 好好的 / 'hungry' 饿着 / 'sick' 病了
+  animal.hungryDays;          // 连续饿了几个游戏日。到 HUNGRY_DAYS_TO_SICK 生病
+  animal.sickDays;            // 病了几个游戏日。到 SICK_DAYS_TO_DIE 死亡
+  animal.pregnantDays;        // 怀了(鸡是抱窝)几个游戏日,没怀是 null
+  canBreed(save, index);      // 能不能让它生小的
 });
 
-livestockCost(save.herd.length);   // 再买一头小牛要多少金币
-buyLivestock(save, now);           // 钱不够返回 false
-breed(save, index, now);           // 让这头牛怀小牛
-buyMedicine(save);                 // 在商店买一份动物药
-cureAnimal(save, index, now);      // 给这头病牛用药
-livestockSellPrice(cow);           // 这头牛现在卖多少钱,病着的是 0
-sellLivestock(save, index, now);   // 卖掉(病着的是送走)这头牛
+livestockCost('sheep', houseCount(save, 'barn'));   // 再买一只小羊要多少金币。小屋和鸡舍各算各的
+buyLivestock(save, now, 'chicken');   // 买一只小鸡;不传种类买的是小牛。钱不够返回 false
+breed(save, index, now);              // 让这只怀上
+buyMedicine(save);                    // 在商店买一份动物药
+cureAnimal(save, index, now);         // 给这只病了的用药
+livestockSellPrice(animal);           // 这只现在卖多少钱,病着的是 0
+sellLivestock(save, index, now);      // 卖掉(病着的是送走)这只
+
+// 做鸡饲料:玩家挑一份作物,答一道题
+const feeding = new FeedSession(save, deck, Math.random);
+feeding.closed(now);                  // 'no_crops' 没有作物 / 'nothing_due' 没有到期的旧词 / null 可以做
+const feedTurn = feeding.current(now);   // 这次考的是哪个旧词。feedTurn.crops 是库存里还有几份作物
+const fed = feeding.submit(await askPlayer(feedTurn.question), cropId, stars, now, elapsedMs);
+// fed.feed     答对做成了几份饲料,那份作物从库存里拿走了
+// fed.bagged   答错:没做成,作物还在,这个词进了词袋。之后的重复练习不要再提交
 
 // 割草
 const session = new GrassSession(save, deck, Math.random);
@@ -212,16 +224,18 @@ while (turn) {
 }
 
 sellHay(save, now, 10);     // 卖 10 捆牧草;不传数量就全卖
-sellMilk(save);             // 全卖
+sellGoods(save, 'milk');    // 牛奶全卖;'wool'、'eggs' 同理,goodPrice('eggs') 是单价
 ```
 
 - 牧场是单独的一页,和农场并列:一块草地,一栋房子。
 - **草地上画几株草、各多高,由 `grassField` 决定**,不是玩家种的。草杂乱地长着,不占地块,位置随界面摆。
   草不和词绑定:不要给每株草存一个词。玩家点一株,就按它的高矮去取词;割完按 `grassField` 重画。
 - 割草是当场答、当场收的。它和矿里的旧矿脉是同一批词,在一边复习过,另一边就没有了。
-- **牛吃草不需要玩家操作**,不要做成要玩家一头头去喂。
-- **要让玩家一眼看出草够不够吃**:草垛里的草够这群牛吃几天(`save.hay / (save.herd.length * RATION)`),
-  以及今天割的草够几头牛吃。牛会饿病、会死,玩家得能提前看到。
+- **牲畜吃东西不需要玩家操作**,不要做成要玩家一只只去喂。
+- **要让玩家一眼看出够不够吃**:草垛里的草够小屋里的牛羊吃几天、饲料够鸡吃几天(口粮在 `animalType(kind).ration`),
+  以及今天割的草、做的饲料够几只吃。牲畜会饿病、会死,玩家得能提前看到。
+- **做饲料和割草、挖旧矿脉用的是同一批到期的词。** 界面上要让玩家看得出:到期的词是有数的,拿去做饲料就少割一株草。
+  做饲料时让玩家自己挑用哪份作物,默认挑星级最低的。
 - **饿着、病了要画得出来**,病了的牛旁边要有"去买药"的入口。药只治病不管饱,用药之前最好提醒草垛是不是空的。
 - **牛快死的时候要提前说**(比如病了一周以上)。牛死了要有交代,不能悄悄少一头。
 - 怀小牛之前要让玩家知道多一头牛每天多吃多少草。

@@ -1,7 +1,8 @@
 import { INITIAL_PLOTS } from './constants';
 import { cropKind, cropType } from './crops';
+import { AnimalGood, AnimalKind } from './types';
 
-// 金币来自卖东西:矿石、作物、牧草、牛奶。答题本身不给金币。用途是买种子、解锁地块、买牲畜和动物药。
+// 金币来自卖东西:矿石、作物、牧草、牛奶、羊毛、鸡蛋。答题本身不给金币。用途是买种子、解锁地块、买牲畜和动物药。
 
 export const PLOT_COST_BASE = 40;
 export const PLOT_COST_STEP = 2;
@@ -35,25 +36,78 @@ export function hayBundles(masteryAfter: number): number {
 /** 一捆牧草的售价。 */
 export const HAY_PRICE = 10;
 
-/** 一头牲畜一个游戏日吃这么多捆牧草。 */
-export const RATION = 3;
-
-/** 一份牛奶的售价。比它吃掉的牧草值钱一半,这是养牛的好处。 */
-export const MILK_PRICE = 45;
-
 /** 一份动物药的价格。生病的牲畜要用它才能治好。 */
 export const MEDICINE_PRICE = 50;
 
-export const LIVESTOCK_COST_BASE = 200;
-export const LIVESTOCK_COST_STEP = 100;
+/** 一份作物做成几份鸡饲料。不看星级:卖不上价的低星作物正好拿来喂鸡。 */
+export const FEED_PER_CROP = 1;
 
-/** 卖掉一头小牛、一头长大的牛能得多少金币。比买价低:卖牛是为了少养几头,不是为了赚钱。病着的卖不出钱,只能送走。 */
-export const CALF_SELL_PRICE = 100;
-export const COW_SELL_PRICE = 300;
+export interface AnimalType {
+  kind: AnimalKind;
+  label: string;
+  house: 'barn' | 'coop'; // 住哪:小屋还是鸡舍。买价按同一处已经养了几只来涨
+  food: 'hay' | 'feed'; // 吃什么:草垛里的牧草,还是鸡饲料
+  ration: number; // 一个游戏日吃几份
+  good: AnimalGood; // 长大后每吃饱一个游戏日出一份什么
+  goodPrice: number; // 这份产出的售价。比它吃掉的东西值钱,这是养它的好处
+  costBase: number; // 这一处的第一只多少钱
+  costStep: number; // 之后每只贵多少
+  youngSellPrice: number; // 没长大的卖多少。卖价都比买价低:卖是为了少养,不是为了赚钱
+  grownSellPrice: number; // 长大的卖多少
+}
 
-/** 已经有 owned 头牲畜时,再买一头小牛的价格。 */
-export function livestockCost(owned: number): number {
-  return LIVESTOCK_COST_BASE + LIVESTOCK_COST_STEP * owned;
+/** 羊和牛除了产出不同,规则和数值完全一样。鸡吃得少、便宜,产出也便宜。数值都是占位的。 */
+export const ANIMAL_TYPES: AnimalType[] = [
+  {
+    kind: 'cow',
+    label: '牛',
+    house: 'barn',
+    food: 'hay',
+    ration: 3,
+    good: 'milk',
+    goodPrice: 45,
+    costBase: 200,
+    costStep: 100,
+    youngSellPrice: 100,
+    grownSellPrice: 300,
+  },
+  {
+    kind: 'sheep',
+    label: '羊',
+    house: 'barn',
+    food: 'hay',
+    ration: 3,
+    good: 'wool',
+    goodPrice: 45,
+    costBase: 200,
+    costStep: 100,
+    youngSellPrice: 100,
+    grownSellPrice: 300,
+  },
+  {
+    kind: 'chicken',
+    label: '鸡',
+    house: 'coop',
+    food: 'feed',
+    ration: 1,
+    good: 'eggs',
+    goodPrice: 30,
+    costBase: 100,
+    costStep: 50,
+    youngSellPrice: 50,
+    grownSellPrice: 150,
+  },
+];
+
+export function animalType(kind: AnimalKind): AnimalType {
+  for (const type of ANIMAL_TYPES) if (type.kind === kind) return type;
+  throw new Error(`没有这种牲畜: ${kind}`);
+}
+
+/** 同一处(小屋或鸡舍)已经养了 owned 只时,再买一只这种牲畜的价格。 */
+export function livestockCost(kind: AnimalKind, owned: number): number {
+  const type = animalType(kind);
+  return type.costBase + type.costStep * owned;
 }
 
 /** 已解锁 unlockedCount 块地时,解锁下一块的价格。 */

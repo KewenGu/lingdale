@@ -1,6 +1,7 @@
 import { answer, AnswerResult, cropOfCard, cropQuestionType } from './farm';
 import { isCorrect, makeQuestion, Rng } from './quiz';
 import { GrassClosed, GrassResult, grassStatus, mowGrass } from './pasture';
+import { FeedClosed, FeedResult, feedStatus, makeFeed } from './feed';
 import { DigResult, MineClosed, Vein, dig, mineStatus } from './mine';
 import { Deck, Grade, Question, QuestionType, SaveData } from './types';
 
@@ -191,5 +192,88 @@ export class GrassSession {
     if (!turn) throw new Error('草地上现在没有草可割');
     this.turn = null;
     return mowGrass(this.save, this.deck, turn.cardId, correct, now, turn.question.type, elapsedMs);
+  }
+}
+
+export interface FeedTurn {
+  question: Question;
+  cardId: string;
+  mastery: number; // 这个旧词现在的掌握度
+  crops: number; // 库存里还有几份作物
+  due: number; // 到期的旧词一共还有几个
+}
+
+/**
+ * 做鸡饲料。每做一份答一道题:从到期的旧词里取最早到期的那个,答对了玩家挑的那份作物就变成饲料。
+ * 没有作物或者没有到期的旧词时做不了。
+ */
+export class FeedSession {
+  private turn: FeedTurn | null = null;
+
+  constructor(
+    private save: SaveData,
+    private deck: Deck,
+    private rng: Rng,
+    private questionType: QuestionType = 'choice',
+  ) {}
+
+  /** 现在不能做饲料的原因;能做时返回 null。 */
+  closed(now: number): FeedClosed | null {
+    const status = feedStatus(this.save, this.deck, now);
+    return status.open ? null : status.reason;
+  }
+
+  /** 当前这道题;做不了饲料时返回 null。重复调用返回同一道题。 */
+  current(now: number): FeedTurn | null {
+    if (this.turn) return this.turn;
+    const status = feedStatus(this.save, this.deck, now);
+    if (!status.open) return null;
+    const question = makeQuestion(this.deck, status.cardId, this.questionType, this.rng);
+    this.turn = {
+      question,
+      cardId: status.cardId,
+      mastery: status.mastery,
+      crops: status.crops,
+      due: status.due,
+    };
+    return this.turn;
+  }
+
+  /** 提交玩家的回答。cropId 和 stars 是玩家挑来做饲料的那份作物。 */
+  submit(
+    response: number | string,
+    cropId: string,
+    stars: number,
+    now: number,
+    elapsedMs: number = 0,
+  ): FeedResult {
+    const turn = this.current(now);
+    if (!turn) throw new Error('现在做不了饲料');
+    return this.submitCorrect(isCorrect(turn.question, response), cropId, stars, now, elapsedMs);
+  }
+
+  /** 直接按对错提交。 */
+  submitCorrect(
+    correct: boolean,
+    cropId: string,
+    stars: number,
+    now: number,
+    elapsedMs: number = 0,
+  ): FeedResult {
+    const turn = this.current(now);
+    if (!turn) throw new Error('现在做不了饲料');
+    const result = makeFeed(
+      this.save,
+      this.deck,
+      turn.cardId,
+      cropId,
+      stars,
+      correct,
+      now,
+      turn.question.type,
+      elapsedMs,
+    );
+    this.turn = null;
+    return result;
   }
 }

@@ -2,8 +2,11 @@ import {
   DAY_MS,
   HOUR_MS,
   Deck,
+  FeedSession,
   GrassSession,
-  RATION,
+  animalType,
+  houseCount,
+  sellGoods,
   buyLivestock,
   livestockCost,
   MineSession,
@@ -22,7 +25,6 @@ import {
   plotCost,
   sellAllOre,
   sellHay,
-  sellMilk,
   setAside,
   settlePasture,
   buyMedicine,
@@ -66,6 +68,7 @@ export interface SimOptions {
   sessionHours: number[]; // 每天在哪些整点打开游戏。8 点和 20 点分属两个游戏日
   digsPerSession: number; // 每次打开最多在矿里答几道题(新词、复习、练习都算)。规则上没有上限,这是学习者自己的耐心
   skipProb: number; // 每天整天不打开的概率
+  chickens: boolean; // 种田放牧的学习者要不要养鸡:拿星级最低的作物做饲料,做饲料用掉的是本来要去割草的复习
   away: [number, number] | null; // 连续缺席:[从第几天开始, 一共几天]。用来看牲畜挨饿、生病、死亡的规则实际会怎样
   autoBuy: boolean; // 金币够了就解锁地块
   seed: number;
@@ -113,11 +116,17 @@ export interface SimTotals {
   grassAnswers: Tally; // 割牧草复习
   mineVisits: number; // 只种田的学习者因为没钱买种子而去矿里的次数
   milk: number; // 牛一共出了几份奶
+  eggs: number; // 鸡一共下了几个蛋
+  feedAnswers: Tally; // 做饲料时的复习
+  feedMade: number; // 一共做了几份饲料
+  flock: number; // 结束时养了几只鸡
+  flockGrown: number; // 其中长大了的
   hayMowed: number; // 一共割了几捆牧草
   haySold: number; // 其中直接卖掉的
   herd: number; // 结束时养了几头牛
   grown: number; // 其中长大了的
   bought: number; // 买过几头小牛
+  boughtChicks: number; // 买过几只小鸡
   born: number; // 生过几头小牛
   fellSick: number; // 饿病过几头次
   cured: number; // 用药治好过几头次
@@ -155,6 +164,8 @@ export interface SimTotals {
 const SOLID_MASTERY = 4;
 /** 学习者按最近这么多天割到的草来决定养几头牲畜。 */
 const HERD_WINDOW_DAYS = 3;
+const COW = animalType('cow');
+const CHICKEN = animalType('chicken');
 
 export const DEFAULT_OPTIONS: SimOptions = {
   days: 60,
@@ -175,6 +186,7 @@ export const DEFAULT_OPTIONS: SimOptions = {
   sessionHours: [8, 20],
   digsPerSession: 30,
   skipProb: 0,
+  chickens: false,
   away: null,
   autoBuy: false,
   seed: 1,
@@ -228,11 +240,17 @@ export function simulate(options: SimOptions): { rows: DayRow[]; totals: SimTota
     grassAnswers: tally(),
     mineVisits: 0,
     milk: 0,
+    eggs: 0,
+    feedAnswers: tally(),
+    feedMade: 0,
+    flock: 0,
+    flockGrown: 0,
     hayMowed: 0,
     haySold: 0,
     herd: 0,
     grown: 0,
     bought: 0,
+    boughtChicks: 0,
     born: 0,
     fellSick: 0,
     cured: 0,
@@ -380,10 +398,44 @@ export function simulate(options: SimOptions): { rows: DayRow[]; totals: SimTota
   };
 
   /** 用牧草复习到期的旧词,每次打开最多 digsPerSession 个。返回答了几题。 */
-  const grassRound = (now: number, row: DayRow): number => {
+  /** 库存里星级最低的一份作物:卖不上价的先拿去做饲料。 */
+  const cheapestCrop = (): { cropId: string; stars: number } | null => {
+    let best: { cropId: string; stars: number } | null = null;
+    for (const cropId of Object.keys(save.produce)) {
+      const counts = save.produce[cropId];
+      for (let stars = 1; stars < counts.length; stars++) {
+        if (counts[stars] > 0 && (!best || stars < best.stars)) best = { cropId, stars };
+      }
+    }
+    return best;
+  };
+
+  /** 做饲料,做到 want 份或者没有作物、没有到期的词为止。返回答了几题。 */
+  const feedRound = (now: number, row: DayRow, want: number, limit: number): number => {
+    const session = new FeedSession(save, deck, rng);
+    let questions = 0;
+    let made = 0;
+    while (made < want && questions < limit) {
+      const turn = session.current(now);
+      const crop = cheapestCrop();
+      if (!turn || !crop) break;
+      const correct = ask(turn.cardId, now);
+      const result = session.submitCorrect(correct, crop.cropId, crop.stars, now);
+      questions++;
+      made += result.feed;
+      row.reviews++;
+      count(totals.feedAnswers, correct);
+      count(totals.reviewByMastery[turn.mastery], correct);
+      if (result.bagged) totals.missedReview++;
+    }
+    totals.feedMade += made;
+    return questions;
+  };
+
+  const grassRound = (now: number, row: DayRow, limit: number): number => {
     const session = new GrassSession(save, deck, rng);
     let questions = 0;
-    while (questions < options.digsPerSession) {
+    while (questions < limit) {
       const turn = session.current(now);
       if (!turn) break;
       const correct = ask(turn.cardId, now);
@@ -449,26 +501,43 @@ export function simulate(options: SimOptions): { rows: DayRow[]; totals: SimTota
 
         const thirsty = thirstyCards(save, now);
         if (thirsty.length > 0) row.farmQuestions += waterRound(thirsty, now);
-        row.earned += sellAllProduce(save);
         totals.sessions++;
+        // 养鸡的人先把牲畜的日子过了、把饲料做了,剩下的作物才卖
+        let asked = 0;
+        const report = settlePasture(save, now);
+        totals.milk += report.milk;
+        totals.eggs += report.eggs;
+        totals.born += report.born;
+        totals.fellSick += report.fellSick;
+        totals.died += report.died;
+        if (options.chickens && !options.mines) {
+          const hens = houseCount(save, 'coop');
+          // 备够现有的鸡和再多一只吃两天的。备得齐,说明作物和到期的词养得起再多一只,就再买一只
+          const stock = (hens + 1) * CHICKEN.ration * 4;
+          asked = feedRound(now, row, stock - save.feed, options.digsPerSession);
+          row.farmQuestions += asked;
+          if (
+            save.feed >= stock &&
+            save.coins >= livestockCost('chicken', hens) + 50 &&
+            buyLivestock(save, now, 'chicken')
+          ) {
+            totals.boughtChicks++;
+          }
+        }
+        row.earned += sellAllProduce(save);
         // 只种田和放牧的学习者,只有在没钱买种子、田里也没东西在长的时候才去矿里挣一点
         const broke =
           save.seeds.choice === 0 && save.coins < 2 && save.hay === 0 && !save.plots.some((p) => p.crop);
         if (!options.mines && !broke) {
-          const report = settlePasture(save, now);
-          totals.milk += report.milk;
-          totals.born += report.born;
-          totals.fellSick += report.fellSick;
-          totals.died += report.died;
-          row.earned += sellMilk(save);
-          // 有牛病了先治:买得起药就买
+          row.earned += sellGoods(save, 'milk') + sellGoods(save, 'wool') + sellGoods(save, 'eggs');
+          // 有牲畜病了先治:买得起药就买
           for (let i = 0; i < save.herd.length; i++) {
             if (save.herd[i].sickDays === null) continue;
             if (save.medicine === 0 && !buyMedicine(save)) break;
             if (cureAnimal(save, i, now)) totals.cured++;
           }
           const hayBefore = save.hay;
-          row.farmQuestions += grassRound(now, row);
+          row.farmQuestions += grassRound(now, row, options.digsPerSession - asked);
           totals.hayMowed += save.hay - hayBefore;
           recentHay.push({ day, hay: save.hay - hayBefore });
           while (recentHay[0].day <= day - HERD_WINDOW_DAYS) recentHay.shift();
@@ -476,18 +545,21 @@ export function simulate(options: SimOptions): { rows: DayRow[]; totals: SimTota
           // 只看当次割了多少会养多:积了几天的草一次割完,看上去养得起很多头,其实平时喂不饱。
           // 添的时候先让长大的牛怀小牛(不花钱),没有能怀的才买。
           const hayPerGameDay = recentHay.reduce((sum, r) => sum + r.hay, 0) / (HERD_WINDOW_DAYS * 2);
-          let expecting = save.herd.filter((a) => a.pregnantDays !== null).length;
-          while (hayPerGameDay >= (save.herd.length + expecting + 1) * RATION) {
-            const mother = save.herd.findIndex((_, i) => canBreed(save, i));
+          const isCow = (i: number) => save.herd[i].kind === 'cow';
+          let cows = houseCount(save, 'barn');
+          let expecting = save.herd.filter((a) => a.kind === 'cow' && a.pregnantDays !== null).length;
+          while (hayPerGameDay >= (cows + expecting + 1) * COW.ration) {
+            const mother = save.herd.findIndex((_, i) => isCow(i) && canBreed(save, i));
             if (mother >= 0 && breed(save, mother, now)) {
               expecting++;
               continue;
             }
-            if (save.coins < livestockCost(save.herd.length) + 50 || !buyLivestock(save, now)) break;
+            if (save.coins < livestockCost('cow', cows) + 50 || !buyLivestock(save, now)) break;
+            cows++;
             totals.bought++;
           }
           // 留两天的口粮,多的牧草卖掉;还没有牛时全卖
-          const spare = Math.max(0, save.hay - save.herd.length * RATION * 4);
+          const spare = Math.max(0, save.hay - cows * COW.ration * 4);
           row.earned += sellHay(save, now, spare);
           totals.haySold += spare;
           row.planted += plantAll(now, row);
@@ -583,8 +655,12 @@ export function simulate(options: SimOptions): { rows: DayRow[]; totals: SimTota
   });
   totals.masteredRecall = mastered ? totals.masteredRecall / mastered : 0;
   totals.solidRecall = solid ? totals.solidRecall / solid : 0;
-  totals.herd = save.herd.length;
-  totals.grown = save.herd.filter(isGrown).length;
+  const cattle = save.herd.filter((a) => a.kind !== 'chicken');
+  const hens = save.herd.filter((a) => a.kind === 'chicken');
+  totals.herd = cattle.length;
+  totals.grown = cattle.filter(isGrown).length;
+  totals.flock = hens.length;
+  totals.flockGrown = hens.filter(isGrown).length;
   totals.rememberedNow = rememberedAt(end);
   totals.rememberedIn30 = rememberedAt(end + 30);
   totals.gainedNow = rememberedAt(end, true);

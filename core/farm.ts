@@ -129,7 +129,7 @@ export function buySeeds(save: SaveData, questionType: QuestionType = 'choice', 
 
 function hasAnythingToSell(save: SaveData): boolean {
   for (const count of save.ore) if (count > 0) return true;
-  if (save.hay > 0 || save.milk > 0) return true;
+  if (save.hay > 0 || save.goods.milk > 0 || save.goods.wool > 0 || save.goods.eggs > 0) return true;
   for (const cropId of Object.keys(save.produce)) {
     for (const count of save.produce[cropId]) if (count > 0) return true;
   }
@@ -422,6 +422,23 @@ function produceOf(save: SaveData, cropId: string): number[] {
 
 function addProduce(save: SaveData, cropId: string, stars: number): void {
   produceOf(save, cropId)[stars]++;
+}
+
+/** 从库存里拿走一份作物(做饲料用)。没有这种作物返回 false。 */
+export function takeProduce(save: SaveData, cropId: string, stars: number): boolean {
+  const counts = produceOf(save, cropId);
+  if (!(counts[stars] > 0)) return false;
+  counts[stars]--;
+  return true;
+}
+
+/** 库存里一共有多少份作物。 */
+export function produceTotal(save: SaveData): number {
+  let total = 0;
+  for (const cropId of Object.keys(save.produce)) {
+    for (const count of save.produce[cropId]) total += count || 0;
+  }
+  return total;
 }
 
 /** 库存里某种作物某个星级有几个。 */

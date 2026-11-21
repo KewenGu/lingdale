@@ -79,10 +79,10 @@ export const MAX_LOGS = 20000;
 
 // ---------- 牧场 ----------
 
-/** 小牛要吃饱这么多个游戏日才长大(两个季节)。没吃上的日子不长。 */
-export const COW_GROWTH_DAYS = 2 * DAYS_PER_SEASON;
+/** 小牛、小羊、小鸡要吃饱这么多个游戏日才长大(两个季节)。没吃上的日子不长。 */
+export const ANIMAL_GROWTH_DAYS = 2 * DAYS_PER_SEASON;
 
-/** 怀孕的牛要吃饱这么多个游戏日才生小牛(一个季节)。 */
+/** 怀上之后(鸡是抱窝)要吃饱这么多个游戏日才生下一只(一个季节)。 */
 export const GESTATION_DAYS = DAYS_PER_SEASON;
 
 /** 连续这么多个游戏日没吃上草,牲畜生病(现实 7 天)。 */

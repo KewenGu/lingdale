@@ -1,5 +1,5 @@
 import {
-  COW_GROWTH_DAYS,
+  ANIMAL_GROWTH_DAYS,
   GESTATION_DAYS,
   HUNGRY_DAYS_TO_SICK,
   MAX_LOGS,
@@ -7,22 +7,13 @@ import {
   RELAPSE_DAYS,
   SICK_DAYS_TO_DIE,
 } from './constants';
-import {
-  CALF_SELL_PRICE,
-  COW_SELL_PRICE,
-  HAY_PRICE,
-  MEDICINE_PRICE,
-  MILK_PRICE,
-  RATION,
-  hayBundles,
-  livestockCost,
-} from './economy';
+import { HAY_PRICE, MEDICINE_PRICE, animalType, hayBundles, livestockCost } from './economy';
 import { Milestone, addXp, xpForAnswer } from './level';
 import { activeProgress, getState } from './save';
 import { mined } from './scheduler';
 import { gameDay } from './time';
 import { dueVeins } from './words';
-import { Animal, Deck, QuestionType, SaveData } from './types';
+import { Animal, AnimalGood, AnimalKind, Deck, QuestionType, SaveData } from './types';
 
 // 这个文件里的函数会直接修改传入的 save。
 //
@@ -36,11 +27,12 @@ import { Animal, Deck, QuestionType, SaveData } from './types';
 // 对这个词来说,结果和在矿里复习完全一样。牧草不用种、不用买种子、不占种作物的地块:
 // 复习不该有过路费,更不该因为田种满了或者没钱就做不了。
 //
-// 房子:小牛用金币买,吃饱两个季节长大,长大了才出奶、才能怀小牛。
-//   每个游戏日开始时,每头牛从草垛里吃一份口粮。吃草不用玩家动手,但草只能靠复习得来。
-//   没吃上的那天:不长、不出奶。连着一周没吃上:生病,要用商店买的动物药才治得好。病了半个月还没治:死。
-//   这是有意的:玩家不回来复习,牛就挨饿。负责人的判断是有合理的奖励和惩罚,玩家才会持续回来。
-//   受罚的只是牛。词的进度不会因为缺席变差,田里的作物也只是等着。
+// 牲畜:小屋里养牛和羊,吃草垛里的牧草;鸡舍里养鸡,吃用作物做的饲料(见 feed.ts)。三种的规则一样,只有吃什么、出什么不同。
+//   小的用金币买,吃饱两个季节长大,长大了才有产出(牛奶、羊毛、鸡蛋)、才能再生小的。
+//   每个游戏日开始时,每只吃一份口粮。吃不用玩家动手,但牧草和饲料都只能靠复习得来。
+//   没吃上的那天:不长、没有产出。连着一周没吃上:生病,要用商店买的动物药才治得好。病了半个月还没治:死。
+//   这是有意的:玩家不回来复习,牲畜就挨饿。负责人的判断是有合理的奖励和惩罚,玩家才会持续回来。
+//   受罚的只是牲畜。词的进度不会因为缺席变差,田里的作物也只是等着。
 
 /** 现在不能割牧草的原因:没有到期的旧词(或者没有这么高的草)。 */
 export type GrassClosed = 'nothing_due';
@@ -162,38 +154,47 @@ export function mowGrass(
 
 export type AnimalCondition = 'well' | 'hungry' | 'sick';
 
-/** 长大了没有。长大了才出奶、才能怀小牛。 */
+/** 长大了没有。长大了才有产出、才能再生小的。 */
 export function isGrown(animal: Animal): boolean {
-  return animal.fedDays >= COW_GROWTH_DAYS;
+  return animal.fedDays >= ANIMAL_GROWTH_DAYS;
 }
 
-/** 这头牲畜现在怎么样:生病、饿着(上一个游戏日没吃上),还是好好的。 */
+/** 这只牲畜现在怎么样:生病、饿着(上一个游戏日没吃上),还是好好的。 */
 export function animalCondition(animal: Animal): AnimalCondition {
   if (animal.sickDays !== null) return 'sick';
   return animal.hungryDays > 0 ? 'hungry' : 'well';
 }
 
-/** 这次结算里牧场发生了什么。界面用它告诉玩家他不在的时候出了什么事。 */
+/** 某一处(小屋或鸡舍)现在养了几只。 */
+export function houseCount(save: SaveData, house: 'barn' | 'coop'): number {
+  let n = 0;
+  for (const animal of save.herd) if (animalType(animal.kind).house === house) n++;
+  return n;
+}
+
+/** 这次结算里发生了什么。界面用它告诉玩家他不在的时候出了什么事。 */
 export interface PastureReport {
-  milk: number; // 出了几份奶
-  born: number; // 生了几头小牛
-  fellSick: number; // 几头饿病了
-  died: number; // 几头病死了
+  milk: number; // 出了几份牛奶
+  wool: number; // 几份羊毛
+  eggs: number; // 几个鸡蛋
+  born: number; // 生了几只小的
+  fellSick: number; // 几只饿病了
+  died: number; // 几只病死了
 }
 
 /**
- * 把牲畜从上次结算到现在的日子一天天过完:吃草、长大、出奶、挨饿、生病、死亡。
- * 界面在进牧场和进商店时调用;割草、买卖、治病之前也会自己调用。同一个游戏日里重复调用没有副作用。
+ * 把所有牲畜(小屋里的牛羊、鸡舍里的鸡)从上次结算到现在的日子一天天过完:吃、长大、产出、挨饿、生病、死亡。
+ * 界面在打开游戏、进牧场和进商店时调用;割草、做饲料、买卖、治病之前也会自己调用。同一个游戏日里重复调用没有副作用。
  *
  * 每个游戏日:
- * - 病着的不吃草,病情加一天,到 SICK_DAYS_TO_DIE 就死。
- * - 其余的轮流吃,最饿的先吃。草不够所有牛吃的时候,它们轮着挨饿,而不是总饿着同一头:
- *   买多了的玩家每天都来复习,不该眼看着固定的几头牛病死。
- * - 吃上了:没长大的长一天;长大了的出一份奶,怀着的离生小牛近一天。
+ * - 病着的不吃,病情加一天,到 SICK_DAYS_TO_DIE 就死。
+ * - 其余的轮流吃,最饿的先吃:牛羊分草垛里的牧草,鸡分饲料。不够所有牲畜吃的时候,它们轮着挨饿,
+ *   而不是总饿着同一只:买多了的玩家每天都来复习,不该眼看着固定的几只病死。
+ * - 吃上了:没长大的长一天;长大了的出一份产出,怀着的离生小的近一天。
  * - 没吃上:连续挨饿加一天,到 HUNGRY_DAYS_TO_SICK 就生病。
  */
 export function settlePasture(save: SaveData, now: number): PastureReport {
-  const report: PastureReport = { milk: 0, born: 0, fellSick: 0, died: 0 };
+  const report: PastureReport = { milk: 0, wool: 0, eggs: 0, born: 0, fellSick: 0, died: 0 };
   const today = gameDay(now, save.tzOffsetMs);
   const days = today - save.pastureDay;
   if (days <= 0) return report;
@@ -218,7 +219,8 @@ export function settlePasture(save: SaveData, now: number): PastureReport {
       .map((a, i) => ({ a, i }))
       .sort((x, y) => y.a.hungryDays - x.a.hungryDays || x.i - y.i);
     for (const { a } of order) {
-      if (save.hay < RATION) {
+      const type = animalType(a.kind);
+      if (save[type.food] < type.ration) {
         a.hungryDays++;
         if (a.hungryDays >= HUNGRY_DAYS_TO_SICK) {
           a.sickDays = 0;
@@ -226,19 +228,19 @@ export function settlePasture(save: SaveData, now: number): PastureReport {
         }
         continue;
       }
-      save.hay -= RATION;
+      save[type.food] -= type.ration;
       a.hungryDays = 0;
       if (!isGrown(a)) {
         a.fedDays++;
         continue;
       }
-      save.milk++;
-      report.milk++;
+      save.goods[type.good]++;
+      report[type.good]++;
       if (a.pregnantDays === null) continue;
       a.pregnantDays++;
       if (a.pregnantDays >= GESTATION_DAYS) {
         a.pregnantDays = null;
-        save.herd.push(newborn());
+        save.herd.push(newborn(a.kind));
         report.born++;
       }
     }
@@ -246,30 +248,31 @@ export function settlePasture(save: SaveData, now: number): PastureReport {
   return report;
 }
 
-function newborn(): Animal {
-  return { kind: 'cow', fedDays: 0, hungryDays: 0, sickDays: null, pregnantDays: null };
+function newborn(kind: AnimalKind): Animal {
+  return { kind, fedDays: 0, hungryDays: 0, sickDays: null, pregnantDays: null };
 }
 
-/** 买一头小牛。金币不够返回 false。新来的从下一个游戏日开始吃草。 */
-export function buyLivestock(save: SaveData, now: number): boolean {
+/** 买一只小的(默认小牛)。金币不够返回 false。新来的从下一个游戏日开始吃。 */
+export function buyLivestock(save: SaveData, now: number, kind: AnimalKind = 'cow'): boolean {
   settlePasture(save, now);
-  const cost = livestockCost(save.herd.length);
+  const cost = livestockCost(kind, houseCount(save, animalType(kind).house));
   if (save.coins < cost) return false;
   save.coins -= cost;
-  save.herd.push(newborn());
+  save.herd.push(newborn(kind));
   save.updatedAt = now;
   return true;
 }
 
-/** 第 index 头牛现在卖掉能得多少金币。病着的卖不出钱。 */
+/** 这只牲畜现在卖掉能得多少金币。病着的卖不出钱。 */
 export function livestockSellPrice(animal: Animal): number {
   if (animal.sickDays !== null) return 0;
-  return isGrown(animal) ? COW_SELL_PRICE : CALF_SELL_PRICE;
+  const type = animalType(animal.kind);
+  return isGrown(animal) ? type.grownSellPrice : type.youngSellPrice;
 }
 
 /**
- * 卖掉(病着的是送走)第 index 头牛,返回得到的金币;没有这头牛返回 -1。
- * 养几头牛就是每天要复习多少才喂得饱,这个量得由玩家自己定,所以随时可以少养几头。
+ * 卖掉(病着的是送走)第 index 只牲畜,返回得到的金币;没有这一只返回 -1。
+ * 养几只就是每天要复习多少才喂得饱,这个量得由玩家自己定,所以随时可以少养几只。
  */
 export function sellLivestock(save: SaveData, index: number, now: number): number {
   settlePasture(save, now);
@@ -293,8 +296,8 @@ export function buyMedicine(save: SaveData, count: number = 1): boolean {
 }
 
 /**
- * 给第 index 头牲畜用一份药。它没病、或者手里没药,返回 false。
- * 药只治病,不管饱:治好之后还是没草吃,RELAPSE_DAYS 个游戏日后又会病。
+ * 给第 index 只牲畜用一份药。它没病、或者手里没药,返回 false。
+ * 药只治病,不管饱:治好之后还是没东西吃,RELAPSE_DAYS 个游戏日后又会病。
  */
 export function cureAnimal(save: SaveData, index: number, now: number): boolean {
   settlePasture(save, now);
@@ -307,15 +310,15 @@ export function cureAnimal(save: SaveData, index: number, now: number): boolean 
   return true;
 }
 
-/** 第 index 头牛现在能不能怀小牛:长大了、没病、没怀着。 */
+/** 第 index 只现在能不能再生小的:长大了、没病、没怀着。 */
 export function canBreed(save: SaveData, index: number): boolean {
   const animal = save.herd[index];
   return !!animal && isGrown(animal) && animal.sickDays === null && animal.pregnantDays === null;
 }
 
 /**
- * 让第 index 头牛怀小牛。吃饱 GESTATION_DAYS 个游戏日后生一头小牛。
- * 要玩家自己决定,不会自己怀上:多一头牛就多一张要靠复习喂的嘴。
+ * 让第 index 只怀上(鸡是抱窝)。吃饱 GESTATION_DAYS 个游戏日后生一只同种的小的。
+ * 要玩家自己决定,不会自己怀上:多一只就多一张要靠复习喂的嘴。
  */
 export function breed(save: SaveData, index: number, now: number): boolean {
   settlePasture(save, now);
@@ -336,12 +339,22 @@ export function sellHay(save: SaveData, now: number, count?: number): number {
   return earned;
 }
 
-/** 卖牛奶(默认全部),返回得到的金币。 */
-export function sellMilk(save: SaveData, count?: number): number {
-  const selling = Math.min(save.milk, count === undefined ? save.milk : Math.max(0, Math.floor(count)));
+/** 这种产出一份卖多少金币。 */
+export function goodPrice(good: AnimalGood): number {
+  for (const kind of ['cow', 'sheep', 'chicken'] as AnimalKind[]) {
+    const type = animalType(kind);
+    if (type.good === good) return type.goodPrice;
+  }
+  return 0;
+}
+
+/** 卖牛奶、羊毛或鸡蛋(默认全部),返回得到的金币。 */
+export function sellGoods(save: SaveData, good: AnimalGood, count?: number): number {
+  const have = save.goods[good];
+  const selling = Math.min(have, count === undefined ? have : Math.max(0, Math.floor(count)));
   if (selling <= 0) return 0;
-  save.milk -= selling;
-  const earned = selling * MILK_PRICE;
+  save.goods[good] -= selling;
+  const earned = selling * goodPrice(good);
   save.coins += earned;
   return earned;
 }
