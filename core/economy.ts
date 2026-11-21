@@ -7,8 +7,11 @@ import { AnimalGood, AnimalKind } from './types';
 export const PLOT_COST_BASE = 40;
 export const PLOT_COST_STEP = 2;
 
-/** 基础作物的售价,下标是星数。 */
-export const PRODUCE_PRICES = [0, 1, 3, 6, 12, 20];
+/**
+ * 基础作物的售价,下标是星数。三星及以下的卖不上价:它们的出路是做成饲料喂鸡,
+ * 四星和五星才值得卖。
+ */
+export const PRODUCE_PRICES = [0, 1, 2, 3, 12, 20];
 
 /** 矿石的售价,下标是品级。品级越高说明这个词记得越久,所以越值钱。 */
 export const ORE_PRICES = [0, 2, 5, 10, 18, 30, 45, 65];
@@ -56,7 +59,11 @@ export interface AnimalType {
   grownSellPrice: number; // 长大的卖多少
 }
 
-/** 羊和牛除了产出不同,规则和数值完全一样。鸡吃得少、便宜,产出也便宜。数值都是占位的。 */
+/**
+ * 羊和牛除了产出不同,规则和数值完全一样。鸡吃得少、买得便宜。
+ * 鸡蛋定得比一份饲料的成本高不少:一份饲料是一份作物加一次复习,那次复习本来可以去割草喂牛(合 15 到 45 金币)。
+ * 蛋价低于这个数,养鸡就不如不养。数值都是占位的。
+ */
 export const ANIMAL_TYPES: AnimalType[] = [
   {
     kind: 'cow',
@@ -91,7 +98,7 @@ export const ANIMAL_TYPES: AnimalType[] = [
     food: 'feed',
     ration: 1,
     good: 'eggs',
-    goodPrice: 30,
+    goodPrice: 60,
     costBase: 100,
     costStep: 50,
     youngSellPrice: 50,

@@ -10,6 +10,7 @@ import {
   GESTATION_DAYS,
   HUNGRY_DAYS_TO_SICK,
   MEDICINE_PRICE,
+  PRODUCE_PRICES,
   SICK_DAYS_TO_DIE,
   SaveData,
   activeProgress,
@@ -290,6 +291,19 @@ test('牛奶、羊毛、鸡蛋各卖各的价;每种牲畜的产出都比它吃�
   addAnimal(save, 'sheep');
   assert.deepEqual(save.herd.map(livestockSellPrice), [CHICKEN.grownSellPrice, SHEEP.youngSellPrice]);
   assert.equal(sellLivestock(save, 0, T0), CHICKEN.grownSellPrice);
+});
+
+test('低星作物的出路是喂鸡:做成蛋比卖掉划算得多;五星作物配上记得久的词,还是卖作物、割草更划算', () => {
+  const egg = goodPrice('eggs');
+  // 一次复习拿去割草,最多 3 捆,正好是一头牛一个游戏日的口粮,换一份牛奶
+  const bestMowing = goodPrice('milk');
+  const worstMowing = (goodPrice('milk') / COW.ration) * 1;
+  for (let stars = 1; stars <= 3; stars++) {
+    assert.ok(PRODUCE_PRICES[stars] <= 3, `${stars} 星作物卖不上价`);
+    assert.ok(egg > PRODUCE_PRICES[stars] + bestMowing, `${stars} 星作物做成蛋,比卖掉再去割最高的草还值`);
+  }
+  assert.ok(egg > PRODUCE_PRICES[5] + worstMowing, '五星作物配上刚学会的词,做成蛋也不亏');
+  assert.ok(egg < PRODUCE_PRICES[5] + bestMowing, '五星作物配上记得久的词,做成蛋就亏了');
 });
 
 test('有饲料、羊毛或鸡蛋可卖的时候,商店不送兜底种子', () => {
