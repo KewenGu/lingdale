@@ -555,14 +555,19 @@ test('卖牧草和牛奶', () => {
   assert.equal(save.goods.milk, 0);
 });
 
-test('牧草可以在商店买,买价和卖价一样;买来的草进草垛,牛照样吃', () => {
-  assert.deepEqual([HAY_PRICE, HAY_BUY_PRICE], [5, 5]);
+test('牧草可以在商店买,买价比卖价高;买来的草进草垛,牛照样吃', () => {
+  assert.deepEqual([HAY_PRICE, HAY_BUY_PRICE], [5, 8]);
   const { save } = ranch(HAY_BUY_PRICE * RATION + 1, 0);
   grownCow(save);
   assert.equal(buyHay(save, RATION), true);
   assert.deepEqual([save.hay, save.coins], [RATION, 1]);
   assert.equal(buyHay(save, 1), false, '钱不够');
   assert.equal(settlePasture(save, dayStart(1)).milk, 1);
+});
+
+test('买草喂牛不赚钱:一头牛一天吃的草买来比牛奶贵,自己割的草喂才划算', () => {
+  assert.ok(RATION * HAY_BUY_PRICE > MILK_PRICE, '买草喂牛是亏的,所以买草只是救急');
+  assert.ok(RATION * HAY_PRICE < MILK_PRICE, '自己割的草喂牛,比直接卖草划算');
 });
 
 test('卖牧草之前牛先吃:不会把它们今天的口粮卖掉', () => {

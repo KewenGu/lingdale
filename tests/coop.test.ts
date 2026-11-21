@@ -4,7 +4,9 @@ import {
   ANIMAL_TYPES,
   Animal,
   AnimalKind,
+  FEED_BUY_PRICE,
   FEED_PER_CROP,
+  FEED_PRICE,
   FeedSession,
   HUNGRY_DAYS_TO_SICK,
   MEDICINE_PRICE,
@@ -15,6 +17,7 @@ import {
   animalCondition,
   animalType,
   breed,
+  buyFeed,
   buyLivestock,
   buyMedicine,
   claimReliefSeed,
@@ -33,6 +36,7 @@ import {
   makeFeed,
   mineStatus,
   produceCount,
+  sellFeed,
   sellGoods,
   sellLivestock,
   settlePasture,
@@ -335,6 +339,29 @@ test('一份作物做两份饲料,蛋鸡一天吃两份,所以一份作物换一
   for (let stars = 1; stars <= 4; stars++) assert.ok(PRODUCE_PRICES[stars] < egg, `${stars} 星`);
 });
 
+test('饲料能卖也能买,买价比卖价高;买饲料喂鸡不赚钱,自己做的才划算', () => {
+  assert.deepEqual([FEED_PRICE, FEED_BUY_PRICE], [5, 16]);
+  assert.ok(CHICKEN.ration * FEED_BUY_PRICE > goodPrice('eggs'), '买饲料喂鸡是亏的,所以买饲料只是救急');
+  assert.ok(CHICKEN.ration * FEED_PRICE < goodPrice('eggs'), '自己做的饲料喂鸡,比直接卖饲料划算');
+
+  const { save } = setup();
+  save.coins = FEED_BUY_PRICE * 3 + 1;
+  assert.equal(buyFeed(save, 3), true);
+  assert.deepEqual([save.feed, save.coins], [3, 1]);
+  assert.equal(buyFeed(save, 1), false, '钱不够');
+  assert.equal(sellFeed(save, T0, 1), FEED_PRICE);
+  assert.equal(sellFeed(save, T0), FEED_PRICE * 2);
+  assert.deepEqual([save.feed, save.coins], [0, 1 + FEED_PRICE * 3]);
+});
+
+test('卖饲料之前鸡先吃:不会把它们今天的口粮卖掉', () => {
+  const { save } = setup();
+  save.feed = CHICKEN.ration * 3;
+  grown(save, 'chicken');
+  assert.equal(sellFeed(save, dayStart(1)), FEED_PRICE * CHICKEN.ration * 2);
+  assert.deepEqual([save.goods.eggs, save.feed], [1, 0]);
+});
+
 test('有饲料、羊毛或鸡蛋可卖的时候,商店不送兜底种子', () => {
   const { deck, save } = setup();
   missWords(save, deck, 1, T0);
@@ -344,5 +371,8 @@ test('有饲料、羊毛或鸡蛋可卖的时候,商店不送兜底种子', () =
   assert.equal(claimReliefSeed(save), false);
   save.goods.eggs = 0;
   save.goods.wool = 1;
+  assert.equal(claimReliefSeed(save), false);
+  save.goods.wool = 0;
+  save.feed = 1;
   assert.equal(claimReliefSeed(save), false);
 });

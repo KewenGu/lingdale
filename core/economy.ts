@@ -39,8 +39,20 @@ export function hayBundles(masteryAfter: number): number {
 /** 一捆牧草的售价。 */
 export const HAY_PRICE = 5;
 
-/** 在商店买一捆牧草的价格。和卖价一样。 */
-export const HAY_BUY_PRICE = 5;
+/**
+ * 在商店买一捆牧草的价格,比卖价高。一头牛一天吃 6 捆,买来是 48 金币,牛奶只卖 40:
+ * 买草喂牛不赚钱,所以买草只是救急,牛羊养得起多少还是看割了多少草,也就是复习了多少。
+ */
+export const HAY_BUY_PRICE = 8;
+
+/** 一份鸡饲料的售价。 */
+export const FEED_PRICE = 5;
+
+/**
+ * 在商店买一份鸡饲料的价格。蛋鸡一天吃 2 份、下一个 30 金币的蛋,所以买价要高过 15,买饲料喂鸡才不赚钱。
+ * 和牧草是同一个道理:买是救急,不是生意。
+ */
+export const FEED_BUY_PRICE = 16;
 
 /** 一份动物药的价格。生病的牲畜要用它才能治好。 */
 export const MEDICINE_PRICE = 50;

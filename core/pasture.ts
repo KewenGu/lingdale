@@ -1,5 +1,14 @@
 import { HUNGRY_DAYS_TO_SICK, MAX_LOGS, MAX_MASTERY, RELAPSE_DAYS, SICK_DAYS_TO_DIE } from './constants';
-import { HAY_BUY_PRICE, HAY_PRICE, MEDICINE_PRICE, animalType, hayBundles, livestockCost } from './economy';
+import {
+  FEED_BUY_PRICE,
+  FEED_PRICE,
+  HAY_BUY_PRICE,
+  HAY_PRICE,
+  MEDICINE_PRICE,
+  animalType,
+  hayBundles,
+  livestockCost,
+} from './economy';
 import { Milestone, addXp, xpForAnswer } from './level';
 import { activeProgress, getState } from './save';
 import { mined } from './scheduler';
@@ -21,7 +30,8 @@ import { Animal, AnimalGood, AnimalKind, Deck, QuestionType, SaveData } from './
 //
 // 牲畜:小屋里养牛和羊,吃草垛里的牧草;鸡舍里养鸡,吃用作物做的饲料(见 feed.ts)。三种的规则一样,只有吃什么、出什么不同。
 //   小的用金币买,吃饱两个季节长大,长大了才有产出(牛奶、羊毛、鸡蛋)、才能再生小的。
-//   每个游戏日开始时,每只吃一份口粮。吃不用玩家动手。牧草靠复习割来,也可以在商店买;饲料只能靠复习做。
+//   每个游戏日开始时,每只吃一份口粮。吃不用玩家动手。牧草靠复习割来,饲料靠复习做;
+//   两样都能在商店买,但买价比卖价高,买来喂不赚钱,只是救急。
 //   没吃上的那天:不长、没有产出。连着一周没吃上:生病,要用商店买的动物药才治得好。病了半个月还没治:死。
 //   这是有意的:玩家不回来复习,牲畜就挨饿。负责人的判断是有合理的奖励和惩罚,玩家才会持续回来。
 //   受罚的只是牲畜。词的进度不会因为缺席变差,田里的作物也只是等着。
@@ -351,6 +361,27 @@ export function buyHay(save: SaveData, count: number): boolean {
   if (n === 0 || save.coins < cost) return false;
   save.coins -= cost;
   save.hay += n;
+  return true;
+}
+
+/** 卖鸡饲料(默认全部),返回得到的金币。卖之前牲畜先把到今天为止该吃的吃了。 */
+export function sellFeed(save: SaveData, now: number, count?: number): number {
+  settlePasture(save, now);
+  const selling = Math.min(save.feed, count === undefined ? save.feed : Math.max(0, Math.floor(count)));
+  if (selling <= 0) return 0;
+  save.feed -= selling;
+  const earned = selling * FEED_PRICE;
+  save.coins += earned;
+  return earned;
+}
+
+/** 在商店买鸡饲料。金币不够返回 false。 */
+export function buyFeed(save: SaveData, count: number): boolean {
+  const n = Math.max(0, Math.floor(count));
+  const cost = n * FEED_BUY_PRICE;
+  if (n === 0 || save.coins < cost) return false;
+  save.coins -= cost;
+  save.feed += n;
   return true;
 }
 

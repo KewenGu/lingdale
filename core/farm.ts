@@ -129,7 +129,8 @@ export function buySeeds(save: SaveData, questionType: QuestionType = 'choice', 
 
 function hasAnythingToSell(save: SaveData): boolean {
   for (const count of save.ore) if (count > 0) return true;
-  if (save.hay > 0 || save.goods.milk > 0 || save.goods.wool > 0 || save.goods.eggs > 0) return true;
+  if (save.hay > 0 || save.feed > 0) return true;
+  if (save.goods.milk > 0 || save.goods.wool > 0 || save.goods.eggs > 0) return true;
   for (const cropId of Object.keys(save.produce)) {
     for (const count of save.produce[cropId]) if (count > 0) return true;
   }
