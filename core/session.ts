@@ -135,11 +135,12 @@ export interface GrassTurn {
   question: Question;
   cardId: string;
   mastery: number; // 这个旧词现在的掌握度
+  hay: number; // 答对能割下几捆
   due: number; // 到期的旧词一共还有几个,也就是草地上还有几株草
 }
 
 /**
- * 在牧场割牧草复习旧词。每次取最早到期的那个词出一道题,答完再取下一个,
+ * 在牧场割牧草复习旧词。草不和词绑定:每次从到期的词里取最早到期的那个出一道题,答完再取下一个,
  * 直到草地上没有草了(没有到期的旧词),或者玩家离开。
  */
 export class GrassSession {
@@ -158,13 +159,22 @@ export class GrassSession {
     return status.open ? null : status.reason;
   }
 
-  /** 当前这道题;没有草可割时返回 null。重复调用返回同一道题。 */
-  current(now: number): GrassTurn | null {
+  /**
+   * 当前这道题;没有草可割时返回 null。已经出了题还没答时,重复调用返回同一道题。
+   * size 是玩家点的那株草有多高(能割几捆),传了就从这么高的词里取;不传取最早到期的。
+   */
+  current(now: number, size?: number): GrassTurn | null {
     if (this.turn) return this.turn;
-    const status = grassStatus(this.save, this.deck, now);
+    const status = grassStatus(this.save, this.deck, now, size);
     if (!status.open) return null;
     const question = makeQuestion(this.deck, status.cardId, this.questionType, this.rng);
-    this.turn = { question, cardId: status.cardId, mastery: status.mastery, due: status.due };
+    this.turn = {
+      question,
+      cardId: status.cardId,
+      mastery: status.mastery,
+      hay: status.hay,
+      due: status.due,
+    };
     return this.turn;
   }
 

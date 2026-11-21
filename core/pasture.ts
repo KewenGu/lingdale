@@ -3,10 +3,20 @@ import {
   GESTATION_DAYS,
   HUNGRY_DAYS_TO_SICK,
   MAX_LOGS,
+  MAX_MASTERY,
   RELAPSE_DAYS,
   SICK_DAYS_TO_DIE,
 } from './constants';
-import { HAY_PRICE, MEDICINE_PRICE, MILK_PRICE, RATION, livestockCost } from './economy';
+import {
+  CALF_SELL_PRICE,
+  COW_SELL_PRICE,
+  HAY_PRICE,
+  MEDICINE_PRICE,
+  MILK_PRICE,
+  RATION,
+  hayBundles,
+  livestockCost,
+} from './economy';
 import { Milestone, addXp, xpForAnswer } from './level';
 import { activeProgress, getState } from './save';
 import { mined } from './scheduler';
@@ -18,8 +28,10 @@ import { Animal, Deck, QuestionType, SaveData } from './types';
 //
 // 牧场是复习的地方,有一块草地和一栋养牛的房子。
 //
-// 草地:休息结束的旧词长成牧草,有几个词到期,就有几株能割。割一株就是答一道题,先割最早到期的。
-//   答对 → 收一捆牧草,进草垛;这个词升一级去休息。
+// 草地:休息结束的旧词长成牧草,有几个词到期,就有几株能割。割一株就是答一道题。
+//   草不和哪个词绑在一起:玩家割的时候才从到期的词里取最早到期的那个。草只分高矮,
+//   记得越久的词草越高、割下的捆数越多;玩家挑了多高的草,就从那么高的词里取。
+//   答对 → 收下牧草,进草垛;这个词升一级去休息。
 //   答错 → 这株草没割成;这个词降两级,进词袋,要重新种一遍去学。
 // 对这个词来说,结果和在矿里复习完全一样。牧草不用种、不用买种子、不占种作物的地块:
 // 复习不该有过路费,更不该因为田种满了或者没钱就做不了。
@@ -30,18 +42,18 @@ import { Animal, Deck, QuestionType, SaveData } from './types';
 //   这是有意的:玩家不回来复习,牛就挨饿。负责人的判断是有合理的奖励和惩罚,玩家才会持续回来。
 //   受罚的只是牛。词的进度不会因为缺席变差,田里的作物也只是等着。
 
-/** 现在不能割牧草的原因:没有到期的旧词。 */
+/** 现在不能割牧草的原因:没有到期的旧词(或者没有这么高的草)。 */
 export type GrassClosed = 'nothing_due';
 
 export type GrassStatus =
-  | { open: true; cardId: string; mastery: number; due: number }
+  | { open: true; cardId: string; mastery: number; hay: number; due: number }
   | { open: false; reason: GrassClosed; due: number };
 
 export interface GrassResult {
   correct: boolean;
   masteryBefore: number;
   masteryAfter: number;
-  hay: number; // 答对收到几捆牧草:1,答错是 0
+  hay: number; // 答对收到几捆牧草,答错是 0
   bagged: boolean; // 答错,这个词进了词袋
   xp: number;
   levelBefore: number;
@@ -51,18 +63,47 @@ export interface GrassResult {
 
 // ---------- 草地 ----------
 
-/** 草地上现在有没有草可割,有的话最先割的是哪个词。due 是到期的旧词一共有几个,也就是草地上有几株草。不修改存档。 */
-export function grassStatus(save: SaveData, deck: Deck, now: number): GrassStatus {
+/** 掌握度是 mastery 的到期旧词长成的草有多高,也就是答对能割下几捆。 */
+export function grassSize(mastery: number): number {
+  return hayBundles(Math.min(MAX_MASTERY, mastery + 1));
+}
+
+/**
+ * 草地上各种高矮的草各有几株。下标是能割下的捆数(1 到 3),值是株数。
+ * 界面按它画草地:画几株、各多高。哪一株是哪个词并不固定,割的时候才取。不修改存档。
+ */
+export function grassField(save: SaveData, now: number): number[] {
+  const field: number[] = [];
+  for (let size = 0; size <= hayBundles(MAX_MASTERY); size++) field.push(0);
+  const progress = activeProgress(save);
+  for (const cardId of dueVeins(save, now)) {
+    const state = getState(progress, cardId);
+    field[grassSize(state ? state.mastery : 0)]++;
+  }
+  return field;
+}
+
+/**
+ * 草地上现在有没有草可割,有的话割下去考的是哪个词:到期的旧词里最早到期的那个。
+ * 传了 size 就只在这么高的草里取(玩家点了一株高草,考的就是一个记得久的词)。
+ * due 是到期的旧词一共有几个,也就是草地上有几株草。不修改存档。
+ */
+export function grassStatus(save: SaveData, deck: Deck, now: number, size?: number): GrassStatus {
   if (deck.id !== save.activeDeckId) {
     throw new Error(`卡组 ${deck.id} 不是当前卡组 ${save.activeDeckId}`);
   }
   const due = dueVeins(save, now);
-  if (due.length === 0) return { open: false, reason: 'nothing_due', due: 0 };
-  const state = getState(activeProgress(save), due[0]);
-  return { open: true, cardId: due[0], mastery: state ? state.mastery : 0, due: due.length };
+  const progress = activeProgress(save);
+  for (const cardId of due) {
+    const state = getState(progress, cardId);
+    const mastery = state ? state.mastery : 0;
+    if (size !== undefined && grassSize(mastery) !== size) continue;
+    return { open: true, cardId, mastery, hay: grassSize(mastery), due: due.length };
+  }
+  return { open: false, reason: 'nothing_due', due: due.length };
 }
 
-/** 割一株牧草,也就是答这个旧词。只能割 grassStatus 给出的那一株。 */
+/** 割一株牧草,也就是答这个旧词。只能割到期的词,用 grassStatus 取。 */
 export function mowGrass(
   save: SaveData,
   deck: Deck,
@@ -72,10 +113,11 @@ export function mowGrass(
   questionType: QuestionType = 'choice',
   elapsedMs: number = 0,
 ): GrassResult {
-  const status = grassStatus(save, deck, now);
-  if (!status.open) throw new Error('现在没有到期的旧词');
-  if (status.cardId !== cardId) throw new Error(`现在该复习的是 ${status.cardId},不是 ${cardId}`);
-  // 先让牲畜把之前的草吃了,这一捆是今天割的,明天才轮到它
+  if (deck.id !== save.activeDeckId) {
+    throw new Error(`卡组 ${deck.id} 不是当前卡组 ${save.activeDeckId}`);
+  }
+  if (dueVeins(save, now).indexOf(cardId) < 0) throw new Error(`${cardId} 现在不该复习`);
+  // 先让牛把之前的草吃了,这一捆是今天割的,明天才轮到它
   settlePasture(save, now);
 
   const progress = activeProgress(save);
@@ -97,8 +139,7 @@ export function mowGrass(
     progress.logs.splice(0, progress.logs.length - MAX_LOGS);
   }
 
-  // 一株草一捆,不分这个词记了多久:玩家要一眼算得出"复习几个词够一头牛吃一天"
-  const hay = correct ? 1 : 0;
+  const hay = correct ? hayBundles(after.mastery) : 0;
   save.hay += hay;
   if (!correct) progress.wordBag.push(cardId);
 
@@ -218,6 +259,27 @@ export function buyLivestock(save: SaveData, now: number): boolean {
   save.herd.push(newborn());
   save.updatedAt = now;
   return true;
+}
+
+/** 第 index 头牛现在卖掉能得多少金币。病着的卖不出钱。 */
+export function livestockSellPrice(animal: Animal): number {
+  if (animal.sickDays !== null) return 0;
+  return isGrown(animal) ? COW_SELL_PRICE : CALF_SELL_PRICE;
+}
+
+/**
+ * 卖掉(病着的是送走)第 index 头牛,返回得到的金币;没有这头牛返回 -1。
+ * 养几头牛就是每天要复习多少才喂得饱,这个量得由玩家自己定,所以随时可以少养几头。
+ */
+export function sellLivestock(save: SaveData, index: number, now: number): number {
+  settlePasture(save, now);
+  const animal = save.herd[index];
+  if (!animal) return -1;
+  const earned = livestockSellPrice(animal);
+  save.herd.splice(index, 1);
+  save.coins += earned;
+  save.updatedAt = now;
+  return earned;
 }
 
 /** 在商店买动物药(默认一份)。金币不够返回 false。 */

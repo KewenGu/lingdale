@@ -174,7 +174,8 @@ const report = settlePasture(save, now);
 // report.milk / born / fellSick / died   这段时间出了几份奶、生了几头、饿病了几头、病死了几头。
 // 玩家几天没来再打开时,要把后三项告诉他。这个结果只在这一次调用里有,不会再给第二次,所以要接住。
 
-grassStatus(save, deck, now).due;   // 草地上有几株草,也就是有几个旧词该复习了。画草地用它
+grassField(save, now);              // 草地上高矮各几株:下标是能割下的捆数(1 到 3),值是株数。画草地用它
+grassStatus(save, deck, now).due;   // 一共有几株,也就是有几个旧词该复习了
 save.hay;                           // 草垛里有几捆牧草
 save.milk;                          // 还没卖的牛奶
 save.medicine;                      // 手里的动物药
@@ -194,17 +195,20 @@ buyLivestock(save, now);           // 钱不够返回 false
 breed(save, index, now);           // 让这头牛怀小牛
 buyMedicine(save);                 // 在商店买一份动物药
 cureAnimal(save, index, now);      // 给这头病牛用药
+livestockSellPrice(cow);           // 这头牛现在卖多少钱,病着的是 0
+sellLivestock(save, index, now);   // 卖掉(病着的是送走)这头牛
 
 // 割草
 const session = new GrassSession(save, deck, Math.random);
-let turn = session.current(now);
+let turn = session.current(now, tappedSize);   // tappedSize 是玩家点的那株草能割几捆;不传就取最早到期的词
 while (turn) {
-  // turn.cardId / turn.mastery   这株草是哪个旧词,它现在的掌握度
+  // turn.cardId / turn.mastery   这次考的是哪个旧词,它现在的掌握度
+  // turn.hay                     答对能割下几捆
   // turn.due                     草地上还有几株
   const result = session.submit(await askPlayer(turn.question), now, elapsedMs);
-  // result.hay      答对收到一捆牧草
+  // result.hay      答对收到的捆数,答错是 0
   // result.bagged   答错:这个词进了词袋,要重新种
-  turn = session.current(now);
+  turn = session.current(now, await nextTap());
 }
 
 sellHay(save, now, 10);     // 卖 10 捆牧草;不传数量就全卖
@@ -212,7 +216,8 @@ sellMilk(save);             // 全卖
 ```
 
 - 牧场是单独的一页,和农场并列:一块草地,一栋房子。
-- **草地上画几株草,由到期的旧词有几个决定**,不是玩家种的。没有到期的词时草地是矮的。
+- **草地上画几株草、各多高,由 `grassField` 决定**,不是玩家种的。草杂乱地长着,不占地块,位置随界面摆。
+  草不和词绑定:不要给每株草存一个词。玩家点一株,就按它的高矮去取词;割完按 `grassField` 重画。
 - 割草是当场答、当场收的。它和矿里的旧矿脉是同一批词,在一边复习过,另一边就没有了。
 - **牛吃草不需要玩家操作**,不要做成要玩家一头头去喂。
 - **要让玩家一眼看出草够不够吃**:草垛里的草够这群牛吃几天(`save.hay / (save.herd.length * RATION)`),
@@ -220,6 +225,7 @@ sellMilk(save);             // 全卖
 - **饿着、病了要画得出来**,病了的牛旁边要有"去买药"的入口。药只治病不管饱,用药之前最好提醒草垛是不是空的。
 - **牛快死的时候要提前说**(比如病了一周以上)。牛死了要有交代,不能悄悄少一头。
 - 怀小牛之前要让玩家知道多一头牛每天多吃多少草。
+- **卖牛的入口要好找。** 养几头牛是玩家自己选的学习量,觉得累了要能随时少养几头,不该等牛饿病了才发现可以卖。
 - 卖牧草之前牛会先吃当天的口粮(`sellHay` 自己会结算),但不会替以后的日子留。卖的时候提醒会不会把明天的口粮卖掉。
 
 ### 浇水

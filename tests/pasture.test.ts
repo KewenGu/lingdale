@@ -6,10 +6,14 @@ import {
   GESTATION_DAYS,
   GrassSession,
   HAY_PRICE,
+  HAY_BUNDLES,
   HUNGRY_DAYS_TO_SICK,
+  CALF_SELL_PRICE,
+  COW_SELL_PRICE,
   LIVESTOCK_COST_BASE,
   LIVESTOCK_COST_STEP,
   MEDICINE_PRICE,
+  MAX_MASTERY,
   MILK_PRICE,
   RATION,
   RELAPSE_DAYS,
@@ -27,14 +31,18 @@ import {
   gameDay,
   gameDayStart,
   getState,
+  grassField,
+  grassSize,
   grassStatus,
   isGrown,
+  livestockSellPrice,
   livestockCost,
   mineStatus,
   mowGrass,
   plant,
   plantCandidate,
   sellHay,
+  sellLivestock,
   sellMilk,
   setAside,
   settlePasture,
@@ -89,7 +97,7 @@ test('割草答对:收一捆牧草进草垛,这个词照常升级去休息', () 
   assert.equal(grassStatus(save, deck, LATER).open, false);
 });
 
-test('在牧场复习和在矿里复习,这个词的结果一样;一株草一捆,不分这个词记了多久', () => {
+test('在牧场复习和在矿里复习,这个词的结果一样', () => {
   const a = setup();
   const b = setup();
   const word = digNext(a.save, a.deck, true, T0).cardId;
@@ -98,10 +106,55 @@ test('在牧场复习和在矿里复习,这个词的结果一样;一株草一捆
   const ore = digNext(b.save, b.deck, true, LATER).result;
   assert.deepEqual([grass.masteryAfter, grass.xp], [ore.masteryAfter, ore.xp]);
   assert.deepEqual(state(a.save, word), state(b.save, word));
+});
 
-  // 再过一轮休息,这个词已经 2 级了,割下来还是一捆
-  const again = mowGrass(a.save, a.deck, word, true, state(a.save, word).dueAt);
-  assert.deepEqual([again.masteryAfter, again.hay, a.save.hay], [3, 1, 2]);
+test('记得越久的词草越高:一株割下 1、2、3 捆,看答对后的掌握度,不掷骰子', () => {
+  assert.deepEqual(HAY_BUNDLES, [0, 1, 1, 2, 2, 3, 3, 3]);
+  const { deck, save } = setup(1);
+  let now = T0;
+  digNext(save, deck, true, now); // 掌握度 1
+  const got: number[] = [];
+  for (let mastery = 2; mastery <= MAX_MASTERY; mastery++) {
+    now = state(save, 'w0').dueAt;
+    const status = grassStatus(save, deck, now);
+    assert.ok(status.open);
+    // 割之前就看得出这株草能割几捆
+    assert.deepEqual([status.hay, grassSize(mastery - 1)], [HAY_BUNDLES[mastery], HAY_BUNDLES[mastery]]);
+    const result = mowGrass(save, deck, 'w0', true, now);
+    assert.equal(result.masteryAfter, mastery);
+    got.push(result.hay);
+  }
+  assert.deepEqual(got, [1, 2, 2, 3, 3, 3]);
+  assert.equal(save.hay, 14);
+});
+
+test('草不和词绑定:草地只分高矮各几株,割的时候才取最早到期的词;点了多高的草就从那么高的词里取', () => {
+  const { deck, save } = setup();
+  // 三个到期的旧词:w0 掌握度 1(割 1 捆),w1 掌握度 4(割 3 捆),w2 掌握度 2(割 2 捆);w0 最早到期
+  for (let i = 0; i < 3; i++) digNext(save, deck, true, T0 + i);
+  const cards = activeProgress(save).cards;
+  cards.w1.mastery = 4;
+  cards.w2.mastery = 2;
+  const later = T0 + gameDays(8);
+  assert.deepEqual(grassField(save, later), [0, 1, 1, 1]);
+
+  const any = grassStatus(save, deck, later);
+  assert.ok(any.open);
+  assert.deepEqual([any.cardId, any.hay, any.due], ['w0', 1, 3]);
+  const tall = grassStatus(save, deck, later, 3);
+  assert.ok(tall.open);
+  assert.deepEqual([tall.cardId, tall.hay], ['w1', 3]);
+
+  // 先割高的也行:到期的词都可以割,不必按到期的先后
+  assert.equal(mowGrass(save, deck, 'w1', true, later).hay, 3);
+  assert.deepEqual(grassField(save, later), [0, 1, 1, 0]);
+  assert.equal(grassStatus(save, deck, later, 3).open, false, '没有这么高的草了');
+  assert.throws(() => mowGrass(save, deck, 'w1', true, later), /现在不该复习/);
+
+  const session = new GrassSession(save, deck, noLuck);
+  const turn = session.current(later, 2)!;
+  assert.deepEqual([turn.cardId, turn.hay], ['w2', 2]);
+  assert.equal(session.current(later, 1), turn, '已经出了题,答完之前不换');
 });
 
 test('割草答错:没有收成,这个词降两级进词袋,要重新种一遍', () => {
@@ -115,7 +168,7 @@ test('割草答错:没有收成,这个词降两级进词袋,要重新种一遍',
   assert.deepEqual([candidate.card.id, candidate.source], [word, 'bag']);
 });
 
-test('田种满了照样能割草复习;只能割当前该复习的那一株', () => {
+test('田种满了照样能割草复习;没到期的词割不了;在牧场复习过的词矿里不再出', () => {
   const { deck, save } = setup();
   save.plots.forEach((plot, i) => (plot.unlocked = i < 1));
   const known = digNext(save, deck, true, T0).cardId;
@@ -129,9 +182,10 @@ test('田种满了照样能割草复习;只能割当前该复习的那一株', (
   const status = grassStatus(save, deck, later);
   assert.ok(status.open);
   assert.deepEqual([status.cardId, status.due], [known, 2]);
-  assert.throws(() => mowGrass(save, deck, other, true, later), /现在该复习的是/);
+  assert.throws(() => mowGrass(save, deck, 'w9', true, later), /现在不该复习/);
   assert.equal(mowGrass(save, deck, known, true, later).masteryAfter, 2);
   // 牧草和矿里的旧矿脉是同一批词:在牧场复习过的,矿里不会再出
+  assert.equal(grassStatus(save, deck, later).due, 1);
   const vein = mineStatus(save, deck, later);
   assert.ok(vein.open);
   assert.equal(vein.vein.cardId, other);
@@ -404,6 +458,34 @@ test('没吃上草的日子,肚子里的小牛也不长', () => {
   const cow = grownCow(save, { pregnantDays: 5 });
   settlePasture(save, dayStart(3));
   assert.equal(cow.pregnantDays, 5);
+});
+
+test('可以卖牛:养几头由玩家自己定。小牛、大牛各有价,都比买价低;病着的卖不出钱,只能送走', () => {
+  const { save } = ranch(0, 0);
+  addCow(save);
+  const grown = grownCow(save);
+  const sick = grownCow(save, { sickDays: 3, hungryDays: HUNGRY_DAYS_TO_SICK });
+  assert.deepEqual(save.herd.map(livestockSellPrice), [CALF_SELL_PRICE, COW_SELL_PRICE, 0]);
+  assert.ok(CALF_SELL_PRICE < LIVESTOCK_COST_BASE, '买来再卖是亏的');
+
+  assert.equal(sellLivestock(save, 0, T0), CALF_SELL_PRICE);
+  assert.deepEqual(save.herd, [grown, sick]);
+  assert.equal(sellLivestock(save, 1, T0), 0);
+  assert.equal(sellLivestock(save, 0, T0), COW_SELL_PRICE);
+  assert.deepEqual([save.herd.length, save.coins], [0, CALF_SELL_PRICE + COW_SELL_PRICE]);
+  assert.equal(sellLivestock(save, 0, T0), -1, '没有牛可卖');
+});
+
+test('卖掉几头之后,剩下的牛吃得饱了', () => {
+  const { save } = ranch(0, 0);
+  for (let i = 0; i < 4; i++) grownCow(save);
+  save.hay = RATION * 2;
+  assert.equal(settlePasture(save, dayStart(1)).milk, 2, '四头牛,草只够两头');
+  sellLivestock(save, 3, dayStart(1));
+  sellLivestock(save, 2, dayStart(1));
+  save.hay = RATION * 2;
+  settlePasture(save, dayStart(2));
+  assert.ok(save.herd.every((cow) => cow.hungryDays === 0));
 });
 
 test('今天割的草,牛明天才吃到', () => {
