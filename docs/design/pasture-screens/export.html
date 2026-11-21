@@ -177,11 +177,13 @@ svg {
     { name: '答错', note: '草没割成,这个词进词袋', svg: PS.quiz(sc, W.mid, 'miss') },
   ]);
   sheet('pasture-enough', '够不够吃', [
-    { name: '够吃', note: '草垛够 3 顿,饲料只够 1 顿', svg: PS.pasture(sc) },
-    { name: '存粮空了一天', note: '都饿着;吃上一顿就好', svg: PS.pasture(LD.pastureHungry) },
+    { name: '够吃,但饲料只剩一顿', note: '饲料桶上探出一个感叹号', svg: PS.pasture(sc) },
+    { name: '点草垛', note: '够吃几顿、吃到什么时候,点开才看到', svg: PS.stockCard(sc) },
+    { name: '存粮空了一天', note: '两处都是感叹号,牲畜头上是空碗', svg: PS.pasture(LD.pastureHungry) },
+    { name: '点空了的草垛', note: '见底时才有"去商店救急"', svg: PS.stockCard(LD.pastureHungry) },
     { name: '9 天没来', note: '6 只刚病,4 只饿着', svg: PS.pasture(LD.pastureAway) },
     { name: '24 天没来', note: '剩下的 4 只今天不治就来不及', svg: PS.pasture(LD.pastureLost) },
-  ]);
+  ], true);
   sheet('pasture-away', '几天没来再打开', [
     { name: '3 天', note: '存粮够吃,什么事都没有', svg: PS.report(LD.pastureBack) },
     { name: '9 天', note: '病了,都来得及', svg: PS.report(LD.pastureAway) },

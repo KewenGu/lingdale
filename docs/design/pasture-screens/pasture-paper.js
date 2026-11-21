@@ -125,8 +125,8 @@
     return ['今天', '明天', '后天', '大后天'][d] + (am ? '早上' : '下午');
   }
   /**
-   * 存粮的牌子上的两行字:head 是够吃几顿,sub 是吃到什么时候。stock 是有几份,need 是一顿吃几份。
-   * 牌子就立在草垛(饲料桶)下面,所以不再写"草垛""饲料"和有几捆:东西是什么看得见,捆数在割草时和小屋那张纸上。
+   * 存粮的一句话拆成两段:head 是够吃几顿,sub 是吃到什么时候。stock 是有几份,need 是一顿吃几份。
+   * 牧场一屏上不写它(负责人定的);点草垛、饲料桶、小屋、鸡舍之后的纸上,和割草时右下角的草垛上才用到。
    */
   function storeLines(sc, stock, need, unitWord, storeName) {
     var meals = need > 0 ? Math.floor(stock / need) : 0,
@@ -785,6 +785,15 @@
   function medMark() {
     return circ(0, 0, 10.6, C.white) + medBottle(0, 1, 0.62);
   }
+  // 感叹号:草垛或饲料桶见底了。负责人定的:牧场一屏不写"够吃几顿",见底时用它叫住玩家。
+  // 墨绿色,不是红色;和水滴、空碗、药瓶是同一种探出来的纸白圆片。它只出现在草垛和饲料桶上。
+  function alertMark() {
+    return circ(0, 0, 11.6, C.white) + rrect(-2, -7, 4, 8.8, 2, C.ink) + circ(0, 5.2, 2.2, C.ink);
+  }
+  /** 存粮见底:不够吃两顿,也就是撑不过现实的一天。没有要喂的牲畜时不算。 */
+  function lowStock(stock, need) {
+    return need > 0 && stock < need * 2;
+  }
   function goodMark(kind) {
     return circ(0, 0, 10.6, C.yellow) + goodIcon(kind, 0, kind === 'milk' ? 1 : 0, kind === 'eggs' ? 0.74 : 0.62);
   }
@@ -873,6 +882,8 @@
       bowlMark: bowlMark,
       medMark: medMark,
       goodMark: goodMark,
+      alertMark: alertMark,
+      lowStock: lowStock,
       pastureIcon: pastureIcon,
       sickleIcon: sickleIcon,
       mowButton: mowButton,

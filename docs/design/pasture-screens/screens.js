@@ -97,35 +97,17 @@
     L.add(b);
     x += 49 + 10;
     if (main === 'hay' || main === 'feed') L.add(stockPlate(x, 712, 378 - x, 62, sc, main));
-    // 没有草可割的时候不放一个按不动的按钮,换成草垛
-    else if (!due) L.add(stockPlate(x, 712, 378 - x, 62, sc, 'hay'));
+    // 没有草可割的时候不放一个按不动的按钮,换成一张说明现状的纸片
+    else if (!due)
+      L.add({
+        shape: rrect(x, 712, 378 - x, 60, 26, C.white) + P.sickle(x + 36, 750, 24, 0.8),
+        text: txt(x + (378 - x) / 2 + 16, 747.4, '没有草可割', 15, C.ink, { a: 'middle' }),
+      });
     else L.add(P.mowButton(x, 712, 378 - x, 60, due));
     return L.out();
   }
 
   // ---------- 牧场一屏 ----------
-
-  // 存粮的名牌:够吃几顿一行,吃到什么时候一行。和小镇地图上的名牌是同一种纸片,立在草垛和饲料桶下面。
-  function storePlate(cx, y, lines) {
-    return S.plate(cx, y, lines.head, lines.sub || null);
-  }
-  // 有牲畜饿着或者病了的时候,栅栏上多挂一张纸条。几只有事已经由标记说了,纸条只说标记说不了的那一句:还有多久。
-  function troubleLine(sc) {
-    var worstSick = -1,
-      worstHungry = -1,
-      Pn = LD.PASTURE;
-    sc.herd.forEach(function (a) {
-      if (a.sick != null) worstSick = Math.max(worstSick, a.sick);
-      else if (a.hungry > 0) worstHungry = Math.max(worstHungry, a.hungry);
-    });
-    if (worstSick >= 0) {
-      var left = Pn.sickToDie - worstSick;
-      return left <= 1 ? '今天不治就来不及了' : '病了的还能等 ' + P.daysText(left);
-    }
-    if (worstHungry < 0) return null;
-    var more = Pn.hungryToSick - worstHungry;
-    return more <= 1 ? '再饿一顿就要病了' : '再饿 ' + P.daysText(more) + '会生病';
-  }
 
   // 院子:把一处的牲畜排成一两排。有事的排在前面(病了的、饿着的),一屏放不下时省掉的是好好的那些。
   function yard(list, x0, x1, yTop, yBottom, opt) {
@@ -184,7 +166,6 @@
       hayLines = P.storeLines(sc, sc.hay, hayNeed, '捆', '草垛'),
       feedLines = P.storeLines(sc, sc.feed, feedNeed, '份', '饲料'),
       total = sc.grass[1] + sc.grass[2] + sc.grass[3],
-      trouble = troubleLine(sc),
       opt = { style: o.style, mark: o.mark },
       xsNow,
       fld,
@@ -199,9 +180,11 @@
       B.s += P.barn(xs[0], by, s) + P.haystack(xs[1], by, stockLevel(sc.hay, hayNeed, true), s > 0.8 ? 1 : 0.86);
       B.s += P.feedBin(xs[2], by, stockLevel(sc.feed, feedNeed, false), s > 0.8 ? 1 : 0.9) + P.coop(xs[3], by, s);
     }
-    function plates(y) {
-      U.add(storePlate(xsNow[4], y, hayLines));
-      U.add(storePlate(xsNow[5], y, feedLines));
+    // 见底的感叹号:探出草垛和饲料桶的右上角
+    function alerts(by, xs) {
+      var hl = stockLevel(sc.hay, hayNeed, true);
+      if (P.lowStock(sc.hay, hayNeed)) A.mark += at(xs[1] + 19, by - [14, 22, 34, 50][hl], P.alertMark(), -8);
+      if (P.lowStock(sc.feed, feedNeed)) A.mark += at(xs[2] + 17, by - 34, P.alertMark(), -8);
     }
     // 院子:一块深一档的草地。纸白的牛羊鸡在草地色上明暗只差 1.30,病了的(纸白暗)只有 1.02;垫上它是 1.70 和 1.33。
     function paddock(x, y, w, h, seed) {
@@ -213,30 +196,28 @@
     }
 
     if (layout === 'A') {
-      out += paddock(8, 312, 236, 110, 3) + paddock(250, 318, 132, 104, 5);
-      houses(250, 1, [80, 180, 250, 324, 124, 292]);
-      plates(258);
-      yd = yard(barnList, 14, 240, 318, 412, copy(opt, { max: 12 }));
+      out += paddock(8, 268, 236, 124, 3) + paddock(250, 274, 132, 118, 5);
+      houses(250, 1, [80, 180, 250, 324]);
+      alerts(250, xsNow);
+      yd = yard(barnList, 14, 240, 280, 384, copy(opt, { max: 12 }));
       add(yd);
       // 一屏放不下的时候,省掉的是好好的那些,并且说出来
-      if (yd.more) U.add(pill(56, 414, '还有 ' + yd.more + ' 只', 11, C.white, C.ink, 9, 20));
-      add(yard(coopList, 250, 380, 330, 410, copy(opt, { max: 8 })));
-      B.s += P.rail(8, 382, 438, 176, 214);
+      if (yd.more) U.add(pill(56, 386, '还有 ' + yd.more + ' 只', 11, C.white, C.ink, 9, 20));
+      add(yard(coopList, 250, 380, 294, 382, copy(opt, { max: 8 })));
+      B.s += P.rail(8, 382, 410, 176, 214);
       if (total) {
-        fld = P.field(sc.grass, 14, 458, 362, 232, 11, 58);
+        fld = P.field(sc.grass, 14, 426, 362, 264, 11, 58);
         F += fld.svg;
       } else {
-        emptyNote(195, 536);
+        emptyNote(195, 520);
         F += at(60, 520, P.stubble(1)) + at(140, 600, P.stubble(2)) + at(300, 520, P.stubble(3)) + at(250, 640, P.stubble(4)) + at(90, 660, P.stubble(5));
       }
-      // 纸条挂在栅栏上
-      if (trouble) U.add(pill(195, 423, trouble, 13, C.white, C.ink, 14, 28));
       out += g('', B.s, SH) + g('', F, SH) + g('', A.body, SH);
     } else if (layout === 'B') {
       // 牲畜散在草地里吃草。房子缩小,退到远处。
-      houses(214, 0.7, [62, 132, 262, 326, 96, 296]);
-      plates(222);
-      B.s += P.rail(8, 382, 286, 176, 214);
+      houses(214, 0.7, [62, 132, 262, 326]);
+      alerts(214, xsNow);
+      B.s += P.rail(8, 382, 246, 176, 214);
       var spots = [
           [70, 392],
           [300, 452],
@@ -264,7 +245,7 @@
         items.push({ y: p[1], q: P.animalAt(a, p[0], p[1], copy(opt, { flip: i % 2 === 0 })) });
       });
       if (total) {
-        fld = P.field(sc.grass, 14, 310, 362, 380, 23, 58);
+        fld = P.field(sc.grass, 14, 270, 362, 420, 23, 58);
         fld.pts.forEach(function (p) {
           items.push({ y: p.y, q: { body: at(p.x, p.y, P.tuft(p.size, p.seed)), mark: '', text: '' } });
         });
@@ -275,21 +256,19 @@
       items.forEach(function (it) {
         add(it.q);
       });
-      if (trouble) U.add(pill(195, 273, trouble, 13, C.white, C.ink, 14, 28));
       out += g('', B.s, SH) + g('', A.body, SH);
     } else {
       // 草地在上,房子和院子在下:牲畜离拇指近,草离得远。
       if (total) {
-        fld = P.field(sc.grass, 14, 150, 362, 210, 31, 58);
+        fld = P.field(sc.grass, 14, 150, 362, 232, 31, 58);
         F += fld.svg;
       } else emptyNote(195, 230);
-      B.s += P.rail(8, 382, 384, 176, 214);
-      out += paddock(8, 568, 236, 110, 3) + paddock(250, 574, 132, 104, 5);
-      houses(506, 1, [80, 180, 250, 324, 124, 292]);
-      plates(514);
-      add(yard(barnList, 14, 240, 574, 668, copy(opt, { max: 10 })));
-      add(yard(coopList, 250, 380, 584, 668, copy(opt, { max: 8 })));
-      if (trouble) U.add(pill(195, 369, trouble, 13, C.white, C.ink, 14, 28));
+      B.s += P.rail(8, 382, 404, 176, 214);
+      out += paddock(8, 548, 236, 124, 3) + paddock(250, 554, 132, 118, 5);
+      houses(530, 1, [80, 180, 250, 324]);
+      alerts(530, xsNow);
+      add(yard(barnList, 14, 240, 560, 664, copy(opt, { max: 10 })));
+      add(yard(coopList, 250, 380, 574, 662, copy(opt, { max: 8 })));
       out += g('', F, SH) + g('', B.s, SH) + g('', A.body, SH);
     }
     if (o.goods) {
@@ -299,7 +278,7 @@
         count = { milk: 0, wool: 0, eggs: 0 },
         kinds = [],
         gx,
-        gy = layout === 'C' ? 383 : 437;
+        gy = layout === 'C' ? 403 : 409;
       o.goods.forEach(function (p) {
         gm += at(p[0], p[1], P.goodMark(p[2]), 8);
         if (!count[p[2]]) kinds.push(p[2]);
@@ -455,10 +434,16 @@
    *   pick  选中第几行
    *   warn  选中的这份卖得和一个鸡蛋一样贵(或者更贵):提醒一句,给一个换回去的按钮
    */
+  // 存粮的一句话:有多少,够吃几顿,吃到什么时候。牧场一屏上不写它,点开草垛、饲料桶、小屋、鸡舍才看到。
+  function stockText(sc, food) {
+    var hay = food === 'hay',
+      lines = P.storeLines(sc, hay ? sc.hay : sc.feed, P.perMeal(sc, hay ? 'barn' : 'coop'), hay ? '捆' : '份', hay ? '草垛' : '饲料');
+    return (hay ? '草垛 ' : '饲料 ') + lines.count + ' · ' + lines.head + (lines.sub ? ',' + lines.sub : '');
+  }
   function feedPick(sc, pick, warn) {
     var o = k.svgOpen() + pasture(sc, { under: true }),
       L = new Layer(),
-      y0 = 844 - (warn ? 588 : 536) - 5 * 0,
+      y0 = 844 - (warn ? 606 : 554),
       rows = sc.produce
         .map(function (r) {
           return copy(r, { price: producePrice(r) });
@@ -472,6 +457,7 @@
     S.drawer(L, y0);
     L.s += P.scoop(40, y0 + 46, 1.5, -8);
     L.t += txt(66, y0 + 56, '做饲料', 28, C.ink, { f: K.FONT_T, w: 400 });
+    L.t += txt(162, y0 + 54, stockText(sc, 'feed'), 12.5, C.ink, { w: 700 });
     L.t += txt(24, y0 + 84, '一份作物做 ' + LD.PASTURE.feedPerCrop + ' 份饲料,不看星级。要答对一个到期的旧词才做得成。', 12, C.ink, { w: 500 });
     rows.forEach(function (r, i) {
       y = y0 + 98 + i * 54;
@@ -526,14 +512,14 @@
       list = P.houseAnimals(sc, house),
       barnH = house === 'barn',
       rowH = list.length > 5 ? 46 : 54,
-      y0 = 844 - (222 + list.length * rowH),
+      y0 = 844 - (240 + list.length * rowH),
       need = P.perMeal(sc, house),
       y;
     S.drawer(L, y0);
     L.s += barnH ? P.barn(44, y0 + 62, 0.36) : P.coop(44, y0 + 60, 0.44);
     L.t += txt(76, y0 + 56, barnH ? '小屋' : '鸡舍', 28, C.ink, { f: K.FONT_T, w: 400 });
-    L.t += txt(140, y0 + 54, '一' + P.mealWord() + '吃 ' + need + (barnH ? ' 捆 · 草垛 ' + sc.hay + ' 捆' : ' 份 · 饲料 ' + sc.feed + ' 份'), 12.5, C.ink, { w: 500 });
-    L.t += txt(24, y0 + 84, '养几只,就是每天要复习多少才喂得饱。', 12, C.ink, { w: 500 });
+    L.t += txt(140, y0 + 54, '一' + P.mealWord() + '吃 ' + need + (barnH ? ' 捆' : ' 份'), 12.5, C.ink, { w: 500 });
+    L.t += txt(24, y0 + 84, stockText(sc, barnH ? 'hay' : 'feed'), 12.5, C.ink, { w: 700 });
     list.forEach(function (a, i) {
       y = y0 + 98 + i * rowH;
       var sz = P.sizeOf(a),
@@ -563,6 +549,7 @@
       L.add(b);
     });
     L.t += txt(195, y + 72, barnH ? '小牛每' + P.mealWord() + '吃 3 捆,小羊 2 捆。吃饱 28 天长大,之前没有奶和毛。' : '小鸡每' + P.mealWord() + '吃 1 份。吃饱 7 天长大,之前不下蛋。', 11.5, C.ink, { a: 'middle', w: 500 });
+    L.t += txt(195, y + 90, '养几只,就是每天要复习多少才喂得饱。', 11.5, C.ink, { a: 'middle', w: 500 });
     return k.finish(o + L.out());
   }
 
@@ -617,6 +604,45 @@
       L.add(bs);
       coinLabel(L, 124, y + 20, sellPrice(a), 14.5);
       L.t += txt(204, y + 18, '卖价比买价低:卖是为了', 11.5, C.ink, { w: 500 }) + txt(204, y + 34, '少养几只,不是为了赚钱。', 11.5, C.ink, { w: 500 });
+    }
+    return k.finish(o + L.out());
+  }
+
+  /**
+   * 点草垛看到的卡片:有几捆,够吃几顿、吃到什么时候,小屋一顿吃多少,草地上的草割完能添多少。
+   * 牧场一屏上不写这些;见底时草垛上探出一个感叹号,点它就是这张卡片。
+   */
+  function stockCard(sc) {
+    var o = k.svgOpen() + pasture(sc, { under: true }),
+      L = new Layer(),
+      need = P.perMeal(sc, 'barn'),
+      lines = P.storeLines(sc, sc.hay, need, '捆', '草垛'),
+      low = P.lowStock(sc.hay, need),
+      total = sc.grass[1] + sc.grass[2] + sc.grass[3],
+      hay = sc.grass[1] + sc.grass[2] * 2 + sc.grass[3] * 3,
+      y0 = low ? 500 : 546,
+      y;
+    S.drawer(L, y0);
+    L.s += circ(70, y0 + 68, 46, C.grass) + P.haystack(70, y0 + 96, stockLevel(sc.hay, need, true), 1.3);
+    if (low) L.s += at(104, y0 + 34, P.alertMark(), -8);
+    L.t += txt(134, y0 + 52, '草垛', 24, C.ink) + txt(196, y0 + 52, sc.hay + ' 捆', 24, C.ink);
+    L.t += txt(134, y0 + 76, lines.head + (lines.sub ? ',' + lines.sub : ''), 14, C.ink);
+    L.t += txt(134, y0 + 96, '小屋里 ' + P.houseAnimals(sc, 'barn').length + ' 只,一' + P.mealWord() + '吃 ' + need + ' 捆', 13, C.ink, { w: 500 });
+    y = y0 + 126;
+    L.s += rrect(20, y, 350, 52, 15, C.whiteD) + at(46, y + 42, P.tuft(3, 2), 0, 0.6);
+    L.t += txt(72, y + 22, '草地上 ' + total + ' 株草', 14, C.ink);
+    L.t += txt(72, y + 40, total ? '割完是 ' + hay + ' 捆' + (need ? ',够吃 ' + Math.floor(hay / need) + ' ' + P.mealWord() : '') : sc.nextGrass.when + '会再长出 ' + sc.nextGrass.n + ' 株', 11.5, C.ink, { w: 500 });
+    y += 66;
+    if (total) {
+      var mb = button(20, y, low ? 216 : 350, 46, '', true);
+      mb.shape += P.sickle(50, y + 30, 24, 0.7);
+      mb.text = txt(20 + (low ? 216 : 350) / 2 + 12, y + 29, '割一轮草', 16, C.white, { a: 'middle' });
+      L.add(mb);
+    }
+    // 买草是救急用的,只在见底的时候才露出来
+    if (low) {
+      L.add(button(total ? 248 : 20, y + 3, 122, 40, '去商店救急', false, 14.5, C.whiteD));
+      L.t += txt(195, y + 68, '买来的草比牛奶和羊毛还贵,只是救急。', 11.5, C.ink, { a: 'middle', w: 500 });
     }
     return k.finish(o + L.out());
   }
@@ -977,6 +1003,7 @@
     bar: bar,
     quiz: quiz,
     feedPick: feedPick,
+    stockCard: stockCard,
     houseSheet: houseSheet,
     animalCard: animalCard,
     report: report,
@@ -986,6 +1013,6 @@
     farmTwoSigns: farmTwoSigns,
     statesSheet: statesSheet,
     grassSheet: grassSheet,
-    kit: { meadowBg: meadowBg, storePlate: storePlate, yard: yard, troubleLine: troubleLine, stockLevel: stockLevel, stockPlate: stockPlate, bundles: bundles, scoops: scoops },
+    kit: { meadowBg: meadowBg, yard: yard, stockLevel: stockLevel, stockPlate: stockPlate, bundles: bundles, scoops: scoops },
   };
 })();
