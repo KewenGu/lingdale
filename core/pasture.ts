@@ -1,5 +1,4 @@
 import {
-  ANIMAL_GROWTH_DAYS,
   GESTATION_DAYS,
   HUNGRY_DAYS_TO_SICK,
   MAX_LOGS,
@@ -156,7 +155,13 @@ export type AnimalCondition = 'well' | 'hungry' | 'sick';
 
 /** 长大了没有。长大了才有产出、才能再生小的。 */
 export function isGrown(animal: Animal): boolean {
-  return animal.fedDays >= ANIMAL_GROWTH_DAYS;
+  return animal.fedDays >= animalType(animal.kind).growthDays;
+}
+
+/** 这只牲畜一个游戏日吃几份。没长大的吃一半。 */
+export function rationOf(animal: Animal): number {
+  const type = animalType(animal.kind);
+  return isGrown(animal) ? type.ration : type.youngRation;
 }
 
 /** 这只牲畜现在怎么样:生病、饿着(上一个游戏日没吃上),还是好好的。 */
@@ -190,7 +195,8 @@ export interface PastureReport {
  * - 病着的不吃,病情加一天,到 SICK_DAYS_TO_DIE 就死。
  * - 其余的轮流吃,最饿的先吃:牛羊分草垛里的牧草,鸡分饲料。不够所有牲畜吃的时候,它们轮着挨饿,
  *   而不是总饿着同一只:买多了的玩家每天都来复习,不该眼看着固定的几只病死。
- * - 吃上了:没长大的长一天;长大了的出一份产出,怀着的离生小的近一天。
+ * - 吃上了:没长大的长一天;长大了的每吃饱 yieldDays 天出一份产出(牛和鸡天天出,羊三天一份),怀着的离生小的近一天。
+ *   吃饱的天数一直往上记,产出的节奏就是从它算出来的,不另外存。
  * - 没吃上:连续挨饿加一天,到 HUNGRY_DAYS_TO_SICK 就生病。
  */
 export function settlePasture(save: SaveData, now: number): PastureReport {
@@ -220,7 +226,8 @@ export function settlePasture(save: SaveData, now: number): PastureReport {
       .sort((x, y) => y.a.hungryDays - x.a.hungryDays || x.i - y.i);
     for (const { a } of order) {
       const type = animalType(a.kind);
-      if (save[type.food] < type.ration) {
+      const ration = rationOf(a);
+      if (save[type.food] < ration) {
         a.hungryDays++;
         if (a.hungryDays >= HUNGRY_DAYS_TO_SICK) {
           a.sickDays = 0;
@@ -228,14 +235,15 @@ export function settlePasture(save: SaveData, now: number): PastureReport {
         }
         continue;
       }
-      save[type.food] -= type.ration;
+      save[type.food] -= ration;
       a.hungryDays = 0;
-      if (!isGrown(a)) {
-        a.fedDays++;
-        continue;
+      const wasGrown = isGrown(a);
+      a.fedDays++;
+      if (!wasGrown) continue;
+      if ((a.fedDays - type.growthDays) % type.yieldDays === 0) {
+        save.goods[type.good]++;
+        report[type.good]++;
       }
-      save.goods[type.good]++;
-      report[type.good]++;
       if (a.pregnantDays === null) continue;
       a.pregnantDays++;
       if (a.pregnantDays >= GESTATION_DAYS) {
@@ -331,7 +339,9 @@ export function breed(save: SaveData, index: number, now: number): boolean {
 /** 卖牧草(默认全部),返回得到的金币。卖之前牲畜先把到今天为止该吃的吃了。 */
 export function sellHay(save: SaveData, now: number, count?: number): number {
   settlePasture(save, now);
-  const selling = Math.min(save.hay, count === undefined ? save.hay : Math.max(0, Math.floor(count)));
+  // 小牛小羊一顿吃一捆半,草垛里会有半捆的零头;卖只卖整捆
+  const whole = Math.floor(save.hay);
+  const selling = Math.min(whole, count === undefined ? whole : Math.max(0, Math.floor(count)));
   if (selling <= 0) return 0;
   save.hay -= selling;
   const earned = selling * HAY_PRICE;

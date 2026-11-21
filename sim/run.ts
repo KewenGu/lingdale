@@ -23,6 +23,7 @@ import {
   plant,
   plantCandidate,
   plotCost,
+  producePrice,
   sellAllOre,
   sellHay,
   setAside,
@@ -32,6 +33,7 @@ import {
   canBreed,
   breed,
   isGrown,
+  rationOf,
   sellAllProduce,
   thirstyCards,
   unlockPlot,
@@ -119,6 +121,7 @@ export interface SimTotals {
   eggs: number; // 鸡一共下了几个蛋
   feedAnswers: Tally; // 做饲料时的复习
   feedMade: number; // 一共做了几份饲料
+  feedAtLoss: number; // 其中用卖了更划算的好作物做的,为了不让鸡挨饿
   flock: number; // 结束时养了几只鸡
   flockGrown: number; // 其中长大了的
   hayMowed: number; // 一共割了几捆牧草
@@ -243,6 +246,7 @@ export function simulate(options: SimOptions): { rows: DayRow[]; totals: SimTota
     eggs: 0,
     feedAnswers: tally(),
     feedMade: 0,
+    feedAtLoss: 0,
     flock: 0,
     flockGrown: 0,
     hayMowed: 0,
@@ -398,37 +402,48 @@ export function simulate(options: SimOptions): { rows: DayRow[]; totals: SimTota
   };
 
   /** 用牧草复习到期的旧词,每次打开最多 digsPerSession 个。返回答了几题。 */
-  /** 库存里星级最低的一份作物:卖不上价的先拿去做饲料。 */
-  const cheapestCrop = (): { cropId: string; stars: number } | null => {
-    let best: { cropId: string; stars: number } | null = null;
+  /**
+   * 库存里最便宜的一份作物。worthOnly 为真时只要拿去喂鸡不亏的:蛋鸡下一个蛋要吃 ration 份饲料,
+   * 这么多份作物直接卖的钱要是不比一个蛋少,就不算。
+   */
+  const cheapestCrop = (worthOnly: boolean): { cropId: string; stars: number; worth: boolean } | null => {
+    let best: { cropId: string; stars: number; worth: boolean; price: number } | null = null;
     for (const cropId of Object.keys(save.produce)) {
       const counts = save.produce[cropId];
       for (let stars = 1; stars < counts.length; stars++) {
-        if (counts[stars] > 0 && (!best || stars < best.stars)) best = { cropId, stars };
+        if (!(counts[stars] > 0)) continue;
+        const price = producePrice(cropId, stars);
+        const worth = price * CHICKEN.ration < CHICKEN.goodPrice;
+        if (worthOnly && !worth) continue;
+        if (!best || price < best.price) best = { cropId, stars, worth, price };
       }
     }
     return best;
   };
 
-  /** 做饲料,做到 want 份或者没有作物、没有到期的词为止。返回答了几题。 */
-  const feedRound = (now: number, row: DayRow, want: number, limit: number): number => {
+  /**
+   * 做饲料。先用喂鸡不亏的作物做到 want 份;要是这样还不够鸡吃到下一次打开(need 份),
+   * 就拿好作物贴进去:学习者不会看着鸡挨饿。返回答了几题。
+   */
+  const feedRound = (now: number, row: DayRow, want: number, need: number, limit: number): number => {
     const session = new FeedSession(save, deck, rng);
     let questions = 0;
-    let made = 0;
-    while (made < want && questions < limit) {
+    const start = save.feed;
+    while (questions < limit) {
+      const made = save.feed - start;
       const turn = session.current(now);
-      const crop = cheapestCrop();
+      const crop = made < want ? cheapestCrop(true) || (save.feed < need ? cheapestCrop(false) : null) : null;
       if (!turn || !crop) break;
       const correct = ask(turn.cardId, now);
       const result = session.submitCorrect(correct, crop.cropId, crop.stars, now);
       questions++;
-      made += result.feed;
+      if (result.feed > 0 && !crop.worth) totals.feedAtLoss += result.feed;
       row.reviews++;
       count(totals.feedAnswers, correct);
       count(totals.reviewByMastery[turn.mastery], correct);
       if (result.bagged) totals.missedReview++;
     }
-    totals.feedMade += made;
+    totals.feedMade += save.feed - start;
     return questions;
   };
 
@@ -514,7 +529,9 @@ export function simulate(options: SimOptions): { rows: DayRow[]; totals: SimTota
           const hens = houseCount(save, 'coop');
           // 备够现有的鸡和再多一只吃两天的。备得齐,说明作物和到期的词养得起再多一只,就再买一只
           const stock = (hens + 1) * CHICKEN.ration * 4;
-          asked = feedRound(now, row, stock - save.feed, options.digsPerSession);
+          // 现有的鸡到下一次打开之前要吃的量
+          const need = save.herd.reduce((sum, a) => sum + (a.kind === 'chicken' ? rationOf(a) : 0), 0);
+          asked = feedRound(now, row, stock - save.feed, need, options.digsPerSession);
           row.farmQuestions += asked;
           if (
             save.feed >= stock &&
@@ -559,7 +576,7 @@ export function simulate(options: SimOptions): { rows: DayRow[]; totals: SimTota
             totals.bought++;
           }
           // 留两天的口粮,多的牧草卖掉;还没有牛时全卖
-          const spare = Math.max(0, save.hay - cows * COW.ration * 4);
+          const spare = Math.max(0, Math.floor(save.hay - cows * COW.ration * 4));
           row.earned += sellHay(save, now, spare);
           totals.haySold += spare;
           row.planted += plantAll(now, row);

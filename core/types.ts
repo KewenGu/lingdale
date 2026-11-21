@@ -85,7 +85,7 @@ export type AnimalGood = 'milk' | 'wool' | 'eggs';
  */
 export interface Animal {
   kind: AnimalKind;
-  fedDays: number; // 吃饱过多少个游戏日。吃饱的日子才长,够数就长大
+  fedDays: number; // 吃饱过多少个游戏日,一直往上记。吃饱的日子才长,够数就长大;长大后的产出节奏也从它算
   hungryDays: number; // 已经连续多少个游戏日没吃上草
   sickDays: number | null; // 病了多少个游戏日;没病是 null
   pregnantDays: number | null; // 怀孕之后吃饱了多少个游戏日;没怀是 null
@@ -103,7 +103,7 @@ export interface SaveData {
   seeds: Record<QuestionType, number>; // 商店买的种子,按品种分。种子决定长成哪类作物,带上词袋里的一个词
   produce: Record<string, number[]>; // 收获后还没卖的作物:作物 id → 各星级的数量(下标是星数)
   ore: number[]; // 矿石库存,下标是品级,值是数量
-  hay: number; // 草垛里有几捆牧草,割牧草得来
+  hay: number; // 草垛里有几捆牧草,割牧草得来。小牛小羊一顿吃一捆半,所以会有半捆的零头
   feed: number; // 鸡饲料有几份,用作物做出来的
   herd: Animal[]; // 所有牲畜(牛、羊、鸡),按来的先后排
   goods: Record<AnimalGood, number>; // 还没卖的牛奶、羊毛、鸡蛋

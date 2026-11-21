@@ -167,7 +167,7 @@ if (result.ok) {
 import {
   FeedSession, GrassSession, animalCondition, animalType, breed, buyLivestock, buyMedicine, canBreed, cureAnimal,
   feedStatus, goodPrice, grassField, grassStatus, houseCount, isGrown, livestockCost, livestockSellPrice,
-  sellGoods, sellHay, sellLivestock, settlePasture,
+  rationOf, sellGoods, sellHay, sellLivestock, settlePasture,
 } from './core/index';
 
 // 每次打开游戏、进牧场、进商店时先结算:把所有牲畜从上次到现在的日子一天天过完
@@ -186,7 +186,8 @@ save.medicine;                      // 手里的动物药
 // 画牲畜。小屋里画牛和羊,鸡舍里画鸡;index 是它在 save.herd 里的位置,下面的操作都用它
 save.herd.forEach((animal, index) => {
   const type = animalType(animal.kind);   // kind 是 'cow'、'sheep'、'chicken';type.house 是 'barn' 或 'coop'
-  isGrown(animal);            // 小的还是大的。animal.fedDays / ANIMAL_GROWTH_DAYS 是长到哪了
+  isGrown(animal);            // 小的还是大的。没长大时 animal.fedDays / type.growthDays 是长到哪了
+  rationOf(animal);           // 它一个游戏日吃几份,小的吃一半(小牛小羊是 1.5 捆,草垛会有半捆的零头)
   animalCondition(animal);    // 'well' 好好的 / 'hungry' 饿着 / 'sick' 病了
   animal.hungryDays;          // 连续饿了几个游戏日。到 HUNGRY_DAYS_TO_SICK 生病
   animal.sickDays;            // 病了几个游戏日。到 SICK_DAYS_TO_DIE 死亡
@@ -232,10 +233,11 @@ sellGoods(save, 'milk');    // 牛奶全卖;'wool'、'eggs' 同理,goodPrice('eg
   草不和词绑定:不要给每株草存一个词。玩家点一株,就按它的高矮去取词;割完按 `grassField` 重画。
 - 割草是当场答、当场收的。它和矿里的旧矿脉是同一批词,在一边复习过,另一边就没有了。
 - **牲畜吃东西不需要玩家操作**,不要做成要玩家一只只去喂。
-- **要让玩家一眼看出够不够吃**:草垛里的草够小屋里的牛羊吃几天、饲料够鸡吃几天(口粮在 `animalType(kind).ration`),
+- **要让玩家一眼看出够不够吃**:草垛里的草够小屋里的牛羊吃几天、饲料够鸡吃几天(每只的口粮用 `rationOf`,小的和大的不一样),
   以及今天割的草、做的饲料够几只吃。牲畜会饿病、会死,玩家得能提前看到。
 - **做饲料和割草、挖旧矿脉用的是同一批到期的词。** 界面上要让玩家看得出:到期的词是有数的,拿去做饲料就少割一株草。
-  做饲料时让玩家自己挑用哪份作物,默认挑星级最低的。
+  做饲料时让玩家自己挑用哪份作物,默认挑星级最低的。四星、五星的作物拿去喂鸡不如直接卖,玩家挑了这样的作物时提醒一句。
+- **羊毛三个游戏日才有一份**,可以画出"毛长到哪了":`(animal.fedDays - type.growthDays) % type.yieldDays`。
 - **饿着、病了要画得出来**,病了的牛旁边要有"去买药"的入口。药只治病不管饱,用药之前最好提醒草垛是不是空的。
 - **牛快死的时候要提前说**(比如病了一周以上)。牛死了要有交代,不能悄悄少一头。
 - 怀小牛之前要让玩家知道多一头牛每天多吃多少草。

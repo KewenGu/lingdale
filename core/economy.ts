@@ -1,4 +1,4 @@
-import { INITIAL_PLOTS } from './constants';
+import { DAYS_PER_SEASON, INITIAL_PLOTS } from './constants';
 import { cropKind, cropType } from './crops';
 import { AnimalGood, AnimalKind } from './types';
 
@@ -8,10 +8,10 @@ export const PLOT_COST_BASE = 40;
 export const PLOT_COST_STEP = 2;
 
 /**
- * 基础作物的售价,下标是星数。三星及以下的卖不上价:它们的出路是做成饲料喂鸡,
- * 四星和五星才值得卖。
+ * 基础作物的售价,下标是星数。五星作物和一个鸡蛋一个价。
+ * 三星及以下的卖不上价,它们的出路是做成饲料喂鸡。
  */
-export const PRODUCE_PRICES = [0, 1, 2, 3, 12, 20];
+export const PRODUCE_PRICES = [0, 1, 5, 10, 20, 30];
 
 /** 矿石的售价,下标是品级。品级越高说明这个词记得越久,所以越值钱。 */
 export const ORE_PRICES = [0, 2, 5, 10, 18, 30, 45, 65];
@@ -50,9 +50,12 @@ export interface AnimalType {
   label: string;
   house: 'barn' | 'coop'; // 住哪:小屋还是鸡舍。买价按同一处已经养了几只来涨
   food: 'hay' | 'feed'; // 吃什么:草垛里的牧草,还是鸡饲料
-  ration: number; // 一个游戏日吃几份
-  good: AnimalGood; // 长大后每吃饱一个游戏日出一份什么
-  goodPrice: number; // 这份产出的售价。比它吃掉的东西值钱,这是养它的好处
+  ration: number; // 长大的一个游戏日吃几份
+  youngRation: number; // 没长大的一个游戏日吃几份,是长大的一半
+  growthDays: number; // 吃饱这么多个游戏日才长大。没吃上的日子不长
+  good: AnimalGood; // 长大后的产出
+  yieldDays: number; // 长大后每吃饱这么多个游戏日出一份产出
+  goodPrice: number; // 这份产出的售价
   costBase: number; // 这一处的第一只多少钱
   costStep: number; // 之后每只贵多少
   youngSellPrice: number; // 没长大的卖多少。卖价都比买价低:卖是为了少养,不是为了赚钱
@@ -60,9 +63,9 @@ export interface AnimalType {
 }
 
 /**
- * 羊和牛除了产出不同,规则和数值完全一样。鸡吃得少、买得便宜。
- * 鸡蛋定得比一份饲料的成本高不少:一份饲料是一份作物加一次复习,那次复习本来可以去割草喂牛(合 15 到 45 金币)。
- * 蛋价低于这个数,养鸡就不如不养。数值都是占位的。
+ * 三种牲畜的规则一样,数值不同。
+ * 牛和羊:两个季节长大。牛每个游戏日一份牛奶;羊三个游戏日一份羊毛,一份顶三份牛奶还多一点。
+ * 鸡:14 个游戏日就下蛋,一个蛋和一份五星作物一个价;蛋鸡一个游戏日吃两份饲料,所以拿四星以上的作物喂鸡不如直接卖。
  */
 export const ANIMAL_TYPES: AnimalType[] = [
   {
@@ -71,8 +74,11 @@ export const ANIMAL_TYPES: AnimalType[] = [
     house: 'barn',
     food: 'hay',
     ration: 3,
+    youngRation: 1.5,
+    growthDays: 2 * DAYS_PER_SEASON,
     good: 'milk',
-    goodPrice: 45,
+    yieldDays: 1,
+    goodPrice: 50,
     costBase: 200,
     costStep: 100,
     youngSellPrice: 100,
@@ -84,8 +90,11 @@ export const ANIMAL_TYPES: AnimalType[] = [
     house: 'barn',
     food: 'hay',
     ration: 3,
+    youngRation: 1.5,
+    growthDays: 2 * DAYS_PER_SEASON,
     good: 'wool',
-    goodPrice: 45,
+    yieldDays: 3,
+    goodPrice: 160,
     costBase: 200,
     costStep: 100,
     youngSellPrice: 100,
@@ -96,9 +105,12 @@ export const ANIMAL_TYPES: AnimalType[] = [
     label: '鸡',
     house: 'coop',
     food: 'feed',
-    ration: 1,
+    ration: 2,
+    youngRation: 1,
+    growthDays: 14,
     good: 'eggs',
-    goodPrice: 60,
+    yieldDays: 1,
+    goodPrice: 30,
     costBase: 100,
     costStep: 50,
     youngSellPrice: 50,

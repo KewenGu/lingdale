@@ -119,7 +119,7 @@ if (totals.grassAnswers.asked > 0) {
   );
   if (totals.feedAnswers.asked > 0) {
     console.log(
-      `鸡舍:做饲料 ${pct(totals.feedAnswers)}(${totals.feedAnswers.asked} 题),做成 ${totals.feedMade} 份;买过 ${totals.boughtChicks} 只小鸡;` +
+      `鸡舍:做饲料 ${pct(totals.feedAnswers)}(${totals.feedAnswers.asked} 题),做成 ${totals.feedMade} 份(其中 ${totals.feedAtLoss} 份用的是卖了更划算的好作物);买过 ${totals.boughtChicks} 只小鸡;` +
         `结束时有 ${totals.flock} 只鸡,其中长大的 ${totals.flockGrown} 只,一共下蛋 ${totals.eggs} 个`,
     );
   }

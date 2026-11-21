@@ -1,7 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import {
-  ANIMAL_GROWTH_DAYS,
   Animal,
   animalType,
   sellGoods,
@@ -53,7 +52,8 @@ const LIVESTOCK_COST_BASE = COW.costBase;
 const LIVESTOCK_COST_STEP = COW.costStep;
 const CALF_SELL_PRICE = COW.youngSellPrice;
 const COW_SELL_PRICE = COW.grownSellPrice;
-const COW_GROWTH_DAYS = ANIMAL_GROWTH_DAYS;
+const COW_GROWTH_DAYS = COW.growthDays;
+const CALF_RATION = COW.youngRation;
 
 function setup(deckSize = 100) {
   const deck = makeDeck(deckSize);
@@ -294,8 +294,9 @@ test('买小牛:越买越贵,钱不够买不了', () => {
   assert.equal(save.herd.length, 1);
 });
 
-test('小牛吃饱两个季节才长大,长大之前不出奶', () => {
-  const { save } = ranch(1000, RATION * (COW_GROWTH_DAYS + 3));
+test('小牛吃饱两个季节才长大,长大之前不出奶;小牛吃的是大牛的一半', () => {
+  assert.equal(CALF_RATION, RATION / 2);
+  const { save } = ranch(1000, CALF_RATION * COW_GROWTH_DAYS + RATION * 3);
   buyLivestock(save, T0);
   assert.deepEqual(
     settlePasture(save, T0),
@@ -311,6 +312,7 @@ test('小牛吃饱两个季节才长大,长大之前不出奶', () => {
 
   settlePasture(save, dayStart(COW_GROWTH_DAYS));
   assert.deepEqual([isGrown(save.herd[0]), save.goods.milk], [true, 0], '长大的那一天还不出奶');
+  assert.equal(save.hay, RATION * 3, '两个季节里每天吃一捆半');
 
   assert.equal(settlePasture(save, dayStart(COW_GROWTH_DAYS + 2)).milk, 2);
   assert.deepEqual([save.goods.milk, save.hay], [2, RATION]);
@@ -327,11 +329,12 @@ test('长大的牛每个游戏日吃一份口粮,出一份奶;同一个游戏日
 });
 
 test('没吃上草的那天:牛饿着,不出奶,小牛不长', () => {
-  const { save } = ranch(0, RATION - 1);
+  const short = CALF_RATION - 0.5; // 连小牛的一顿都不够
+  const { save } = ranch(0, short);
   const cow = grownCow(save);
   const calf = addCow(save, { fedDays: 10 });
   settlePasture(save, dayStart(3));
-  assert.deepEqual([save.goods.milk, save.hay], [0, RATION - 1], '不够一份口粮就不吃,草垛里剩下的不会坏');
+  assert.deepEqual([save.goods.milk, save.hay], [0, short], '不够一份口粮就不吃,草垛里剩下的不会坏');
   assert.deepEqual([cow.hungryDays, animalCondition(cow)], [3, 'hungry']);
   assert.deepEqual([calf.fedDays, calf.hungryDays], [10, 3]);
 
@@ -539,6 +542,12 @@ test('卖牧草和牛奶:喂了牛再卖奶,比直接卖草多卖一半', () => 
   assert.equal(sellGoods(save, 'milk'), MILK_PRICE * 2);
   assert.equal(save.goods.milk, 0);
   assert.ok(MILK_PRICE > RATION * HAY_PRICE, '喂了牛再卖要比直接卖草划算');
+});
+
+test('草垛里有半捆的零头时,卖只卖整捆', () => {
+  const { save } = ranch(0, RATION + 0.5);
+  assert.equal(sellHay(save, T0), HAY_PRICE * RATION);
+  assert.equal(save.hay, 0.5);
 });
 
 test('卖牧草之前牛先吃:不会把它们今天的口粮卖掉', () => {

@@ -172,12 +172,12 @@ test('牧场养得起来:割的草够喂,小牛长大后出奶;天天来的人,�
   assert.ok(save.hay >= 0 && save.coins >= 0);
 });
 
-test('养鸡走得通:拿作物做饲料,做饲料就是复习;鸡慢慢变多、长大下蛋,牛还养得起', () => {
+test('养鸡走得通:拿作物做饲料,做饲料就是复习;小鸡长大下蛋,不会饿病,牛还养得起', () => {
   const plain = simulate({ ...DEFAULT_OPTIONS, mines: false }).totals;
   const { totals, rows } = simulate({ ...DEFAULT_OPTIONS, mines: false, chickens: true });
-  assert.ok(totals.feedAnswers.asked > 200, `做饲料答了 ${totals.feedAnswers.asked} 题`);
-  assert.ok(totals.flock >= 3 && totals.flockGrown >= 1, `养了 ${totals.flock} 只鸡`);
-  assert.ok(totals.eggs > 50, `下了 ${totals.eggs} 个蛋`);
+  assert.ok(totals.feedAnswers.asked > 80, `做饲料答了 ${totals.feedAnswers.asked} 题`);
+  assert.ok(totals.flock >= 1 && totals.flockGrown >= 1, `养了 ${totals.flock} 只鸡`);
+  assert.ok(totals.eggs > 20, `下了 ${totals.eggs} 个蛋`);
   assert.ok(totals.herd >= 3, `还养着 ${totals.herd} 头牛`);
   assert.deepEqual([totals.fellSick, totals.died], [0, 0]);
   // 做饲料用掉的是本来要去割草的复习,不是多出来的题:割的草少了,总的题量差不多
@@ -187,14 +187,15 @@ test('养鸡走得通:拿作物做饲料,做饲料就是复习;鸡慢慢变多�
   assert.ok(totals.masteredRecall > 0.85);
 });
 
-test('缺席的代价:十天不来牛都病了,回来买药能救;二十五天不来牛死光', () => {
+test('缺席的代价:十天不来牛都病了,回来买药能救;二十五天不来,大多数已经病死', () => {
   const shortTrip = simulate({ ...DEFAULT_OPTIONS, mines: false, away: [30, 10] }).totals;
   assert.ok(shortTrip.fellSick > 0, `病了 ${shortTrip.fellSick} 头次`);
   assert.deepEqual([shortTrip.cured, shortTrip.died], [shortTrip.fellSick, 0]);
 
   const longTrip = simulate({ ...DEFAULT_OPTIONS, mines: false, away: [30, 25] }).totals;
   assert.ok(longTrip.died > 0, `死了 ${longTrip.died} 头`);
-  assert.equal(longTrip.died, longTrip.fellSick, '病了的都没等到药');
+  assert.ok(longTrip.died > longTrip.fellSick / 2, `病了 ${longTrip.fellSick},死了 ${longTrip.died}`);
+  assert.equal(longTrip.died + longTrip.cured, longTrip.fellSick, '没死的回来都治好了');
   // 受罚的只是牛:回来之后照样能学,也能重新养起来
   assert.ok(longTrip.herd > 0);
 });
