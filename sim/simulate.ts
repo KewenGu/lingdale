@@ -17,6 +17,8 @@ function parseArgs(argv: string[]): SimOptions {
     else if (key === 'digs') options.digsPerSession = Number(value);
     else if (key === 'nodrill') options.drills = false;
     else if (key === 'nofarm') options.plants = false;
+    else if (key === 'nomine') options.mines = false;
+    else if (key === 'bagonly') options.plantsNew = false;
     else if (key === 'skip') options.skipProb = Number(value);
     else if (key === 'seed') options.seed = Number(value);
     else if (key === 'buy') options.autoBuy = true;

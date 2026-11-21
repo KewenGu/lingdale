@@ -42,7 +42,8 @@ npx tsx --test tests/farm.test.ts
 |---|---|
 | `tests/scheduler.test.ts` | 时间、日历、挖矿、浇水和休息的状态变化、掌握度规则 |
 | `tests/mine.test.ts` | 矿脉顺序、答对出矿石、答错进词袋、答错的额度、词袋装满后的练习、练到离开词袋和隔天再考、田满时照常复习、休息中的旧词、卖矿石 |
-| `tests/farm.test.ts` | 买种子、兜底种子、播种、浇水、收获、死亡、作物种类、季节、卖作物、地块 |
+| `tests/farm.test.ts` | 买种子、兜底种子、候选词、种新词、放到一边、播种、浇水、收获、死亡、作物种类、季节、卖作物、地块 |
+| `tests/grass.test.ts` | 牧草:在田里复习、答对答错的结果、和矿里复习的一致性、只种田走完全程、卖牧草 |
 | `tests/quiz-session.test.ts` | 三种题型的出题和判分、浇水会话、挖矿会话、存档读写 |
 | `tests/level.test.ts` | 经验、等级、解锁、升级节奏 |
 | `tests/simulation.test.ts` | 长期运行后存档是否自洽、整体节奏的回归 |
@@ -53,7 +54,7 @@ npx tsx --test tests/farm.test.ts
   测试列表读起来应该像一份规则清单。
 - **一个测试验证一条规则。**
 - **时间用 `tests/helpers.ts` 里的 `T0`、`hours`、`gameDays`。** 测试里的时区偏移都是 0。
-- **要把词种到田里时用 `missWords` 和 `giveSeeds`。** 词只能从矿里答错得来,`missWords` 替你在矿里答错几个词,
+- **要把答错过的词种到田里时用 `missWords` 和 `giveSeeds`。** `missWords` 替你在矿里答错几个词,让它们进词袋(词袋空着时种下的会是没见过的新词),
   `giveSeeds` 直接给种子。矿石运气用 `noLuck`、`lucky` 两个固定的随机函数控制。
 - **不关心浇水间隔的测试可以在同一个时间点连续调用 `answer`。** `answer` 不检查作物是否到了能浇水的时间,
   这个检查在 `needsWater` 和 `thirstyCards` 里,由界面层负责只对能浇的作物开会话。

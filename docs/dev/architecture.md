@@ -35,21 +35,28 @@
 | `constants.ts` | 时间、掌握度、矿石、作物相关的规则常量 | 无 |
 | `time.ts` | 游戏日、下次浇水时间、日历 | constants |
 | `crops.ts` | 种子种类表和作物表 | types |
-| `economy.ts` | 地块价格、作物售价、矿石售价 | constants、crops |
+| `economy.ts` | 地块价格、作物、矿石和牧草的售价 | constants、crops |
 | `level.ts` | 经验来源、升级曲线、等级解锁、`addXp` | types |
 | `scheduler.ts` | 一个词的状态怎么随挖矿、浇水、收获、死亡变化。全是纯函数 | constants、time |
 | `deck.ts` | 按 id 查卡片 | types |
-| `save.ts` | 创建存档、序列化、读取词的状态 | constants、economy、time |
-| `farm.ts` | 田和商店:买种子、兜底种子、播种、浇水、卖作物、解锁地块,以及作物的所有查询 | 以上全部 |
-| `mine.ts` | 矿洞:下一条矿脉、答错的额度、挖矿、卖矿石 | farm、scheduler、economy、level、save |
+| `save.ts` | 创建存档、序列化、读取词的状态、取下一个没见过的词 | constants、economy、time |
+| `farm.ts` | 田和商店:买种子、兜底种子、候选词、播种、放到一边、浇水、卖作物、解锁地块,以及作物的所有查询 | 以上全部 |
+| `mine.ts` | 矿洞:下一条矿脉、答错的额度、挖矿、练习、卖矿石 | farm、scheduler、economy、level、save |
+| `grass.ts` | 牧草:在田里复习到期的旧词、卖牧草 | farm、mine、scheduler、economy、level、save |
 | `quiz.ts` | 按题型出题、判对错 | constants、deck |
-| `session.ts` | 一次浇水会话(出题顺序、首次作答、重复练习)和一次挖矿会话 | farm、mine、quiz |
+| `session.ts` | 一次浇水会话(出题顺序、首次作答、重复练习)、一次挖矿会话、一次牧草会话 | farm、mine、grass、quiz |
 | `stats.ts` | 从作答日志算统计 | constants、save、time |
 | `index.ts` | 统一导出 | |
 
 依赖方向是单向的,从上到下。`scheduler.ts` 不知道地块和金币的存在,`farm.ts` 和 `mine.ts` 不知道题目长什么样。
 
-矿洞和田只通过两样东西相连:词袋(矿里答错的词进去,播种时取出来)和词的休息时间(收获或死亡后到期,词回到矿里)。
+矿洞和田是两个完整的学习的地方,规则上互不调用对方的玩法,只共用三样东西:
+
+- **卡组里还没见过的词**(`nextUnseen`)。矿里挖新矿脉和田里种新词取的是同一个顺序。
+- **词袋**。在哪里答错的词都进词袋;种下或在矿里练出去都算离开。
+- **每个词的掌握度和到期时间**(`CardState`)。到期的旧词由 `dueVeins` 给出,矿里的旧矿脉和田里的牧草用的是同一份。
+
+以后新增一种玩法,也应该只通过这三样东西和别的玩法相连。检验的办法是它的测试里不需要先去别的地方做任何事。
 
 ## 数据模型
 
@@ -75,7 +82,7 @@ CardState {
   lastReviewAt
 }
 ReviewLog { cardId, at, grade, place, fresh, mastery, stage, questionType, elapsedMs }
-  place         'mine' 或 'farm'
+  place         'mine' 挖矿、'farm' 浇水、'drill' 在矿里练习、'grass' 用牧草复习
   fresh         是不是第一次见到这个词
 ```
 
@@ -85,12 +92,13 @@ ReviewLog { cardId, at, grade, place, fresh, mastery, stage, questionType, elaps
 SaveData {
   schemaVersion, tzOffsetMs, startDay, activeDeckId
   progress: { [deckId]: DeckProgress { cards, cursor, wordBag, logs } }
-                                       wordBag 是矿里答错、还没种下的词
+                                       wordBag 是答错的、还没种下也没练出去的词
   plots: Plot[] { unlocked, crop: Crop | null }
   coins, xp
   seeds: { choice, reverse, spell }    各品种种子的数量
   produce: { [cropId]: number[] }      各星级的库存数量
   ore: number[]                        各品级矿石的数量
+  forage: number[]                     各品级牧草的数量
   updatedAt
 }
 Crop { id, deckId, cardId, plantedAt, cropType }

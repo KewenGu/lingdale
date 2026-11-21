@@ -120,17 +120,33 @@ for (const plot of save.plots) {
 ### 商店和播种
 
 ```ts
-import { activeProgress, buySeeds, claimReliefSeed, plant, seedOffers } from './core/index';
+import { buySeeds, claimReliefSeed, plant, plantCandidate, seedOffers, setAside } from './core/index';
 
 seedOffers(save, now);          // 三种种子:这个季节长成什么作物、价格、解锁了没有、手里有几颗
 buySeeds(save, 'reverse', 2);   // 金币不够或没解锁时返回 false
-claimReliefSeed(save);          // 进商店时调用。玩家卡住时送一颗基础种子并返回 true,其余情况什么都不做
+claimReliefSeed(save, deck);    // 进商店、点空地时调用。玩家没钱没货时送一颗基础种子并返回 true,其余情况什么都不做
 
-activeProgress(save).wordBag;   // 词袋:等着被种下的词
+// 玩家点一块空地、选好种子之后,先和他确认这颗种子带哪个词
+let skip = 0;
+let candidate = plantCandidate(save, deck, skip);
+// candidate.card      要展示的词
+// candidate.source    'bag' 答错过的词,'new' 没见过的新词
+// candidate.mastery   答错过的词现在的掌握度
+// null                没有词可种了
 
-const result = plant(save, deck, plotIndex, now, { cardId, questionType: 'choice' });
+// 玩家点"换一个"
+if (candidate.source === 'new') {
+  setAside(save, deck, candidate.card.id, now);   // 放到一边,下个游戏日考他一次。之后候选词自动变成下一个
+} else {
+  skip++;                                         // 词袋里的词只是往后看一个
+}
+candidate = plantCandidate(save, deck, skip);
+
+// 玩家点"种下"
+const result = plant(save, deck, plotIndex, now, { cardId: candidate.card.id, questionType: 'choice' });
 if (result.ok) {
-  // result.card      展示这个词的卡片。玩家刚在矿里答错它,这是学习的第一步
+  // result.card      展示这个词的卡片(发音、释义、例句)。这是学习的第一步
+  // result.source    'bag' 或 'new'
   // result.mastery   这个词现在的掌握度
   // result.cropType  长成哪种作物
   // result.xp        可能触发升级动画
@@ -139,7 +155,35 @@ if (result.ok) {
 }
 ```
 
-`cardId` 不传就种最早进词袋的那个词,`questionType` 不传就用基础种子。
+- 确认的时候**不要先把释义摆出来**再问"认不认识":那样谁都会说认识。先只给单词,玩家选了"种下"再翻开卡片。
+- "换一个"对新词是有后果的(隔天要考),按钮上的说法要让玩家明白,比如"我认识,明天考我"。
+- 词袋是规则内部的东西,不需要单独的画面:玩家看到的是"种下时会先轮到答错过的词"。
+
+### 牧草
+
+```ts
+import { GrassSession, sellAllForage, sellForage } from './core/index';
+
+const session = new GrassSession(save, deck, Math.random);
+session.closed(now);              // 'nothing_due' 没有到期的旧词;null 可以种
+
+let turn = session.current(now);
+while (turn) {
+  // turn.cardId / turn.mastery   这株牧草带的旧词和它的掌握度(答对收获的牧草高一级)
+  // turn.due                     到期的旧词一共还有几个
+  const result = session.submit(await askPlayer(turn.question), now, elapsedMs);
+  // result.forageGrade   答对:收获的牧草品级
+  // result.bagged        答错:这个词进了词袋,要重新种
+  turn = session.current(now);
+}
+
+save.forage;                // 各品级牧草的数量,下标是品级
+sellForage(save, 3, 2);     // 卖 2 捆 3 级牧草
+sellAllForage(save);        // 全卖
+```
+
+牧草是当场种、当场答、当场收的,不占种作物的地块,田种满了也能种:画面上它应该有自己的一块地方(牧场),
+不和作物的地块混在一起。牧草和矿里的旧矿脉用的是同一批到期的词,在一边复习过,另一边就不会再出现。
 
 ### 浇水
 
@@ -184,7 +228,7 @@ sellAllProduce(save);                  // 全卖
 
 ### 什么时候存档
 
-每次会改变存档的操作之后都存:一次挖矿结束、播种、一轮浇水结束、买卖、解锁地块。存档是一份不大的 JSON,整份写入即可。
+每次会改变存档的操作之后都存:一次挖矿结束、播种、放到一边、一轮浇水结束、一轮牧草结束、买卖、解锁地块。存档是一份不大的 JSON,整份写入即可。
 
 ## 时间
 

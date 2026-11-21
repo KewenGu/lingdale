@@ -103,7 +103,10 @@ export function drilled(state: CardState, correct: boolean, now: number): CardSt
   };
 }
 
-/** 练够了,离开词袋:下一个游戏日(至少隔 6 小时)回到矿里再考一次,那一次才算数。掌握度不变。 */
+/**
+ * 下一个游戏日(至少隔 6 小时)当成旧词再考一次,那一次才算数。掌握度不变。
+ * 用在两处:词袋里的词在矿里练够了;种田时玩家把一个没见过的新词放到一边。
+ */
 export function graduate(state: CardState, now: number, tzOffsetMs: number): CardState {
   return {
     mastery: state.mastery,

@@ -42,7 +42,8 @@ export interface ReviewLog {
   cardId: string;
   at: number;
   grade: Grade;
-  place: 'mine' | 'farm' | 'drill'; // 在矿里挖的,在田里浇水,还是在矿里练词袋里的词(练习不改变掌握度)
+  // 在矿里挖的,在田里浇水,在矿里练词袋里的词(练习不改变掌握度),还是在田里种牧草复习
+  place: 'mine' | 'farm' | 'drill' | 'grass';
   fresh: boolean; // 是不是第一次见到这个词(只可能出现在矿里)
   mastery: number; // 作答时的掌握度
   stage: number; // 作答前这一轮已浇对的次数;矿里的是 0
@@ -84,6 +85,7 @@ export interface SaveData {
   seeds: Record<QuestionType, number>; // 商店买的种子,按品种分。种子决定长成哪类作物,带上词袋里的一个词
   produce: Record<string, number[]>; // 收获后还没卖的作物:作物 id → 各星级的数量(下标是星数)
   ore: number[]; // 矿石库存,下标是品级,值是数量
+  forage: number[]; // 牧草的库存,下标是品级(复习答对后的掌握度)
   updatedAt: number;
 }
 

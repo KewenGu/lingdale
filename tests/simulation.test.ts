@@ -55,10 +55,10 @@ test('长期运行后存档保持自洽(含缺勤、扩建和作物死亡)', () 
 
     const harvested = totals.harvests.reduce((sum, n) => sum + n, 0);
     assert.equal(harvested + totals.cropsDied + inField.size, totals.cropsPlanted);
-    // 进过词袋的词:要么种下了,要么还在词袋里,要么在矿里练到离开了
+    // 进过词袋的词:要么种下了,要么还在词袋里,要么在矿里练到离开了。种下的还包括直接种的新词
     assert.equal(
       totals.missedNew + totals.missedReview,
-      totals.cropsPlanted + progress.wordBag.length + totals.graduated,
+      totals.cropsPlanted - totals.plantedNew + progress.wordBag.length + totals.graduated,
     );
     // 每株作物用掉一颗种子:要么是买的,要么是商店送的
     assert.equal(totals.seedsBought + totals.reliefSeeds, totals.cropsPlanted + save.seeds.choice);
@@ -146,4 +146,30 @@ test('忘得越快的学习者,同样的时间教会的词越少,作物也更容
   assert.ok(forgetful.totals.gainedIn30 < normal.totals.gainedIn30);
   const fiveStar = (t: typeof normal.totals) => t.harvests[5] / t.harvests.reduce((sum, n) => sum + n, 0);
   assert.ok(fiveStar(forgetful.totals) < fiveStar(normal.totals));
+});
+
+test('只种田、从不进矿洞也能走完:田里见新词、学会、用牧草复习', () => {
+  const farming = simulate({ ...DEFAULT_OPTIONS, mines: false });
+  const last = farming.rows[59];
+  assert.equal(farming.totals.digs, 0);
+  assert.ok(farming.totals.plantedNew > 200, `种下 ${farming.totals.plantedNew} 个新词`);
+  assert.ok(farming.totals.setAsides > 100, `换掉 ${farming.totals.setAsides} 个认识的词`);
+  assert.ok(farming.totals.grassAnswers.asked > 1000);
+  assert.ok(last.solid > 200, `牢固 ${last.solid}`);
+  assert.ok(farming.totals.masteredRecall > 0.85);
+  // 复习跟得上:到期的旧词不会越积越多
+  assert.ok(Math.max(...farming.rows.slice(-30).map((r) => r.backlog)) <= 60);
+});
+
+test('三条路都能教会词:只挖矿、只种田、两样都做', () => {
+  const both = simulate(DEFAULT_OPTIONS).totals.gainedIn30;
+  const farmOnly = simulate({ ...DEFAULT_OPTIONS, mines: false }).totals.gainedIn30;
+  const mineOnly = simulate({ ...DEFAULT_OPTIONS, plants: false, digsPerSession: 60 }).totals.gainedIn30;
+  for (const [name, taught] of [
+    ['两样都做', both],
+    ['只种田', farmOnly],
+    ['只挖矿', mineOnly],
+  ] as [string, number][]) {
+    assert.ok(taught > 150, `${name}只教会了 ${taught.toFixed(0)} 个词`);
+  }
 });

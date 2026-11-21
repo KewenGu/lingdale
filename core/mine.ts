@@ -3,7 +3,7 @@ import { orePrice } from './economy';
 import { emptyPlots } from './farm';
 import { Milestone, addXp, xpForAnswer } from './level';
 import { Rng } from './quiz';
-import { activeProgress, getState } from './save';
+import { activeProgress, getState, nextUnseen } from './save';
 import { blankState, drilled, graduate, mined } from './scheduler';
 import { CardState, Deck, QuestionType, SaveData } from './types';
 
@@ -102,15 +102,6 @@ export function restingVeins(save: SaveData, now: number): RestingVein[] {
     .map((id) => ({ cardId: id, dueAt: cards[id].dueAt, mastery: cards[id].mastery }));
 }
 
-/** 卡组里下一个还没见过的词;挖完了返回 null。不修改存档。 */
-function nextNewCard(save: SaveData, deck: Deck): { cardId: string; cursor: number } | null {
-  const progress = activeProgress(save);
-  for (let i = progress.cursor; i < deck.cards.length; i++) {
-    if (!getState(progress, deck.cards[i].id)) return { cardId: deck.cards[i].id, cursor: i };
-  }
-  return null;
-}
-
 /** 矿洞现在能不能挖,能挖的话下一条矿脉是哪个词。不修改存档。 */
 export function mineStatus(save: SaveData, deck: Deck, now: number): MineStatus {
   if (deck.id !== save.activeDeckId) {
@@ -123,7 +114,7 @@ export function mineStatus(save: SaveData, deck: Deck, now: number): MineStatus 
     const mastery = progress.cards[due[0]].mastery;
     return { open: true, vein: { cardId: due[0], source: 'review', mastery, drillStreak: 0 }, allowance };
   }
-  const fresh = allowance > 0 ? nextNewCard(save, deck) : null;
+  const fresh = allowance > 0 ? nextUnseen(save, deck) : null;
   if (fresh) {
     return {
       open: true,
@@ -169,7 +160,7 @@ export function dig(
   const before = getState(progress, cardId) || blankState(now);
   const drill = source === 'drill';
   if (source === 'new') {
-    const fresh = nextNewCard(save, deck);
+    const fresh = nextUnseen(save, deck);
     if (fresh) progress.cursor = fresh.cursor + 1;
   }
 

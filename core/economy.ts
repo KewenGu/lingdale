@@ -1,7 +1,7 @@
 import { INITIAL_PLOTS } from './constants';
 import { cropKind, cropType } from './crops';
 
-// 金币有两个来源:卖矿石、卖作物。答题本身不给金币。用途是买种子和解锁地块。
+// 金币来自卖东西:矿石、作物、牧草。答题本身不给金币。用途是买种子和解锁地块。
 
 export const PLOT_COST_BASE = 40;
 export const PLOT_COST_STEP = 2;
@@ -20,6 +20,11 @@ export function producePrice(cropId: string, stars: number): number {
 
 export function orePrice(grade: number): number {
   return ORE_PRICES[Math.max(0, Math.min(ORE_PRICES.length - 1, grade))];
+}
+
+/** 牧草的售价和同品级的矿石一样:在田里复习和在矿里复习,回报相同。 */
+export function foragePrice(grade: number): number {
+  return orePrice(grade);
 }
 
 /** 已解锁 unlockedCount 块地时,解锁下一块的价格。 */

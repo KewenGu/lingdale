@@ -2,6 +2,7 @@ import {
   DAY_MS,
   HOUR_MS,
   Deck,
+  GrassSession,
   MineSession,
   ReviewSession,
   SaveData,
@@ -14,8 +15,11 @@ import {
   levelOf,
   masteredCount,
   plant,
+  plantCandidate,
   plotCost,
+  sellAllForage,
   sellAllOre,
+  setAside,
   sellAllProduce,
   thirstyCards,
   unlockPlot,
@@ -47,6 +51,8 @@ export interface SimOptions {
   cramGain: boolean; // 同一天内反复答对,记忆强度涨不涨。false 用来看"当场练习完全没用"时结论还成不成立
   drills: boolean; // 词袋装满之后,要不要接着练词袋里的词。false 表示这时就离开矿洞
   plants: boolean; // 要不要种田。false 表示从不种,词袋里的词全靠在矿里练
+  mines: boolean; // 要不要挖矿。false 表示从不进矿洞:新词在田里种,旧词用牧草复习
+  plantsNew: boolean; // 词袋空了、田里还有空地时,要不要种没见过的新词
   sessionHours: number[]; // 每天在哪些整点打开游戏。8 点和 20 点分属两个游戏日
   digsPerSession: number; // 每次打开最多在矿里答几道题(新词、复习、练习都算)。规则上没有上限,这是学习者自己的耐心
   skipProb: number; // 每天整天不打开的概率
@@ -91,6 +97,9 @@ export interface SimTotals {
   ore: number[]; // 下标是品级,值是累计挖到的数量
   missedNew: number; // 新词答错、进了词袋的次数
   missedReview: number; // 旧词答错、进了词袋的次数
+  plantedNew: number; // 种下的没见过的新词
+  setAsides: number; // 种田时换掉、放到一边隔天再考的新词
+  grassAnswers: Tally; // 用牧草复习
   drills: number; // 在矿里练词袋里的词,一共答了几题
   graduated: number; // 练到连续答对、离开词袋的次数
   checksPassed: number; // 离开词袋后隔天再考,答对的次数
@@ -137,6 +146,8 @@ export const DEFAULT_OPTIONS: SimOptions = {
   cramGain: true,
   drills: true,
   plants: true,
+  mines: true,
+  plantsNew: true,
   sessionHours: [8, 20],
   digsPerSession: 30,
   skipProb: 0,
@@ -186,6 +197,9 @@ export function simulate(options: SimOptions): { rows: DayRow[]; totals: SimTota
     ore: [0, 0, 0, 0, 0, 0, 0, 0, 0],
     missedNew: 0,
     missedReview: 0,
+    plantedNew: 0,
+    setAsides: 0,
+    grassAnswers: tally(),
     drills: 0,
     graduated: 0,
     checksPassed: 0,
@@ -228,22 +242,32 @@ export function simulate(options: SimOptions): { rows: DayRow[]; totals: SimTota
    * 学习者答一道题。先按记忆模型决定他想不想得起来,想不起来就蒙;
    * 答完会看到正确答案,所以不管对错,记忆都按"想起来了"或"没想起来"更新一次。
    */
+  /**
+   * 第一次见到一个词:决定学习者本来认不认识它,并留下第一份记忆。
+   * 不认识的词,这时他看到了答案(矿里答完题,或者种下时的单词卡片)。返回他本来认不认识。
+   */
+  const firstSight = (cardId: string, now: number): boolean => {
+    const t = days(now);
+    if (rng() < options.hardWordShare) hardWords.add(cardId);
+    const known = rng() < options.knownShare;
+    if (known) knownBefore.add(cardId);
+    memory.set(
+      cardId,
+      known
+        ? knownWord(params, options.knownStability, t)
+        : options.glanceRecall === null
+          ? firstExposure(params, false, t)
+          : glance(params, options.glanceRecall, t),
+    );
+    return known;
+  };
+
   const ask = (cardId: string, now: number): boolean => {
     const t = days(now);
     const m = memory.get(cardId);
     let recalled: boolean;
     if (!m) {
-      if (rng() < options.hardWordShare) hardWords.add(cardId);
-      recalled = rng() < options.knownShare;
-      if (recalled) knownBefore.add(cardId);
-      memory.set(
-        cardId,
-        recalled
-          ? knownWord(params, options.knownStability, t)
-          : options.glanceRecall === null
-            ? firstExposure(params, false, t)
-            : glance(params, options.glanceRecall, t),
-      );
+      recalled = firstSight(cardId, now);
     } else {
       recalled = rng() < recallOf(cardId, m, t);
       memory.set(cardId, review(params, m, recalled, t, speedOf(cardId), options.cramGain));
@@ -269,20 +293,46 @@ export function simulate(options: SimOptions): { rows: DayRow[]; totals: SimTota
     return questions;
   };
 
-  const plantAll = (now: number): number => {
+  /** 手里没有基础种子时去弄一颗:买,买不起又没东西可卖就领兜底的。弄不到返回 false。 */
+  const getSeed = (): boolean => {
+    if (save.seeds.choice > 0) return true;
+    if (buySeeds(save)) totals.seedsBought++;
+    else if (claimReliefSeed(save, deck)) totals.reliefSeeds++;
+    else return false;
+    return true;
+  };
+
+  /**
+   * 把空地种上,只种基础作物。先种词袋里的词;词袋空了,就看卡组里下一个没见过的词:
+   * 认识的换掉(放到一边,隔天再考),不认识的种下。每次打开最多看 digsPerSession 个新词。
+   */
+  const plantAll = (now: number, row: DayRow): number => {
+    if (!options.plants) return 0;
     let planted = 0;
+    let looked = 0;
     for (let i = 0; i < save.plots.length; i++) {
-      if (!options.plants || activeProgress(save).wordBag.length === 0) break;
       const plot = save.plots[i];
       if (!plot.unlocked || plot.crop) continue;
-      // 只种基础作物。没种子就买,买不起又没东西可卖时领一颗救济种子
-      if (save.seeds.choice === 0) {
-        if (buySeeds(save)) totals.seedsBought++;
-        else if (claimReliefSeed(save)) totals.reliefSeeds++;
-        else break;
+      let candidate = plantCandidate(save, deck);
+      while (candidate && candidate.source === 'new') {
+        if (!options.plantsNew || looked >= options.digsPerSession) {
+          candidate = null;
+          break;
+        }
+        looked++;
+        row.newSeen++;
+        if (!firstSight(candidate.card.id, now)) break;
+        // 认识这个词:换一个。它被放到一边,隔天再考
+        row.newKnown++;
+        setAside(save, deck, candidate.card.id, now);
+        totals.setAsides++;
+        candidate = plantCandidate(save, deck);
       }
-      const result = plant(save, deck, i, now);
+      if (!candidate) break;
+      if (!getSeed()) break;
+      const result = plant(save, deck, i, now, { cardId: candidate.card.id });
       if (!result.ok) break;
+      if (result.source === 'new') totals.plantedNew++;
       // 种下时会看一遍单词卡片
       const m = memory.get(result.card.id);
       if (m) memory.set(result.card.id, restudy(m, days(now)));
@@ -290,6 +340,24 @@ export function simulate(options: SimOptions): { rows: DayRow[]; totals: SimTota
     }
     totals.cropsPlanted += planted;
     return planted;
+  };
+
+  /** 用牧草复习到期的旧词,每次打开最多 digsPerSession 个。返回答了几题。 */
+  const grassRound = (now: number, row: DayRow): number => {
+    const session = new GrassSession(save, deck, rng);
+    let questions = 0;
+    while (questions < options.digsPerSession) {
+      const turn = session.current(now);
+      if (!turn) break;
+      const correct = ask(turn.cardId, now);
+      const result = session.submitCorrect(correct, now);
+      questions++;
+      row.reviews++;
+      count(totals.grassAnswers, correct);
+      count(totals.reviewByMastery[turn.mastery], correct);
+      if (result.bagged) totals.missedReview++;
+    }
+    return questions;
   };
 
   /** 所有见过的词,现在想得起来的概率之和。 */
@@ -336,10 +404,19 @@ export function simulate(options: SimOptions): { rows: DayRow[]; totals: SimTota
         const thirsty = thirstyCards(save, now);
         if (thirsty.length > 0) row.farmQuestions += waterRound(thirsty, now);
         row.earned += sellAllProduce(save);
-        row.planted += plantAll(now);
+        totals.sessions++;
+        if (!options.mines) {
+          // 只种田:旧词用牧草复习,新词在种下时见
+          row.farmQuestions += grassRound(now, row);
+          row.earned += sellAllForage(save);
+          row.planted += plantAll(now, row);
+          totals.dueLeft += dueVeins(save, now).length;
+          totals.bagPeak = Math.max(totals.bagPeak, activeProgress(save).wordBag.length);
+          continue;
+        }
+        row.planted += plantAll(now, row);
 
         const mine = new MineSession(save, deck, rng);
-        totals.sessions++;
         for (let digs = 0; digs < options.digsPerSession; digs++) {
           const turn = mine.current(now);
           if (!turn || (turn.vein.source === 'drill' && !options.drills)) {
@@ -381,7 +458,7 @@ export function simulate(options: SimOptions): { rows: DayRow[]; totals: SimTota
           if (result.oreGrade !== null) totals.ore[result.oreGrade]++;
         }
         row.earned += sellAllOre(save);
-        row.planted += plantAll(now);
+        row.planted += plantAll(now, row);
         totals.dueLeft += dueVeins(save, now).length;
         totals.bagPeak = Math.max(totals.bagPeak, activeProgress(save).wordBag.length);
 

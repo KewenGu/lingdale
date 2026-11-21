@@ -1,5 +1,6 @@
 import { answer, AnswerResult, cropOfCard, cropQuestionType } from './farm';
 import { isCorrect, makeQuestion, Rng } from './quiz';
+import { GrassClosed, GrassResult, grassStatus, growGrass } from './grass';
 import { DigResult, MineClosed, Vein, dig, mineStatus } from './mine';
 import { Deck, Grade, Question, QuestionType, SaveData } from './types';
 
@@ -127,5 +128,58 @@ export class MineSession {
     if (!turn) throw new Error('矿洞现在挖不了');
     this.turn = null;
     return dig(this.save, this.deck, turn.vein.cardId, correct, now, this.rng, turn.question.type, elapsedMs);
+  }
+}
+
+export interface GrassTurn {
+  question: Question;
+  cardId: string;
+  mastery: number; // 这个旧词现在的掌握度;答对收获的牧草比它高一级
+  due: number; // 到期的旧词一共还有几个
+}
+
+/**
+ * 在牧场上种牧草复习旧词。每次取最早到期的那个词出一道题,答完再取下一个,
+ * 直到没有到期的旧词,或者玩家离开。
+ */
+export class GrassSession {
+  private turn: GrassTurn | null = null;
+
+  constructor(
+    private save: SaveData,
+    private deck: Deck,
+    private rng: Rng,
+    private questionType: QuestionType = 'choice',
+  ) {}
+
+  /** 现在不能种牧草的原因;能种时返回 null。 */
+  closed(now: number): GrassClosed | null {
+    const status = grassStatus(this.save, this.deck, now);
+    return status.open ? null : status.reason;
+  }
+
+  /** 当前这道题;不能种牧草时返回 null。重复调用返回同一道题。 */
+  current(now: number): GrassTurn | null {
+    if (this.turn) return this.turn;
+    const status = grassStatus(this.save, this.deck, now);
+    if (!status.open) return null;
+    const question = makeQuestion(this.deck, status.cardId, this.questionType, this.rng);
+    this.turn = { question, cardId: status.cardId, mastery: status.mastery, due: status.due };
+    return this.turn;
+  }
+
+  /** 提交玩家的回答:选择题传选项下标,拼写题传输入的文字。 */
+  submit(response: number | string, now: number, elapsedMs: number = 0): GrassResult {
+    const turn = this.current(now);
+    if (!turn) throw new Error('现在不能种牧草');
+    return this.submitCorrect(isCorrect(turn.question, response), now, elapsedMs);
+  }
+
+  /** 直接按对错提交。 */
+  submitCorrect(correct: boolean, now: number, elapsedMs: number = 0): GrassResult {
+    const turn = this.current(now);
+    if (!turn) throw new Error('现在不能种牧草');
+    this.turn = null;
+    return growGrass(this.save, this.deck, turn.cardId, correct, now, turn.question.type, elapsedMs);
   }
 }

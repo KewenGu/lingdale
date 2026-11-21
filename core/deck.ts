@@ -12,6 +12,10 @@ function indexOf(deck: Deck): Map<string, Card> {
   return index;
 }
 
+export function hasCard(deck: Deck, cardId: string): boolean {
+  return indexOf(deck).has(cardId);
+}
+
 export function getCard(deck: Deck, cardId: string): Card {
   const card = indexOf(deck).get(cardId);
   if (!card) throw new Error(`卡组 ${deck.id} 里没有卡片 ${cardId}`);

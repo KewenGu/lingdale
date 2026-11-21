@@ -9,6 +9,7 @@ export * from './deck';
 export * from './save';
 export * from './farm';
 export * from './mine';
+export * from './grass';
 export * from './quiz';
 export * from './session';
 export * from './stats';
