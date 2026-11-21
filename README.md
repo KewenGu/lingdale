@@ -60,7 +60,7 @@ core/            核心逻辑。纯 TypeScript,不依赖引擎、Node 或 DOM
 tests/           单元测试
 sim/             学习者模拟
 data/            卡组数据
-docs/design/     设计文档
+docs/design/     设计文档;其中 mine-screens/、pasture-screens/ 是矿洞和牧场两边画面的示意稿
 docs/dev/        开发文档
 docs/marketing/  对外内容:策略和选题库
 docs/decisions/  决策记录

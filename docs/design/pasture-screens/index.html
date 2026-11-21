@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>灵谷小镇牧场画面</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Noto+Sans+SC:wght@400;500;700;900&family=Noto+Serif+SC:wght@600;900&family=ZCOOL+KuaiLe&display=swap">
+<link rel="stylesheet" href="../mine-screens/page.css">
+<link rel="stylesheet" href="page.css">
+</head>
+<body>
+<svg id="ld-defs" width="0" height="0" aria-hidden="true" focusable="false"></svg>
+
+<header class="top">
+  <div class="wrap">
+    <p class="eyebrow">灵谷小镇 Lingdale · 彩纸拼贴 · 牧场这一边的画面</p>
+    <h1>牧场、小屋和鸡舍</h1>
+    <p class="lede">
+      牧场是复习的地方:到期的旧词长成草,割一株答一道题,割下的草喂小屋里的牛和羊;收获的作物做成饲料喂鸡舍里的鸡。
+      这一页是牧场这一边的全部画面:牧场一屏、草地、割草答题、牲畜的各种状态、够不够吃、几天没来、做饲料、买卖、产出和小镇地图。
+    </p>
+    <div class="notice">
+      <strong>示意稿,不是成品。</strong>
+      全部用代码绘制(SVG),没有使用图像生成工具。画面不读取游戏数据,数字是手写的示意,但和规则对得上;规则以 <code>../02-gameplay.md</code> 的"牧场"一章为准,
+      画法的规定在 <code>../07-art-direction.md</code>。动效都没有做,下面只有关键帧。
+    </div>
+    <div class="notice" id="status"></div>
+    <nav class="jump" aria-label="页面目录">
+      <a href="#pasture">牧场一屏</a>
+      <a href="#grass">草地</a>
+      <a href="#mow">割草答题</a>
+      <a href="#states">牲畜的状态</a>
+      <a href="#enough">够不够吃</a>
+      <a href="#away">几天没来</a>
+      <a href="#feed">做饲料</a>
+      <a href="#trade">买卖</a>
+      <a href="#goods">产出</a>
+      <a href="#town">小镇地图</a>
+      <a href="#open">没做的和发现的问题</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <section id="pasture" class="band">
+    <div class="wrap">
+      <h2>牧场一屏</h2>
+      <p class="sub">
+        从上到下是玩家打开这一屏要问的三件事:存粮够不够吃(草垛和饲料桶,各一张牌子),哪只有事(院子里的牲畜),今天有多少草能割(草地)。
+        割草是主要动作,所以草在拇指够得着的下半屏。牲畜自己吃,不用玩家去喂。
+      </p>
+      <div class="shots wide" id="pasture-shots"></div>
+      <ul class="notes" id="pasture-notes"></ul>
+    </div>
+  </section>
+
+  <section id="grass" class="band">
+    <div class="wrap">
+      <h2>草地</h2>
+      <p class="sub">
+        有几个旧词到期,草地上就有几株草。草杂乱地长着,不占地块,也不和词绑定:割之前看不到是哪个词。
+        草分矮、中、高三种,割下 1、2、3 捆,对应这个词记了多久。
+      </p>
+      <div class="sheets" id="grass-sheets"></div>
+      <div class="shots wide" id="grass-shots"></div>
+      <ul class="notes" id="grass-notes"></ul>
+    </div>
+  </section>
+
+  <section id="mow" class="band">
+    <div class="wrap">
+      <h2>割草答题</h2>
+      <p class="sub">
+        沿用矿洞的骨架:词牌在上,四个选项是场景里的东西,这里是四垄草。<strong>玩家点哪一垄,镰刀就落在哪一垄上</strong>:没有单独的"割"按钮,也没有弹出来的答题框。
+        右下角原来放"割一轮草"的地方换成草垛,一直看得到割了之后够吃几顿。
+      </p>
+      <div class="shots wide" id="mow-shots"></div>
+      <ul class="notes" id="mow-notes"></ul>
+    </div>
+  </section>
+
+  <section id="states" class="band">
+    <div class="wrap">
+      <h2>牲畜的状态</h2>
+      <p class="sub">
+        牛、羊、鸡各五个样子,都由同一组纸片变换得到:小的是大的缩小;饿着垂头;病了卧倒、闭眼、颜色灰一档;怀着(鸡是抱窝)肚子圆一圈,身下垫一个草窝。
+        饿着和病了再加一个探出来的标记:空碗和药瓶。
+      </p>
+      <div class="sheets" id="states-sheets"></div>
+      <ul class="notes" id="states-notes"></ul>
+    </div>
+  </section>
+
+  <section id="enough" class="band">
+    <div class="wrap">
+      <h2>够不够吃</h2>
+      <p class="sub">
+        这一屏最要紧的信息。草垛和饲料桶的大小就是存粮的样子,精确的话写在牌子上:有几捆、够吃几顿、吃到哪天的早上还是下午。
+        有牲畜饿着或者病了的时候,栅栏上多挂一张纸条:几只、最要紧的那件事还有多久。
+      </p>
+      <div class="shots wide" id="enough-shots"></div>
+      <ul class="notes" id="enough-notes"></ul>
+    </div>
+  </section>
+
+  <section id="away" class="band">
+    <div class="wrap">
+      <h2>几天没来再打开</h2>
+      <p class="sub">
+        结算的结果只给一次,所以打开牧场时先用一张纸交代:出了多少奶、毛、蛋,生了几只,几只病了、几只还饿着,几只没撑住;最后是现在能做的事。
+        说事实,不说人:写"牲畜饿了 7 天开始生病",不写"你没来"。三张图是同一个牧场离开 3 天、9 天、24 天。
+      </p>
+      <div class="shots wide" id="away-shots"></div>
+      <ul class="notes" id="away-notes"></ul>
+    </div>
+  </section>
+
+  <section id="feed" class="band">
+    <div class="wrap">
+      <h2>做鸡饲料</h2>
+      <p class="sub">
+        挑一份作物,答一个到期的旧词,答对做成 2 份饲料。最不值钱的作物排在最上面,默认选中它。答题画面和割草是同一副骨架,选项换成四块木板。
+      </p>
+      <div class="shots wide" id="feed-shots"></div>
+      <ul class="notes" id="feed-notes"></ul>
+    </div>
+  </section>
+
+  <section id="trade" class="band">
+    <div class="wrap">
+      <h2>买卖</h2>
+      <p class="sub">
+        买牲畜和卖牲畜在小屋(鸡舍)那张纸上:点房子打开。点一只牲畜是它自己的卡片:用药、让它怀小的、卖掉。
+        动物药和救急的牧草、饲料在商店的"牧场用品";牛奶、羊毛、鸡蛋在商店的"卖东西"。
+      </p>
+      <div class="shots wide" id="trade-shots"></div>
+      <ul class="notes" id="trade-notes"></ul>
+    </div>
+  </section>
+
+  <section id="goods" class="band">
+    <div class="wrap">
+      <h2>产出好了的那一下</h2>
+      <p class="sub">牛奶、羊毛、鸡蛋不用玩家去收,结算时直接进库存。画面上只说一声:出了东西的那几只头上贴一片玉米黄的圆片。</p>
+      <div class="shots wide" id="goods-shots"></div>
+      <ul class="notes" id="goods-notes"></ul>
+    </div>
+  </section>
+
+  <section id="town" class="band">
+    <div class="wrap">
+      <h2>小镇地图上的牧场</h2>
+      <p class="sub">原来右下角两块"以后开放"的空地,一块成了牧场。它挨着农场,名牌上写着现在的状况,最要紧的写在最前面。</p>
+      <div class="shots wide" id="town-shots"></div>
+      <ul class="notes" id="town-notes"></ul>
+    </div>
+  </section>
+
+  <section id="open" class="band">
+    <div class="wrap">
+      <h2>没做的,和画的时候发现的问题</h2>
+      <div class="two-col">
+        <div>
+          <h3>画的时候发现的规则和界面问题</h3>
+          <ul class="notes" id="rule-notes"></ul>
+        </div>
+        <div>
+          <h3>没做的</h3>
+          <ul class="notes" id="todo-notes"></ul>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    示意稿,不是成品。绘制代码:<code>pasture-paper.js</code>(图形)、<code>screens.js</code>(画面)、<code>pasture-scene.js</code>(示意数据),
+    以及 <code>../mine-screens/</code> 和 <code>../art-exploration/style-paper.js</code> 里已有的图形。
+  </div>
+</footer>
+
+<script src="../art-exploration/scene.js"></script>
+<script src="../art-exploration/style-paper.js"></script>
+<script src="../mine-screens/mine-scene.js"></script>
+<script src="../mine-screens/mine-paper.js"></script>
+<script src="../mine-screens/screens.js"></script>
+<script src="pasture-scene.js"></script>
+<script src="pasture-paper.js"></script>
+<script src="screens.js"></script>
+<script src="index.js"></script>
+</body>
+</html>
