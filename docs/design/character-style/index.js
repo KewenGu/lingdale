@@ -48,10 +48,10 @@
       route: 'C',
       note: '现在的规范:纯色、没有描边和渐变,体积靠对折的纸和硬边投影。',
       draw: function (ex, opt) {
-        return PP.bust(ex, opt);
+        return PP.bust('maidong', ex, opt);
       },
       body: function () {
-        return PP.figure('calm');
+        return PP.figure('maidong', 'calm');
       },
     },
     {
@@ -206,7 +206,7 @@
     });
   })();
 
-  // ---------- 另外三个居民(只用赛璐璐画了草图) ----------
+  // ---------- 彩纸的七个居民 ----------
   LD.CAST.forEach(function (p) {
     var cap =
       '<b>' +
@@ -214,14 +214,18 @@
       ' · ' +
       esc(p.role) +
       '</b>' +
-      esc(p.age + ' 岁,' + p.gender + '。' + p.build + '。');
-    figure($('cast-busts'), 'card', A.bust(p.id, 'calm', 'cel'), p.name + ',赛璐璐', cap);
-    figure($('cast-sil'), 'card sil', A.bust(p.id, 'calm', 'cel'), p.name + '的剪影', null);
-    figure($('cast-happy'), 'card', A.bust(p.id, 'happy', 'cel'), p.name + ',高兴', null);
-    var c = el('div', 'tiny');
-    c.style.width = c.style.height = '40px';
-    c.appendChild(pic(A.bust(p.id, 'calm', 'cel', { crop: 'head' }), p.name + '的头像,40pt'));
-    $('cast-small').appendChild(c);
+      esc(p.age + ' 岁,' + p.gender + '。' + p.build + '。') +
+      ' ' +
+      pieces(PP.figure(p.id, 'calm')) +
+      ' 片。';
+    figure($('paper-busts'), 'card', PP.bust(p.id, 'calm'), p.name + ',彩纸', cap);
+    figure($('paper-sil'), 'card sil', PP.bust(p.id, 'calm'), p.name + '的剪影', null);
+    [40, 28].forEach(function (size) {
+      var c = el('div', 'tiny');
+      c.style.width = c.style.height = size + 'px';
+      c.appendChild(pic(PP.bust(p.id, 'calm', { crop: 'head' }), p.name + '的头像,' + size + 'pt'));
+      $('paper-small-' + size).appendChild(c);
+    });
     var box = el('div');
     box.appendChild(
       el(
@@ -243,5 +247,41 @@
       ),
     );
     $('people').appendChild(box);
+  });
+  (function () {
+    var holder = $('paper-faces'),
+      cols = ['calm'].concat(LD.EXPR_ORDER);
+    holder.appendChild(el('div'));
+    cols.forEach(function (key) {
+      holder.appendChild(el('div', 'col-name', '<b>' + esc(LD.EXPR[key].label) + '</b>'));
+    });
+    LD.CAST.forEach(function (p) {
+      holder.appendChild(el('div', 'row-name', esc(p.name)));
+      cols.forEach(function (key) {
+        var cell = el('div', 'face');
+        cell.appendChild(pic(PP.bust(p.id, key, { crop: 'head' }), p.name + ',彩纸,' + LD.EXPR[key].label));
+        holder.appendChild(cell);
+      });
+    });
+  })();
+
+  // ---------- 赛璐璐的四个居民(另外三个只画了草图) ----------
+  LD.CAST.filter(function (p) {
+    return !p.paperOnly;
+  }).forEach(function (p) {
+    var cap =
+      '<b>' +
+      esc(p.name) +
+      ' · ' +
+      esc(p.role) +
+      '</b>' +
+      esc(p.age + ' 岁,' + p.gender + '。' + p.build + '。');
+    figure($('cast-busts'), 'card', A.bust(p.id, 'calm', 'cel'), p.name + ',赛璐璐', cap);
+    figure($('cast-sil'), 'card sil', A.bust(p.id, 'calm', 'cel'), p.name + '的剪影', null);
+    figure($('cast-happy'), 'card', A.bust(p.id, 'happy', 'cel'), p.name + ',高兴', null);
+    var c = el('div', 'tiny');
+    c.style.width = c.style.height = '40px';
+    c.appendChild(pic(A.bust(p.id, 'calm', 'cel', { crop: 'head' }), p.name + '的头像,40pt'));
+    $('cast-small').appendChild(c);
   });
 })();

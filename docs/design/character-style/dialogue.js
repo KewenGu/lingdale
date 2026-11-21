@@ -192,7 +192,7 @@
     var ex = st === 'miss' ? 'oops' : 'calm',
       o = shopRoom(),
       defs = '';
-    if (who === 'paper') o += g('translate(195 256) scale(1.15)', PP.figure(ex));
+    if (who === 'paper') o += g('translate(195 256) scale(1.15)', PP.figure('maidong', ex));
     else {
       var fig = A.figure('maidong', ex, who);
       defs = fig.defs;
