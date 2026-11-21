@@ -1,0 +1,212 @@
+/* 画风测试页自己的样式。看稿台的底、字体和手机框沿用 ../mine-screens/page.css。 */
+.bar {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background: var(--bg);
+  border-bottom: 1px solid var(--line);
+  padding: 10px 0;
+}
+.bar .wrap {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 16px;
+}
+.bar button {
+  font: 700 14px/1 var(--font-body);
+  color: var(--bg);
+  background: var(--pick);
+  border: 0;
+  border-radius: 999px;
+  padding: 11px 18px;
+  cursor: pointer;
+}
+.bar span {
+  color: var(--muted);
+  font-size: 13px;
+}
+.trio {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px 14px;
+  margin-top: 6px;
+}
+.trio figure,
+.pair figure {
+  margin: 0;
+}
+.trio figcaption,
+.pair figcaption {
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.6;
+}
+.trio figcaption b,
+.pair figcaption b {
+  display: block;
+  color: var(--ink);
+  font-size: 14px;
+}
+.half-frame {
+  aspect-ratio: 390 / 600;
+  border-radius: 7% / 4.6%;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  box-shadow: 0 10px 28px rgba(15, 23, 32, 0.18);
+}
+.corner-frame {
+  aspect-ratio: 190 / 230;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+}
+.trio.narrow {
+  max-width: 780px;
+}
+.trio.narrow + .trio.narrow {
+  margin-top: 16px;
+}
+.corner-frame svg,
+.half-frame svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+/* 没揭晓时只有字母;揭晓之后按等级排好,显示名称和说明。 */
+.tier-name,
+.tier-note,
+.answer {
+  display: none;
+}
+.reveal .tier-name,
+.reveal .tier-note {
+  display: inline;
+}
+.reveal .answer {
+  display: block;
+}
+.reveal .blind-letter,
+.reveal .ask {
+  display: none;
+}
+.reveal [data-tier='1'] {
+  order: 1;
+}
+.reveal [data-tier='2'] {
+  order: 2;
+}
+.reveal [data-tier='3'] {
+  order: 3;
+}
+.ask {
+  color: var(--ink);
+  font-weight: 700;
+}
+/* 小尺寸:按真实的大小显示,不随页面缩放。 */
+.sizes {
+  display: grid;
+  gap: 14px;
+  margin-top: 6px;
+}
+.size-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px 26px;
+  padding: 14px 16px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+.size-row h4 {
+  flex: 0 0 100%;
+  margin: 0;
+  font-size: 13px;
+  color: var(--muted);
+  font-weight: 700;
+}
+.size-set {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+}
+.size-set svg,
+.houses svg {
+  display: block;
+  flex: none;
+  border-radius: 6px;
+}
+.size-set figure {
+  margin: 0;
+  text-align: center;
+  font-size: 11px;
+  color: var(--muted);
+}
+.size-label {
+  font-size: 12px;
+  color: var(--muted);
+  margin-right: 2px;
+  white-space: nowrap;
+}
+.houses {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-top: 6px;
+}
+.houses figure {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  font-size: 13px;
+  color: var(--muted);
+}
+.pair {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 22px 18px;
+  margin-top: 6px;
+}
+.tablewrap {
+  overflow-x: auto;
+}
+table.cmp td.num,
+table.cmp th.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+/* 手机上仍然三张并排,好一眼比较;点其中一张放大到整行,再点一下缩回去。 */
+.trio figure {
+  cursor: zoom-in;
+}
+.trio figure.zoom {
+  grid-column: 1 / -1;
+  cursor: zoom-out;
+}
+.tap-hint {
+  display: none;
+}
+@media (max-width: 640px) {
+  .trio {
+    gap: 12px 8px;
+  }
+  .trio figcaption {
+    font-size: 12px;
+  }
+  .phone-frame,
+  .half-frame {
+    box-shadow: 0 4px 12px rgba(15, 23, 32, 0.16);
+  }
+  .tap-hint {
+    display: inline;
+  }
+}
+@media (min-width: 641px) {
+  .trio figure,
+  .trio figure.zoom {
+    cursor: default;
+    grid-column: auto;
+  }
+}
