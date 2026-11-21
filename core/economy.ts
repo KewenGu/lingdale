@@ -40,13 +40,14 @@ export function hayBundles(masteryAfter: number): number {
 export const HAY_PRICE = 2;
 
 /**
- * 在商店买一捆牧草的价格,比卖价高。一头牛一天吃 6 捆,买来是 48 金币,牛奶只卖 40:
+ * 在商店买一捆牧草的价格,比卖价高。一头牛一天吃 6 捆,买来是 60 金币,牛奶只卖 40;
+ * 一只羊三天吃 12 捆,买来是 120 金币,羊毛只卖 100:
  * 买草喂牛不赚钱,所以买草只是救急,牛羊养得起多少还是看割了多少草,也就是复习了多少。
  */
-export const HAY_BUY_PRICE = 8;
+export const HAY_BUY_PRICE = 10;
 
 /** 一份鸡饲料的售价。 */
-export const FEED_PRICE = 5;
+export const FEED_PRICE = 4;
 
 /**
  * 在商店买一份鸡饲料的价格。蛋鸡一天吃 2 份、下一个 30 金币的蛋,买来要 40 金币,买饲料喂鸡不赚钱。

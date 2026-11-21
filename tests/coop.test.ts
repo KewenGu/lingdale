@@ -8,6 +8,7 @@ import {
   FEED_PER_CROP,
   FEED_PRICE,
   FeedSession,
+  HAY_BUY_PRICE,
   HUNGRY_DAYS_TO_SICK,
   MEDICINE_PRICE,
   PRODUCE_PRICES,
@@ -340,7 +341,9 @@ test('一份作物做两份饲料,蛋鸡一天吃两份,所以一份作物换一
 });
 
 test('饲料能卖也能买,买价比卖价高;买饲料喂鸡不赚钱,自己做的才划算', () => {
-  assert.deepEqual([FEED_PRICE, FEED_BUY_PRICE], [5, 20]);
+  assert.deepEqual([FEED_PRICE, FEED_BUY_PRICE], [4, 20]);
+  // 羊也一样:三天吃的草买来比羊毛贵
+  assert.ok(SHEEP.ration * SHEEP.yieldDays * HAY_BUY_PRICE > goodPrice('wool'));
   assert.ok(CHICKEN.ration * FEED_BUY_PRICE > goodPrice('eggs'), '买饲料喂鸡是亏的,所以买饲料只是救急');
   assert.ok(CHICKEN.ration * FEED_PRICE < goodPrice('eggs'), '自己做的饲料喂鸡,比直接卖饲料划算');
 
