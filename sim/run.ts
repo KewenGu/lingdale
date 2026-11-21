@@ -294,10 +294,10 @@ export function simulate(options: SimOptions): { rows: DayRow[]; totals: SimTota
   };
 
   /** 手里没有基础种子时去弄一颗:买,买不起又没东西可卖就领兜底的。弄不到返回 false。 */
-  const getSeed = (): boolean => {
+  const getSeed = (now: number): boolean => {
     if (save.seeds.choice > 0) return true;
     if (buySeeds(save)) totals.seedsBought++;
-    else if (claimReliefSeed(save, deck)) totals.reliefSeeds++;
+    else if (claimReliefSeed(save, deck, now)) totals.reliefSeeds++;
     else return false;
     return true;
   };
@@ -313,7 +313,7 @@ export function simulate(options: SimOptions): { rows: DayRow[]; totals: SimTota
     for (let i = 0; i < save.plots.length; i++) {
       const plot = save.plots[i];
       if (!plot.unlocked || plot.crop) continue;
-      let candidate = plantCandidate(save, deck);
+      let candidate = plantCandidate(save, deck, now);
       while (candidate && candidate.source === 'new') {
         if (!options.plantsNew || looked >= options.digsPerSession) {
           candidate = null;
@@ -326,10 +326,10 @@ export function simulate(options: SimOptions): { rows: DayRow[]; totals: SimTota
         row.newKnown++;
         setAside(save, deck, candidate.card.id, now);
         totals.setAsides++;
-        candidate = plantCandidate(save, deck);
+        candidate = plantCandidate(save, deck, now);
       }
       if (!candidate) break;
-      if (!getSeed()) break;
+      if (!getSeed(now)) break;
       const result = plant(save, deck, i, now, { cardId: candidate.card.id });
       if (!result.ok) break;
       if (result.source === 'new') totals.plantedNew++;
@@ -368,6 +368,14 @@ export function simulate(options: SimOptions): { rows: DayRow[]; totals: SimTota
       sum += recallOf(cardId, m, t);
     });
     return sum;
+  };
+
+  /** 金币够了就解锁地块,留一点钱买种子。 */
+  const expand = (): void => {
+    if (!options.autoBuy) return;
+    for (let i = 0; i < save.plots.length; i++) {
+      if (!save.plots[i].unlocked && save.coins >= plotCost(unlockedCount(save)) + 20) unlockPlot(save, i);
+    }
   };
 
   // 练够了、离开词袋、正等着隔天再考的词
@@ -412,6 +420,7 @@ export function simulate(options: SimOptions): { rows: DayRow[]; totals: SimTota
           row.planted += plantAll(now, row);
           totals.dueLeft += dueVeins(save, now).length;
           totals.bagPeak = Math.max(totals.bagPeak, activeProgress(save).wordBag.length);
+          expand();
           continue;
         }
         row.planted += plantAll(now, row);
@@ -462,13 +471,7 @@ export function simulate(options: SimOptions): { rows: DayRow[]; totals: SimTota
         totals.dueLeft += dueVeins(save, now).length;
         totals.bagPeak = Math.max(totals.bagPeak, activeProgress(save).wordBag.length);
 
-        if (options.autoBuy) {
-          for (let i = 0; i < save.plots.length; i++) {
-            // 留一点钱买种子
-            if (!save.plots[i].unlocked && save.coins >= plotCost(unlockedCount(save)) + 20)
-              unlockPlot(save, i);
-          }
-        }
+        expand();
       }
     }
 

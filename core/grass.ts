@@ -1,9 +1,9 @@
 import { MAX_LOGS } from './constants';
 import { foragePrice } from './economy';
 import { Milestone, addXp, xpForAnswer } from './level';
-import { dueVeins } from './mine';
 import { activeProgress, getState } from './save';
 import { mined } from './scheduler';
+import { dueVeins } from './words';
 import { Deck, QuestionType, SaveData } from './types';
 
 // 这个文件里的函数会直接修改传入的 save。

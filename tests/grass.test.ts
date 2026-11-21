@@ -96,7 +96,7 @@ test('牧草答错:没有收成,这个词降两级进词袋,要重新种一遍',
     0,
   );
   assert.deepEqual(activeProgress(save).wordBag, [word]);
-  const candidate = plantCandidate(save, deck)!;
+  const candidate = plantCandidate(save, deck, T0)!;
   assert.deepEqual([candidate.card.id, candidate.source], [word, 'bag']);
 });
 
@@ -126,7 +126,7 @@ test('只种田不挖矿也能走完:种新词、换掉认识的词、隔天用�
   const { deck, save } = setup();
   giveSeeds(save, 1);
   // w0 认识,换掉;w1 不认识,种下
-  assert.equal(plantCandidate(save, deck)!.card.id, 'w0');
+  assert.equal(plantCandidate(save, deck, T0)!.card.id, 'w0');
   setAside(save, deck, 'w0', T0);
   const planted = plant(save, deck, 0, T0);
   assert.ok(planted.ok);

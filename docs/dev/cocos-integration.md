@@ -124,15 +124,15 @@ import { buySeeds, claimReliefSeed, plant, plantCandidate, seedOffers, setAside 
 
 seedOffers(save, now);          // 三种种子:这个季节长成什么作物、价格、解锁了没有、手里有几颗
 buySeeds(save, 'reverse', 2);   // 金币不够或没解锁时返回 false
-claimReliefSeed(save, deck);    // 进商店、点空地时调用。玩家没钱没货时送一颗基础种子并返回 true,其余情况什么都不做
+claimReliefSeed(save, deck, now); // 进商店、点空地时调用。玩家没钱没货时送一颗基础种子并返回 true,其余情况什么都不做
 
 // 玩家点一块空地、选好种子之后,先和他确认这颗种子带哪个词
 let skip = 0;
-let candidate = plantCandidate(save, deck, skip);
+let candidate = plantCandidate(save, deck, now, skip);
 // candidate.card      要展示的词
 // candidate.source    'bag' 答错过的词,'new' 没见过的新词
 // candidate.mastery   答错过的词现在的掌握度
-// null                没有词可种了
+// null                没有词可种:卡组见完了,或者有到期的旧词没复习(这时不给新词,引导他去种牧草或挖矿)
 
 // 玩家点"换一个"
 if (candidate.source === 'new') {
@@ -140,7 +140,7 @@ if (candidate.source === 'new') {
 } else {
   skip++;                                         // 词袋里的词只是往后看一个
 }
-candidate = plantCandidate(save, deck, skip);
+candidate = plantCandidate(save, deck, now, skip);
 
 // 玩家点"种下"
 const result = plant(save, deck, plotIndex, now, { cardId: candidate.card.id, questionType: 'choice' });
@@ -151,10 +151,11 @@ if (result.ok) {
   // result.cropType  长成哪种作物
   // result.xp        可能触发升级动画
 } else {
-  // result.reason    'plot_locked' | 'plot_occupied' | 'crop_locked' | 'no_words' | 'word_not_found' | 'no_seeds'
+  // result.reason    'plot_locked' | 'plot_occupied' | 'crop_locked' | 'no_words' | 'word_not_found' | 'reviews_due' | 'no_seeds'
 }
 ```
 
+- 有到期的旧词没复习时,田里不给新词(`reviews_due`)。这时空地上该出现的是"先去割几株牧草"的引导,而不是一个点不动的种子。
 - 确认的时候**不要先把释义摆出来**再问"认不认识":那样谁都会说认识。先只给单词,玩家选了"种下"再翻开卡片。
 - "换一个"对新词是有后果的(隔天要考),按钮上的说法要让玩家明白,比如"我认识,明天考我"。
 - 词袋是规则内部的东西,不需要单独的画面:玩家看到的是"种下时会先轮到答错过的词"。

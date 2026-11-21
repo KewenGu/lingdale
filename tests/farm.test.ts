@@ -103,7 +103,10 @@ test('播种失败的原因', () => {
 test('词袋空了,种的是卡组里还没见过的新词;在田里也能见新词', () => {
   const { deck, save } = setup();
   giveSeeds(save, 5);
-  assert.deepEqual([plantCandidate(save, deck)!.card.id, plantCandidate(save, deck)!.source], ['w0', 'new']);
+  assert.deepEqual(
+    [plantCandidate(save, deck, T0)!.card.id, plantCandidate(save, deck, T0)!.source],
+    ['w0', 'new'],
+  );
   const first = plant(save, deck, 0, T0);
   assert.ok(first.ok);
   assert.deepEqual([first.card.id, first.source, first.mastery], ['w0', 'new', 0]);
@@ -113,7 +116,7 @@ test('词袋空了,种的是卡组里还没见过的新词;在田里也能见新
   const vein = mineStatus(save, deck, T0);
   assert.ok(vein.open);
   assert.equal(vein.vein.cardId, 'w1');
-  assert.equal(plantCandidate(save, deck)!.card.id, 'w1');
+  assert.equal(plantCandidate(save, deck, T0)!.card.id, 'w1');
   // 也可以指定种哪个没见过的词
   const picked = plant(save, deck, 1, T0, { cardId: 'w5' });
   assert.ok(picked.ok);
@@ -125,7 +128,7 @@ test('种下时的候选词:先是词袋里的,再是没见过的新词;换一�
   digNext(save, deck, true, T0); // w0 会,去休息了
   missWords(save, deck, 2, T0); // 词袋里是 w1、w2
   const ids = [0, 1, 2, 3, 4].map((skip) => {
-    const c = plantCandidate(save, deck, skip);
+    const c = plantCandidate(save, deck, T0, skip);
     return c ? `${c.card.id}:${c.source}` : null;
   });
   assert.deepEqual(ids, ['w1:bag', 'w2:bag', 'w3:new', 'w4:new', null]);
@@ -135,7 +138,7 @@ test('换掉一个没见过的新词:它被放到一边,下个游戏日再考,�
   const { deck, save } = setup();
   assert.equal(setAside(save, deck, 'w0', T0), true);
   assert.deepEqual([state(save, 'w0').mastery, activeProgress(save).wordBag.length], [0, 0]);
-  assert.equal(plantCandidate(save, deck)!.card.id, 'w1', '放到一边的词不会再冒出来');
+  assert.equal(plantCandidate(save, deck, T0)!.card.id, 'w1', '放到一边的词不会再冒出来');
   assert.equal(setAside(save, deck, 'w0', T0), false, '见过的词不能再放一次');
 
   // 当天不考;下个游戏日它是矿里最先出的旧词
@@ -146,12 +149,37 @@ test('换掉一个没见过的新词:它被放到一边,下个游戏日再考,�
   assert.deepEqual([check.result.source, check.result.masteryAfter, check.result.oreGrade], ['review', 1, 1]);
 });
 
+test('有到期的旧词没复习时,种下不给新词:复习优先于新词', () => {
+  const { deck, save } = setup();
+  giveSeeds(save, 3);
+  setAside(save, deck, 'w0', T0);
+  const next = T0 + gameDays(1); // w0 到期了,还没复习
+  assert.equal(plantCandidate(save, deck, next), null);
+  assert.deepEqual(plant(save, deck, 0, next), { ok: false, reason: 'reviews_due' });
+  assert.deepEqual(plant(save, deck, 0, next, { cardId: 'w1' }), { ok: false, reason: 'reviews_due' });
+  assert.equal(setAside(save, deck, 'w1', next), false, '放到一边也是在见新词');
+
+  // 词袋里的词不受影响:它是已经见过、要学的词
+  missWords(save, deck, 1, T0); // w1 进词袋。矿里先出的是 T0 时的新词,此时 w0 还没到期
+  assert.deepEqual(plantCandidate(save, deck, next)!.source, 'bag');
+  assert.ok(plant(save, deck, 0, next).ok);
+
+  // 把到期的旧词复习掉(矿里挖或种牧草都行),新词就来了
+  digNext(save, deck, true, next);
+  const candidate = plantCandidate(save, deck, next)!;
+  assert.deepEqual([candidate.card.id, candidate.source], ['w2', 'new']);
+  assert.ok(plant(save, deck, 1, next).ok);
+});
+
 test('放到一边的词再考时答错:进词袋,该种还是要种', () => {
   const { deck, save } = setup();
   setAside(save, deck, 'w0', T0);
   const check = digNext(save, deck, false, T0 + gameDays(1));
   assert.deepEqual([check.cardId, check.result.bagged], ['w0', true]);
-  assert.deepEqual([plantCandidate(save, deck)!.card.id, plantCandidate(save, deck)!.source], ['w0', 'bag']);
+  assert.deepEqual(
+    [plantCandidate(save, deck, T0)!.card.id, plantCandidate(save, deck, T0)!.source],
+    ['w0', 'bag'],
+  );
 });
 
 test('开局:没有种子,挖矿卖矿石,再去商店买种子把挖到的生词种下', () => {
@@ -196,24 +224,24 @@ test('兜底:有地可种,却没种子、买不起、也没东西可卖时,商�
   const { deck, save } = setup();
   digNext(save, deck, true, T0);
   digNext(save, deck, false, T0);
-  assert.equal(claimReliefSeed(save, deck), false); // 手里有矿石可以卖
+  assert.equal(claimReliefSeed(save, deck, T0), false); // 手里有矿石可以卖
   sellAllOre(save);
-  assert.equal(claimReliefSeed(save, deck), false); // 买得起
+  assert.equal(claimReliefSeed(save, deck, T0), false); // 买得起
   save.coins = 1;
-  assert.equal(claimReliefSeed(save, deck), true);
+  assert.equal(claimReliefSeed(save, deck, T0), true);
   assert.equal(save.seeds.choice, 1);
-  assert.equal(claimReliefSeed(save, deck), false); // 已经有种子了
+  assert.equal(claimReliefSeed(save, deck, T0), false); // 已经有种子了
   assert.ok(plant(save, deck, 0, T0).ok);
 });
 
 test('一上来就种田、不去挖矿也行:没钱没货时商店送种子,种的是新词', () => {
   const { deck, save } = setup();
-  assert.equal(claimReliefSeed(save, deck), true);
+  assert.equal(claimReliefSeed(save, deck, T0), true);
   const planted = plant(save, deck, 0, T0);
   assert.ok(planted.ok);
   assert.deepEqual([planted.card.id, planted.source], ['w0', 'new']);
   // 种完又是没钱没货:还能再领
-  assert.equal(claimReliefSeed(save, deck), true);
+  assert.equal(claimReliefSeed(save, deck, T0), true);
 });
 
 test('没有词可种时不送种子', () => {
@@ -221,8 +249,8 @@ test('没有词可种时不送种子', () => {
   digNext(save, deck, true, T0);
   sellAllOre(save);
   save.coins = 0;
-  assert.equal(plantCandidate(save, deck), null);
-  assert.equal(claimReliefSeed(save, deck), false);
+  assert.equal(plantCandidate(save, deck, T0), null);
+  assert.equal(claimReliefSeed(save, deck, T0), false);
   giveSeeds(save, 1);
   assert.deepEqual(plant(save, deck, 0, T0), { ok: false, reason: 'no_words' });
 });

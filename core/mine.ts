@@ -4,6 +4,7 @@ import { emptyPlots } from './farm';
 import { Milestone, addXp, xpForAnswer } from './level';
 import { Rng } from './quiz';
 import { activeProgress, getState, nextUnseen } from './save';
+import { dueVeins } from './words';
 import { blankState, drilled, graduate, mined } from './scheduler';
 import { CardState, Deck, QuestionType, SaveData } from './types';
 
@@ -55,51 +56,12 @@ export interface DigResult {
   unlocked: Milestone[];
 }
 
-/** 见过、现在既不在田里也不在词袋里的词。这些词要么在矿里等着挖,要么在休息。 */
-function wordsInMine(save: SaveData): string[] {
-  const progress = activeProgress(save);
-  const elsewhere = new Set<string>(progress.wordBag);
-  for (const plot of save.plots) {
-    if (plot.crop) elsewhere.add(plot.crop.cardId);
-  }
-  return Object.keys(progress.cards).filter((id) => !elsewhere.has(id));
-}
-
-/** 同上,按到期时间从早到晚排。 */
-function minedWords(save: SaveData): string[] {
-  const cards = activeProgress(save).cards;
-  return wordsInMine(save).sort((x, y) => cards[x].dueAt - cards[y].dueAt);
-}
-
 /**
  * 答错的额度:词袋还装得下几个词,也就是新词还能答错几次。到 0 就不再出新词,改成练词袋里的词。
  * 词袋最多比空地多装 BAG_EXTRA 个词。复习不受它限制。
  */
 export function mineAllowance(save: SaveData): number {
   return Math.max(0, emptyPlots(save) + BAG_EXTRA - activeProgress(save).wordBag.length);
-}
-
-/** 休息结束、重新出现在矿里的旧词,最早到期的排在前面。 */
-export function dueVeins(save: SaveData, now: number): string[] {
-  const cards = activeProgress(save).cards;
-  return minedWords(save).filter((id) => cards[id].dueAt <= now);
-}
-
-export interface RestingVein {
-  cardId: string;
-  dueAt: number; // 休息结束、回到矿里的时间
-  mastery: number; // 现在的掌握度;回来时答对,矿石比它高一级
-}
-
-/**
- * 还在休息的旧词各在什么时候回到矿里,最早回来的排在前面。不修改存档。
- * "没有矿脉可挖"时界面用它告诉玩家什么时候再来,也可以用第一项来安排提醒。
- */
-export function restingVeins(save: SaveData, now: number): RestingVein[] {
-  const cards = activeProgress(save).cards;
-  return minedWords(save)
-    .filter((id) => cards[id].dueAt > now)
-    .map((id) => ({ cardId: id, dueAt: cards[id].dueAt, mastery: cards[id].mastery }));
 }
 
 /** 矿洞现在能不能挖,能挖的话下一条矿脉是哪个词。不修改存档。 */

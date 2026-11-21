@@ -7,6 +7,7 @@ export * from './economy';
 export * from './level';
 export * from './deck';
 export * from './save';
+export * from './words';
 export * from './farm';
 export * from './mine';
 export * from './grass';
