@@ -1,0 +1,43 @@
+/* 家的页面在 ../mine-screens/page.css 之上多出来的几条。 */
+
+/* 一个方案配三张手机图 */
+.opt-shots.three {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+/* 一个方案只配一张手机图:不让它撑满半页 */
+.opt-shots.solo {
+  grid-template-columns: minmax(0, 320px);
+}
+/* 房子和角色的样张:一张放大的图,旁边一张手机图 */
+.opt-shots.card {
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+  align-items: start;
+}
+.card-frame {
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  box-shadow: 0 10px 28px rgba(15, 23, 32, 0.18);
+}
+.card-frame svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+/* 整条样张不留纸白的边:它们自己带着底色 */
+.strip.bare {
+  padding: 0;
+  overflow: hidden;
+}
+/* 画里一个单位正好是一个 CSS 像素,这样"缩小到多少像素"说的是真的 */
+.strips.actual .strip {
+  max-width: 396px;
+}
+/* 三栋房子排成一排 190 像素宽:每栋的墙约 40 像素宽 */
+.strips.actual .strip.tiny {
+  max-width: 190px;
+}
+.strips .strip-cap {
+  margin: 0 0 8px;
+}

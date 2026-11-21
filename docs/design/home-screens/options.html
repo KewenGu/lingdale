@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>家的画面方案比较</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Noto+Sans+SC:wght@400;500;700;900&family=Noto+Serif+SC:wght@600;900&family=ZCOOL+KuaiLe&display=swap">
+<link rel="stylesheet" href="../mine-screens/page.css">
+<link rel="stylesheet" href="page.css">
+</head>
+<body>
+<svg id="ld-defs" width="0" height="0" aria-hidden="true" focusable="false"></svg>
+
+<header class="top">
+  <div class="wrap">
+    <p class="eyebrow">灵谷小镇 Lingdale · 家的画面 · 方案比较</p>
+    <h1>先定五件事,再画定稿</h1>
+    <p class="lede">
+      小镇地图上一直有"家"这个地点,里面是什么没有设计过。负责人给了方向:家可以升级,家里有四个玩法
+      (升级和装饰、厨房、手工坊、衣帽间);玩家有一个自己的角色,在游戏里做的每件事都以它的名义。
+      这次只画第一级的房子、家里的一页和四个入口。动手画定稿之前,有五个取舍要由项目负责人定。
+    </p>
+    <div class="notice" id="result"></div>
+    <div class="notice">
+      <strong>这些是示意稿,不是成品。</strong>
+      全部用代码绘制(SVG),没有使用图像生成工具。<strong>四个玩法都还没有设计,</strong>所以它们在每张图里都是"还没开放"的样子;
+      鱼和别的收集品游戏里还没有,图里没有画。画面和农场、矿洞的参考图是同一个存档:第 1 年夏季第 3 天。
+    </div>
+    <nav class="jump" aria-label="页面目录">
+      <a href="#view">一 家里怎么看</a>
+      <a href="#entry">二 四个入口</a>
+      <a href="#ext">三 房子的外形</a>
+      <a href="#chara">四 角色的长相</a>
+      <a href="#appear">五 角色在别处怎么出现</a>
+      <a href="#nav">进出和底部按钮</a>
+      <a href="#open">发现的问题</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <section id="view" class="band">
+    <div class="wrap">
+      <h2>一 家里怎么看</h2>
+      <p class="sub">
+        要守的事实:手机竖屏;房间以后会变大;家具和装饰以后要一件件加,而这个项目是一个人在做。
+        三个方案里入口的画法相同(三样东西加底部一个主要动作,见第二节),角色先用第四节的方案 2 占位,只比较看法。
+        每个方案两张图:左边是第一级的房间,右边是一张草图,说明以后变大时往哪里长。草图不是升级后的画面。
+      </p>
+      <div class="opts" id="view-opts"></div>
+    </div>
+  </section>
+
+  <section id="entry" class="band">
+    <div class="wrap">
+      <h2>二 四个入口怎么呈现</h2>
+      <p class="sub">
+        四个玩法都还没有设计。入口要让人看得出"这里以后能做什么",同时分得清现在还没开放。
+        三个方案都画在剖面的房间里(第一节的方案 A)。
+      </p>
+      <div class="opts" id="entry-opts"></div>
+
+      <h3>连带的问题:没开放怎么表示</h3>
+      <p class="sub">
+        美术规范已有一条规则:还没开放的东西不上色,只用纸白和纸白暗,像一个还没涂颜色的纸模型,名牌上写"还没开放"。
+        小镇地图上的"家"现在就是这样画的。下面是同一个灶台的三种画法,左边是照规则画的。
+      </p>
+      <div class="opts" id="closed-opts"></div>
+    </div>
+  </section>
+
+  <section id="ext" class="band">
+    <div class="wrap">
+      <h2>三 第一级房子的外形</h2>
+      <p class="sub">
+        它出现在小镇地图上,要在地图的尺寸下认得出,也要和商店(红白雨棚)、远景里那一排小房子分得开。
+        它是第一级,要朴素,给以后的升级留出变化的余地。三个方案用同一套颜色(纸白的墙、屋顶红的屋顶、木头的门),只比较轮廓。
+        每个方案:放大的样子,和放进现有地图里的样子。地图本身归另一张卡片,这里只是借它当背景。
+      </p>
+      <div class="opts" id="ext-opts"></div>
+      <h3>缩小了看</h3>
+      <div class="strips actual" id="ext-strips"></div>
+    </div>
+  </section>
+
+  <section id="chara" class="band">
+    <div class="wrap">
+      <h2>四 角色的长相</h2>
+      <p class="sub">
+        负责人已经定了:角色要画,它就是玩家在游戏里的自己,衣帽间打扮的就是它。<strong>这是这套画面第一次画人,</strong>美术规范里没有人物的画法。
+        要守的:一切都是纸片;换姿势、换衣服靠换纸片和转纸片,不重画;很小的时候也认得出;不像任何已有游戏或动画里的人物。
+        三个方案穿的是同一身默认的衣服。每张图:放大的样子,右边是缩小后在草地、矿壁、纸白上的样子,左上是头像。
+      </p>
+      <div class="opts" id="chara-opts"></div>
+      <h3>姿势和小尺寸</h3>
+      <div class="strips actual" id="chara-strips"></div>
+    </div>
+  </section>
+
+  <section id="appear" class="band">
+    <div class="wrap">
+      <h2>五 角色在矿洞、农场、牧场、地图里怎么出现</h2>
+      <p class="sub">
+        负责人没有说角色能不能走动,所以这里不默认它能走。愿景里原来有一句"没有自由走动的角色"。
+        <strong>已有的矿洞、农场、地图一笔没有改,</strong>下面只是在现有画面上叠了一个角色,用来比较三种出现的方式。
+        牧场的画面在另一张卡片里,这里没有图,同一个方案在牧场是什么样写在说明里。
+      </p>
+      <div class="opts" id="appear-opts"></div>
+    </div>
+  </section>
+
+  <section id="nav" class="band">
+    <div class="wrap">
+      <h2>进出和底部的按钮</h2>
+      <p class="sub">这一项没有画方案,是照美术规范现有的规则排的。有不同意见再改。</p>
+      <div class="shots wide" id="nav-shots"></div>
+      <ul class="notes" id="nav-notes"></ul>
+    </div>
+  </section>
+
+  <section id="open" class="band">
+    <div class="wrap">
+      <h2>画的时候发现的问题</h2>
+      <p class="sub">这些都不是这次能定的,已经记进路线图的未决问题。</p>
+      <ul class="notes" id="open-notes"></ul>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    示意稿,不是成品。绘制代码:<code>home-paper.js</code>(家),以及 <code>../mine-screens/</code> 和
+    <code>../art-exploration/style-paper.js</code> 里已有的图形。规定见 <code>../07-art-direction.md</code>。
+  </div>
+</footer>
+
+<script src="../art-exploration/scene.js"></script>
+<script src="../art-exploration/style-paper.js"></script>
+<script src="../mine-screens/mine-scene.js"></script>
+<script src="../mine-screens/mine-paper.js"></script>
+<script src="../mine-screens/screens.js"></script>
+<script src="home-paper.js"></script>
+<script src="options.js"></script>
+</body>
+</html>
