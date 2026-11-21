@@ -556,7 +556,7 @@ test('卖牧草和牛奶', () => {
 });
 
 test('牧草可以在商店买,买价比卖价高;买来的草进草垛,牛照样吃', () => {
-  assert.deepEqual([HAY_PRICE, HAY_BUY_PRICE], [5, 8]);
+  assert.deepEqual([HAY_PRICE, HAY_BUY_PRICE], [2, 8]);
   const { save } = ranch(HAY_BUY_PRICE * RATION + 1, 0);
   grownCow(save);
   assert.equal(buyHay(save, RATION), true);
