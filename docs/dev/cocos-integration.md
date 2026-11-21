@@ -163,17 +163,36 @@ if (result.ok) {
 ### 牧场
 
 ```ts
-import { GrassSession, buyLivestock, grassStatus, livestockCost, sellHay, sellMilk, settlePasture } from './core/index';
+import {
+  GrassSession, animalCondition, breed, buyLivestock, buyMedicine, canBreed, cureAnimal,
+  grassStatus, isGrown, livestockCost, sellHay, sellMilk, settlePasture,
+} from './core/index';
 
-// 进牧场、进商店时先结算:牲畜把这几个游戏日该吃的草吃了,该出的奶出了
-const newMilk = settlePasture(save, now);   // 这次出了几份奶,可以播一个"奶好了"的画面
+// 每次打开游戏、进牧场、进商店时先结算:把牛从上次到现在的日子一天天过完
+const report = settlePasture(save, now);
+// report.milk / born / fellSick / died   这段时间出了几份奶、生了几头、饿病了几头、病死了几头。
+// 玩家几天没来再打开时,要把后三项告诉他。这个结果只在这一次调用里有,不会再给第二次,所以要接住。
 
 grassStatus(save, deck, now).due;   // 草地上有几株草,也就是有几个旧词该复习了。画草地用它
-save.hay;                           // 草垛里的草料
-save.livestock;                     // 养了几头牲畜
-save.milk;                          // 还没卖的奶
-livestockCost(save.livestock);      // 再买一头要多少金币
-buyLivestock(save, now);            // 钱不够返回 false
+save.hay;                           // 草垛里有几捆牧草
+save.milk;                          // 还没卖的牛奶
+save.medicine;                      // 手里的动物药
+
+// 画牛
+save.herd.forEach((cow, index) => {
+  isGrown(cow);            // 小牛还是大牛。cow.fedDays / COW_GROWTH_DAYS 是长到哪了
+  animalCondition(cow);    // 'well' 好好的 / 'hungry' 饿着 / 'sick' 病了
+  cow.hungryDays;          // 连续饿了几个游戏日。到 HUNGRY_DAYS_TO_SICK 生病
+  cow.sickDays;            // 病了几个游戏日。到 SICK_DAYS_TO_DIE 死亡
+  cow.pregnantDays;        // 怀了几个游戏日,没怀是 null
+  canBreed(save, index);   // 能不能让它怀小牛
+});
+
+livestockCost(save.herd.length);   // 再买一头小牛要多少金币
+buyLivestock(save, now);           // 钱不够返回 false
+breed(save, index, now);           // 让这头牛怀小牛
+buyMedicine(save);                 // 在商店买一份动物药
+cureAnimal(save, index, now);      // 给这头病牛用药
 
 // 割草
 const session = new GrassSession(save, deck, Math.random);
@@ -182,21 +201,25 @@ while (turn) {
   // turn.cardId / turn.mastery   这株草是哪个旧词,它现在的掌握度
   // turn.due                     草地上还有几株
   const result = session.submit(await askPlayer(turn.question), now, elapsedMs);
-  // result.grade / result.hay   答对:这捆牧草的品级,进草垛的草料份数
-  // result.bagged               答错:这个词进了词袋,要重新种
+  // result.hay      答对收到一捆牧草
+  // result.bagged   答错:这个词进了词袋,要重新种
   turn = session.current(now);
 }
 
-sellHay(save, now, 100);    // 卖 100 份草料,一份一个金币;不传数量就全卖
+sellHay(save, now, 10);     // 卖 10 捆牧草;不传数量就全卖
 sellMilk(save);             // 全卖
 ```
 
 - 牧场是单独的一页,和农场并列:一块草地,一栋房子。
 - **草地上画几株草,由到期的旧词有几个决定**,不是玩家种的。没有到期的词时草地是矮的。
 - 割草是当场答、当场收的。它和矿里的旧矿脉是同一批词,在一边复习过,另一边就没有了。
-- **牲畜吃草不需要玩家操作**,也不要做成要玩家一头头去喂。没喂够的牲畜只是没出奶,画面上不要让它显得可怜:
-  它在吃地上的草、在打盹,而不是饿着。
-- 卖草料之前牲畜会先吃当天的口粮(`sellHay` 自己会结算),所以玩家不会误把口粮卖掉。
+- **牛吃草不需要玩家操作**,不要做成要玩家一头头去喂。
+- **要让玩家一眼看出草够不够吃**:草垛里的草够这群牛吃几天(`save.hay / (save.herd.length * RATION)`),
+  以及今天割的草够几头牛吃。牛会饿病、会死,玩家得能提前看到。
+- **饿着、病了要画得出来**,病了的牛旁边要有"去买药"的入口。药只治病不管饱,用药之前最好提醒草垛是不是空的。
+- **牛快死的时候要提前说**(比如病了一周以上)。牛死了要有交代,不能悄悄少一头。
+- 怀小牛之前要让玩家知道多一头牛每天多吃多少草。
+- 卖牧草之前牛会先吃当天的口粮(`sellHay` 自己会结算),但不会替以后的日子留。卖的时候提醒会不会把明天的口粮卖掉。
 
 ### 浇水
 
@@ -241,7 +264,7 @@ sellAllProduce(save);                  // 全卖
 
 ### 什么时候存档
 
-每次会改变存档的操作之后都存:一次挖矿结束、播种、放到一边、一轮浇水结束、一轮割草结束、结算牧场、买卖、解锁地块。存档是一份不大的 JSON,整份写入即可。
+每次会改变存档的操作之后都存:一次挖矿结束、播种、放到一边、一轮浇水结束、一轮割草结束、结算牧场、买卖、用药、怀小牛、解锁地块。存档是一份不大的 JSON,整份写入即可。
 
 ## 时间
 

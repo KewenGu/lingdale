@@ -73,3 +73,20 @@ export const INITIAL_PLOTS = 30;
 
 /** 每个卡组最多保留的日志条数,超出后丢弃最旧的。 */
 export const MAX_LOGS = 20000;
+
+// ---------- 牧场 ----------
+
+/** 小牛要吃饱这么多个游戏日才长大(两个季节)。没吃上的日子不长。 */
+export const COW_GROWTH_DAYS = 2 * DAYS_PER_SEASON;
+
+/** 怀孕的牛要吃饱这么多个游戏日才生小牛(一个季节)。 */
+export const GESTATION_DAYS = DAYS_PER_SEASON;
+
+/** 连续这么多个游戏日没吃上草,牲畜生病(现实 7 天)。 */
+export const HUNGRY_DAYS_TO_SICK = 14;
+
+/** 病了这么多个游戏日还没治,牲畜死亡(现实 15 天)。 */
+export const SICK_DAYS_TO_DIE = 30;
+
+/** 治好之后还是没草吃,再过这么多个游戏日又生病(现实 1 天)。 */
+export const RELAPSE_DAYS = 2;

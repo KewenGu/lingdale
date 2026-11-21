@@ -23,8 +23,9 @@ export function createSave(deckId: string, now: number, tzOffsetMs: number): Sav
     produce: {},
     ore,
     hay: 0,
-    livestock: 0,
+    herd: [],
     milk: 0,
+    medicine: 0,
     pastureDay: today,
     updatedAt: now,
   };

@@ -73,6 +73,18 @@ export interface DeckProgress {
   logs: ReviewLog[];
 }
 
+/**
+ * 一头牲畜。目前只有牛。
+ * 长没长大、饿不饿都由这几个数算出来,不另外存(见 pasture.ts 的 isGrown、animalCondition)。
+ */
+export interface Animal {
+  kind: 'cow';
+  fedDays: number; // 吃饱过多少个游戏日。吃饱的日子才长,够数就长大
+  hungryDays: number; // 已经连续多少个游戏日没吃上草
+  sickDays: number | null; // 病了多少个游戏日;没病是 null
+  pregnantDays: number | null; // 怀孕之后吃饱了多少个游戏日;没怀是 null
+}
+
 export interface SaveData {
   schemaVersion: number;
   tzOffsetMs: number; // 本地时区相对 UTC 的偏移,平台层在每次启动时更新
@@ -85,9 +97,10 @@ export interface SaveData {
   seeds: Record<QuestionType, number>; // 商店买的种子,按品种分。种子决定长成哪类作物,带上词袋里的一个词
   produce: Record<string, number[]>; // 收获后还没卖的作物:作物 id → 各星级的数量(下标是星数)
   ore: number[]; // 矿石库存,下标是品级,值是数量
-  hay: number; // 草垛里的草料,割牧草得来。一份值一个金币
-  livestock: number; // 养了几头牲畜
-  milk: number; // 还没卖的奶
+  hay: number; // 草垛里有几捆牧草,割牧草得来
+  herd: Animal[]; // 牧场里的牲畜,按来的先后排
+  milk: number; // 还没卖的牛奶
+  medicine: number; // 手里的动物药
   pastureDay: number; // 牲畜吃草吃到了哪个游戏日。见 pasture.ts 的 settlePasture
   updatedAt: number;
 }

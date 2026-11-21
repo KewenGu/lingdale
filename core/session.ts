@@ -134,7 +134,7 @@ export class MineSession {
 export interface GrassTurn {
   question: Question;
   cardId: string;
-  mastery: number; // 这个旧词现在的掌握度;答对割下的牧草比它高一级
+  mastery: number; // 这个旧词现在的掌握度
   due: number; // 到期的旧词一共还有几个,也就是草地上还有几株草
 }
 

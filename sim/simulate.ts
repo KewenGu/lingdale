@@ -20,6 +20,7 @@ function parseArgs(argv: string[]): SimOptions {
     else if (key === 'nomine') options.mines = false;
     else if (key === 'bagonly') options.plantsNew = false;
     else if (key === 'skip') options.skipProb = Number(value);
+    else if (key === 'away') options.away = value.split(',').map(Number) as [number, number];
     else if (key === 'seed') options.seed = Number(value);
     else if (key === 'buy') options.autoBuy = true;
     else if (key === 'once') options.sessionHours = [20];
@@ -110,7 +111,9 @@ console.log(
 );
 if (totals.grassAnswers.asked > 0) {
   console.log(
-    `牧场:割到草料 ${totals.hayMowed} 份,直接卖掉 ${totals.haySold} 份;结束时养了 ${totals.livestock} 头牲畜,一共出奶 ${totals.milk} 份;` +
+    `牧场:割到牧草 ${totals.hayMowed} 捆,直接卖掉 ${totals.haySold} 捆;买过 ${totals.bought} 头小牛,生了 ${totals.born} 头;` +
+      `结束时有 ${totals.herd} 头牛,其中长大的 ${totals.grown} 头,一共出奶 ${totals.milk} 份;` +
+      `饿病 ${totals.fellSick} 头次,治好 ${totals.cured} 头次,病死 ${totals.died} 头;` +
       `因为没钱买种子去了矿里 ${totals.mineVisits} 次`,
   );
 }

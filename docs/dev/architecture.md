@@ -35,7 +35,7 @@
 | `constants.ts` | 时间、掌握度、矿石、作物相关的规则常量 | 无 |
 | `time.ts` | 游戏日、下次浇水时间、日历 | constants |
 | `crops.ts` | 种子种类表和作物表 | types |
-| `economy.ts` | 地块和牲畜的价格,作物、矿石、草料、奶的售价 | constants、crops |
+| `economy.ts` | 地块、小牛和动物药的价格,作物、矿石、牧草、牛奶的售价 | constants、crops |
 | `level.ts` | 经验来源、升级曲线、等级解锁、`addXp` | types |
 | `scheduler.ts` | 一个词的状态怎么随挖矿、浇水、收获、死亡变化。全是纯函数 | constants、time |
 | `deck.ts` | 按 id 查卡片 | types |
@@ -43,7 +43,7 @@
 | `words.ts` | 哪些旧词到期了、哪些还在休息。矿洞、牧场和"复习优先于新词"都用它 | save |
 | `farm.ts` | 田和商店:买种子、兜底种子、候选词、播种、放到一边、浇水、卖作物、解锁地块,以及作物的所有查询 | 以上全部 |
 | `mine.ts` | 矿洞:下一条矿脉、答错的额度、挖矿、练习、卖矿石 | farm、scheduler、economy、level、save |
-| `pasture.ts` | 牧场:草地上有几株草、割牧草、牲畜吃草出奶、买牲畜、卖草料和奶 | scheduler、economy、level、save、words、time |
+| `pasture.ts` | 牧场:草地上有几株草、割牧草;牛吃草、长大、出奶、挨饿、生病、死亡、怀小牛;买小牛和药、卖牧草和牛奶 | scheduler、economy、level、save、words、time |
 | `quiz.ts` | 按题型出题、判对错 | constants、deck |
 | `session.ts` | 一次浇水会话(出题顺序、首次作答、重复练习)、一次挖矿会话、一次割草会话 | farm、mine、pasture、quiz |
 | `stats.ts` | 从作答日志算统计 | constants、save、time |
@@ -100,8 +100,10 @@ SaveData {
   seeds: { choice, reverse, spell }    各品种种子的数量
   produce: { [cropId]: number[] }      各星级的库存数量
   ore: number[]                        各品级矿石的数量
-  hay, livestock, milk                 草垛里的草料、牲畜的头数、还没卖的奶
-  pastureDay                           牲畜吃草吃到了哪个游戏日
+  hay, milk, medicine                  草垛里有几捆牧草、还没卖的牛奶、手里的动物药
+  herd: Animal[]                       牧场里的牛。每头:fedDays 吃饱过几个游戏日、hungryDays 连续饿了几个、
+                                       sickDays 病了几个(没病是 null)、pregnantDays 怀了几个(没怀是 null)
+  pastureDay                           牛吃草吃到了哪个游戏日
   updatedAt
 }
 Crop { id, deckId, cardId, plantedAt, cropType }
@@ -146,8 +148,9 @@ Crop { id, deckId, cardId, plantedAt, cropType }
 
 同一个事实只存一份,就不会出现两份数据对不上的缺陷。
 
-牲畜吃草是一个例外:它会把草料变成奶,不能每次现算,所以存了"吃到了哪个游戏日"(`pastureDay`),
-由 `settlePasture` 把落下的日子一次补上。它可以重复调用,结果只取决于存档和传入的时间。
+牛是一个例外:它吃掉牧草、长大、出奶、饿病,这些是一天天累积出来的,不能每次现算。所以存了每头牛的几个计数和
+"吃到了哪个游戏日"(`pastureDay`),由 `settlePasture` 把落下的日子一天天补上。它可以重复调用,结果只取决于存档和传入的时间。
+牛长没长大、饿不饿、病没病,仍然是从这几个计数算出来的(`isGrown`、`animalCondition`),不另外存。
 
 ### 4. 用单词当键时检查自有属性
 

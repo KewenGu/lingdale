@@ -1,7 +1,7 @@
 import { INITIAL_PLOTS } from './constants';
 import { cropKind, cropType } from './crops';
 
-// 金币来自卖东西:矿石、作物、草料、奶。答题本身不给金币。用途是买种子、解锁地块、买牲畜。
+// 金币来自卖东西:矿石、作物、牧草、牛奶。答题本身不给金币。用途是买种子、解锁地块、买牲畜和动物药。
 
 export const PLOT_COST_BASE = 40;
 export const PLOT_COST_STEP = 2;
@@ -22,24 +22,22 @@ export function orePrice(grade: number): number {
   return ORE_PRICES[Math.max(0, Math.min(ORE_PRICES.length - 1, grade))];
 }
 
-/**
- * 一捆牧草顶多少份草料。和同品级矿石的售价一样:在牧场复习和在矿里复习,到手的价值相同;
- * 记得越久的词,割下的草越顶饿。草料可以直接卖,一份一个金币。
- */
-export function hayValue(grade: number): number {
-  return orePrice(grade);
-}
+/** 一捆牧草的售价。割一株草收一捆,不分品级。 */
+export const HAY_PRICE = 10;
 
-/** 一头牲畜一个游戏日吃这么多份草料,吃够了下一个游戏日出一份奶。 */
-export const RATION = 30;
+/** 一头牲畜一个游戏日吃这么多捆牧草。 */
+export const RATION = 3;
 
-/** 一份奶的售价。比它吃掉的草料值钱一半,这是养牲畜的好处。 */
+/** 一份牛奶的售价。比它吃掉的牧草值钱一半,这是养牛的好处。 */
 export const MILK_PRICE = 45;
+
+/** 一份动物药的价格。生病的牲畜要用它才能治好。 */
+export const MEDICINE_PRICE = 50;
 
 export const LIVESTOCK_COST_BASE = 200;
 export const LIVESTOCK_COST_STEP = 100;
 
-/** 已经有 owned 头牲畜时,再买一头的价格。 */
+/** 已经有 owned 头牲畜时,再买一头小牛的价格。 */
 export function livestockCost(owned: number): number {
   return LIVESTOCK_COST_BASE + LIVESTOCK_COST_STEP * owned;
 }

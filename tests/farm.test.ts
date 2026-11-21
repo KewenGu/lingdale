@@ -230,7 +230,7 @@ test('兜底:词袋里有词要种,却没种子、买不起、也没东西可卖
   assert.equal(claimReliefSeed(save), false); // 买得起
   save.coins = 1;
   save.hay = 5;
-  assert.equal(claimReliefSeed(save), false); // 草料也能卖
+  assert.equal(claimReliefSeed(save), false); // 牧草也能卖
   save.hay = 0;
   assert.equal(claimReliefSeed(save), true);
   assert.equal(save.seeds.choice, 1);

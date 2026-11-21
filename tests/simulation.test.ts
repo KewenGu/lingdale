@@ -163,11 +163,25 @@ test('只种田和放牧也能走完:开局去矿里挣到种子钱,之后田里
   assert.ok(Math.max(...farming.rows.slice(-30).map((r) => r.backlog)) <= 60);
 });
 
-test('牧场养得起来:割的草够喂,牲畜慢慢变多,出的奶能卖', () => {
+test('牧场养得起来:割的草够喂,小牛长大后出奶;天天来的人,牛不会饿病', () => {
   const { totals, save } = simulate({ ...DEFAULT_OPTIONS, mines: false });
-  assert.ok(totals.livestock >= 5, `养了 ${totals.livestock} 头`);
+  assert.ok(totals.herd >= 5, `养了 ${totals.herd} 头`);
+  assert.ok(totals.grown >= 3, `长大了 ${totals.grown} 头`);
   assert.ok(totals.milk > 100, `出了 ${totals.milk} 份奶`);
+  assert.deepEqual([totals.fellSick, totals.died], [0, 0]);
   assert.ok(save.hay >= 0 && save.coins >= 0);
+});
+
+test('缺席的代价:十天不来牛都病了,回来买药能救;二十五天不来牛死光', () => {
+  const shortTrip = simulate({ ...DEFAULT_OPTIONS, mines: false, away: [30, 10] }).totals;
+  assert.ok(shortTrip.fellSick > 0, `病了 ${shortTrip.fellSick} 头次`);
+  assert.deepEqual([shortTrip.cured, shortTrip.died], [shortTrip.fellSick, 0]);
+
+  const longTrip = simulate({ ...DEFAULT_OPTIONS, mines: false, away: [30, 25] }).totals;
+  assert.ok(longTrip.died > 0, `死了 ${longTrip.died} 头`);
+  assert.equal(longTrip.died, longTrip.fellSick, '病了的都没等到药');
+  // 受罚的只是牛:回来之后照样能学,也能重新养起来
+  assert.ok(longTrip.herd > 0);
 });
 
 test('三条路都能教会词:只挖矿、只种田、两样都做', () => {
