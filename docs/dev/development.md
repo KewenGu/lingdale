@@ -55,7 +55,7 @@ npx tsx --test tests/farm.test.ts
 - **一个测试验证一条规则。**
 - **时间用 `tests/helpers.ts` 里的 `T0`、`hours`、`gameDays`。** 测试里的时区偏移都是 0。
 - **要把答错过的词种到田里时用 `missWords` 和 `giveSeeds`。** `missWords` 替你在矿里答错几个词,让它们进词袋(词袋空着时种下的会是没见过的新词),
-  `giveSeeds` 直接给种子。矿石运气用 `noLuck`、`lucky` 两个固定的随机函数控制。
+  `giveSeeds` 直接给种子。矿石的品级用 `noLuck`(总是 1 级)、`lucky`(总是能出的最高一级)两个固定的随机函数控制。
 - **不关心浇水间隔的测试可以在同一个时间点连续调用 `answer`。** `answer` 不检查作物是否到了能浇水的时间,
   这个检查在 `needsWater` 和 `thirstyCards` 里,由界面层负责只对能浇的作物开会话。
 - **新规则先写测试。** 规则写进[玩法规则](../design/02-gameplay.md)后,先把它翻译成测试,再改代码。

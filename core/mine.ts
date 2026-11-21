@@ -1,4 +1,4 @@
-import { BAG_EXTRA, DRILL_SET, DRILL_STREAK, LUCKY_ORE_CHANCE, MAX_LOGS, MAX_MASTERY } from './constants';
+import { BAG_EXTRA, DRILL_SET, DRILL_STREAK, MAX_LOGS, MAX_MASTERY, TOP_ORE_CHANCE } from './constants';
 import { orePrice } from './economy';
 import { emptyPlots } from './farm';
 import { Milestone, addXp, xpForAnswer } from './level';
@@ -11,7 +11,7 @@ import { CardState, Deck, QuestionType, SaveData } from './types';
 // 这个文件里的函数会直接修改传入的 save。
 //
 // 矿负责"筛"和"复习":每条矿脉是一个词,挖一次答一道题。
-//   答对 → 爆出矿石。矿石的品级就是这个词的掌握度,记得越久品级越高。然后这个词去休息,到期再回到矿里。
+//   答对 → 爆出矿石。品级是掷出来的,最高到这个词的掌握度:记得越久,越容易出高级的。然后这个词去休息,到期再回到矿里。
 //   答错 → 这个词进词袋,等着去商店买种子把它种下。
 //
 // 矿脉的顺序:
@@ -44,8 +44,8 @@ export interface DigResult {
   source: VeinSource;
   masteryBefore: number;
   masteryAfter: number;
-  oreGrade: number | null; // 答对时爆出的矿石品级;练习不出矿石
-  lucky: boolean; // 这次是否运气好,多升了一个品级
+  oreGrade: number | null; // 答对时爆出的矿石品级,掷出来的,最高到答对后的掌握度;练习不出矿石
+  lucky: boolean; // 这次是否运气好:爆出了这条矿脉能出的最高一级(2 级以上才算)
   bagged: boolean; // 答错,这个词进了词袋
   drillStreak: number; // 练习矿脉:这次之后连续答对了几次
   graduated: boolean; // 练够了,这个词离开词袋,下一个游戏日再考
@@ -98,8 +98,34 @@ export function mineStatus(save: SaveData, deck: Deck, now: number): MineStatus 
 }
 
 /**
+ * 掌握度是 mastery 的词答对时,爆出各级矿石的概率。下标是品级。
+ * 最高到 mastery;从最高一级往下,每一级有 TOP_ORE_CHANCE 的概率就是它,都没中是 1 级。
+ * 界面可以用它告诉玩家这条矿脉可能出什么。
+ */
+export function oreOdds(mastery: number): number[] {
+  const top = Math.max(1, Math.min(mastery, MAX_MASTERY));
+  const odds: number[] = [];
+  for (let grade = 0; grade <= MAX_MASTERY; grade++) odds.push(0);
+  let left = 1;
+  for (let grade = top; grade > 1; grade--) {
+    odds[grade] = left * TOP_ORE_CHANCE;
+    left -= odds[grade];
+  }
+  odds[1] = left;
+  return odds;
+}
+
+/** 按 oreOdds 的概率掷一块矿石的品级。 */
+export function rollOreGrade(mastery: number, rng: Rng): number {
+  for (let grade = Math.max(1, Math.min(mastery, MAX_MASTERY)); grade > 1; grade--) {
+    if (rng() < TOP_ORE_CHANCE) return grade;
+  }
+  return 1;
+}
+
+/**
  * 挖当前这条矿脉并记下答题结果。只能挖 mineStatus 给出的那个词。练习矿脉也从这里走。
- * rng 只用来决定答对时是否运气好、多升一个品级。
+ * rng 只用来掷答对时爆出的矿石是几级。
  */
 export function dig(
   save: SaveData,
@@ -168,8 +194,8 @@ export function dig(
   let oreGrade: number | null = null;
   let lucky = false;
   if (correct && !drill) {
-    lucky = after.mastery < MAX_MASTERY && rng() < LUCKY_ORE_CHANCE;
-    oreGrade = after.mastery + (lucky ? 1 : 0);
+    oreGrade = rollOreGrade(after.mastery, rng);
+    lucky = oreGrade > 1 && oreGrade === Math.min(after.mastery, MAX_MASTERY);
     save.ore[oreGrade] = (save.ore[oreGrade] || 0) + 1;
   }
 

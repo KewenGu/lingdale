@@ -63,7 +63,8 @@ while (turn) {
   const result = session.submit(response, platform.now(), elapsedMs);
 
   // result.correct                  答对了没有
-  // result.oreGrade / .lucky        爆出的矿石品级;运气好时多升了一级。练习不出矿石
+  // result.oreGrade / .lucky        爆出的矿石品级(掷出来的);lucky 表示爆出了这条矿脉能出的最高一级。练习不出矿石
+  // oreOdds(turn.vein.mastery + 1)   这条矿脉答对后各级矿石的概率,想提示"可能出什么"时用
   // result.bagged                   答错,这个词进了词袋
   // result.drillStreak              练习:这次之后连续答对了几次
   // result.graduated                练习:练够了,这个词离开词袋,下一个游戏日再考

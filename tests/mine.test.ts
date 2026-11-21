@@ -2,6 +2,9 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import {
   MAX_MASTERY,
+  TOP_ORE_CHANCE,
+  blankState,
+  oreOdds,
   ORE_PRICES,
   BAG_EXTRA,
   DRILL_SET,
@@ -89,7 +92,7 @@ test('新词答错:这个词进词袋,不出矿石', () => {
   assert.deepEqual(dueVeins(save, T0 + gameDays(100)), []); // 词袋里的词不会出现在矿里
 });
 
-test('同一个词隔着休息期连续答对,矿石品级逐级升高', () => {
+test('同一个词隔着休息期连续答对,能爆出的最高品级逐级升高', () => {
   const { deck, save } = setup(1);
   let now = T0;
   const restDays = [3, 7, 15, 30, 60, 120, 240];
@@ -173,13 +176,46 @@ test('只能挖当前这条矿脉', () => {
   assert.equal(activeProgress(save).cursor, 0);
 });
 
-test('运气好时矿石多升一个品级,但掌握度不受影响;最高级不再加', () => {
+test('矿石的品级是掷出来的:最高到答对后的掌握度,从上往下每一级三成机会,都没中是 1 级', () => {
   const { deck, save } = setup(1);
-  const first = dig(save, deck, 'w0', true, T0, lucky);
-  assert.deepEqual([first.oreGrade, first.lucky, first.masteryAfter], [2, true, 1]);
-  activeProgress(save).cards.w0.mastery = MAX_MASTERY - 1;
-  const top = dig(save, deck, 'w0', true, T0 + gameDays(1000), lucky);
-  assert.deepEqual([top.oreGrade, top.lucky, top.masteryAfter], [MAX_MASTERY, false, MAX_MASTERY]);
+  // 依次给出这些随机数的掷法
+  const rolls = (...values: number[]) => {
+    let i = 0;
+    return () => values[i++];
+  };
+  activeProgress(save).cards.w0 = { ...blankState(T0), mastery: 3 };
+  const at = (n: number) => T0 + gameDays(1000 * n);
+  const reset = () => (activeProgress(save).cards.w0.mastery = 3);
+
+  // 掌握度 3 的词答对后是 4 级:第一掷中了,出 4 级
+  const top = dig(save, deck, 'w0', true, at(1), rolls(TOP_ORE_CHANCE - 0.01));
+  assert.deepEqual([top.masteryAfter, top.oreGrade, top.lucky], [4, 4, true]);
+  // 第一掷没中、第二掷中了,出 3 级
+  reset();
+  const second = dig(save, deck, 'w0', true, at(2), rolls(TOP_ORE_CHANCE, 0));
+  assert.deepEqual([second.oreGrade, second.lucky], [3, false]);
+  // 都没中,出 1 级。掌握度照常升,不受矿石影响
+  reset();
+  const none = dig(save, deck, 'w0', true, at(3), noLuck);
+  assert.deepEqual([none.oreGrade, none.lucky, none.masteryAfter], [1, false, 4]);
+  assert.deepEqual(save.ore.slice(1, 5), [1, 0, 1, 1]);
+});
+
+test('记得越久越容易出高级矿石,但最高那一级的概率封顶;不会出比掌握度更高的', () => {
+  assert.deepEqual(oreOdds(1), [0, 1, 0, 0, 0, 0, 0, 0]);
+  const atLeast = (mastery: number, grade: number) =>
+    oreOdds(mastery)
+      .slice(grade)
+      .reduce((a, b) => a + b, 0);
+  for (let mastery = 2; mastery <= MAX_MASTERY; mastery++) {
+    const odds = oreOdds(mastery);
+    assert.ok(Math.abs(odds.reduce((a, b) => a + b, 0) - 1) < 1e-9);
+    assert.ok(Math.abs(odds[mastery] - TOP_ORE_CHANCE) < 1e-9, '最高一级正好是封顶的概率');
+    assert.ok(odds.slice(mastery + 1).every((p) => p === 0));
+    // 金矿石以上(4 级)的机会随掌握度单调上升
+    assert.ok(atLeast(mastery, 4) >= atLeast(mastery - 1, 4));
+  }
+  assert.ok(atLeast(MAX_MASTERY, 4) > atLeast(4, 4));
 });
 
 test('卖矿石:品级越高越值钱', () => {
