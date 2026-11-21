@@ -71,6 +71,7 @@ data/          卡组数据(目前只有 30 词的示例)
 docs/design/   设计文档:愿景、玩法规则、学习设计、数值、内容、路线图、美术规范
 docs/design/art-exploration/  定美术方向时的探索稿:四种画风的比较页和绘制代码
 docs/design/mine-screens/     矿洞这一边的画面:矿洞、矿石、词袋、商店、小镇地图的示意稿和绘制代码
+docs/design/character-style/  人物画风的探索稿:同一个居民三种画法的比较页、绘制代码和生成提示词(没有定,居民还没有设计)
 docs/dev/      开发文档:架构、开发指南、Cocos 接入
 docs/marketing/ 对外内容:内容策略、选题库
 docs/decisions/ 决策记录:每个重要决定的背景、理由和被否决的方案

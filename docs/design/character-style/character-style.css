@@ -1,0 +1,214 @@
+/* 人物画风对比页自己的样式。看稿台的底、字体和手机框沿用 ../mine-screens/page.css。 */
+.verdict {
+  max-width: 48em;
+  margin: 20px 0 0;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--pick);
+  border-radius: 6px;
+  background: var(--surface);
+  font-size: 15px;
+}
+.verdict p {
+  margin: 0 0 8px;
+}
+.verdict p:last-child {
+  margin: 0;
+}
+.busts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px 14px;
+}
+.busts.four {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+.card {
+  aspect-ratio: 300 / 400;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  background: #f3deb0;
+  box-shadow: 0 8px 22px rgba(15, 23, 32, 0.14);
+}
+.card svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.card.sil {
+  background: #e9e4d8;
+}
+.card.sil svg {
+  filter: brightness(0);
+  opacity: 0.82;
+}
+.busts figcaption b,
+.faces figcaption b {
+  display: block;
+  color: var(--ink);
+  font-size: 14px;
+}
+.tag {
+  display: inline-block;
+  margin-right: 6px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--pick);
+  color: var(--bg);
+  font: 700 12px/1.7 var(--font-body);
+}
+/* 表情表:一行一种画法,一列一种表情 */
+.faces {
+  display: grid;
+  grid-template-columns: 5.2em repeat(5, minmax(0, 1fr));
+  gap: 10px 8px;
+  align-items: center;
+  max-width: 860px;
+}
+.faces .row-name {
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+.faces .col-name {
+  font-size: 12.5px;
+  color: var(--muted);
+  text-align: center;
+  line-height: 1.4;
+}
+.faces .col-name b {
+  display: block;
+  color: var(--ink);
+  font-size: 13.5px;
+}
+.face {
+  aspect-ratio: 160 / 170;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #f3deb0;
+  border: 1px solid var(--line);
+}
+.face svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+/* 小尺寸:按真实大小显示,1 个 CSS 像素就是手机上的 1pt */
+.sizes {
+  display: grid;
+  gap: 14px;
+  max-width: 620px;
+}
+.size-row {
+  display: grid;
+  grid-template-columns: 5.2em repeat(4, auto) 1fr;
+  gap: 16px;
+  align-items: end;
+}
+.size-row .row-name {
+  font-size: 13px;
+  font-weight: 700;
+  align-self: center;
+}
+.tiny {
+  border-radius: 50%;
+  overflow: hidden;
+  background: #f3deb0;
+  border: 1px solid var(--line);
+}
+.tiny svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.size-head {
+  font-size: 12px;
+  color: var(--muted);
+  text-align: center;
+}
+table.cmp {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13.5px;
+  line-height: 1.6;
+}
+table.cmp th,
+table.cmp td {
+  padding: 8px 10px;
+  border-top: 1px solid var(--line);
+  text-align: left;
+  vertical-align: top;
+}
+table.cmp.wide {
+  min-width: 600px;
+}
+table.cmp thead th {
+  border-top: 0;
+  font-size: 13px;
+  white-space: nowrap;
+}
+table.cmp td:first-child,
+table.cmp th:first-child {
+  font-weight: 700;
+  white-space: nowrap;
+  padding-left: 0;
+}
+.src {
+  color: var(--muted);
+  font-size: 12.5px;
+}
+.people {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 6px 28px;
+  margin-top: 18px;
+  font-size: 13.5px;
+}
+.people h3 {
+  margin: 10px 0 2px;
+  font-size: 16px;
+}
+.people p {
+  margin: 0 0 4px;
+  color: var(--muted);
+}
+.people ul {
+  margin: 4px 0 0;
+  padding-left: 1.2em;
+}
+@media (max-width: 720px) {
+  .busts.four {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .busts {
+    gap: 14px 10px;
+  }
+  .faces {
+    grid-template-columns: 3.4em repeat(5, minmax(0, 1fr));
+    gap: 8px 4px;
+  }
+  .faces .row-name,
+  .faces .col-name {
+    font-size: 11.5px;
+  }
+  .faces .col-name b {
+    font-size: 12px;
+  }
+  .size-row {
+    gap: 10px;
+    grid-template-columns: 3.4em repeat(4, auto) 1fr;
+  }
+  table.cmp {
+    font-size: 12.5px;
+  }
+  table.cmp th,
+  table.cmp td {
+    padding: 7px 6px;
+  }
+  table.cmp td:first-child,
+  table.cmp th:first-child {
+    white-space: normal;
+    min-width: 4.2em;
+  }
+}
