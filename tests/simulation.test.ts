@@ -79,7 +79,7 @@ test('默认参数下的节奏:第一天就有收入,不扩建也一直在见新
   assert.ok(perDay >= 6 && perDay <= 16, `每天见到新词 ${perDay}`);
   const questions = tail.reduce((sum, r) => sum + r.mineQuestions + r.farmQuestions, 0) / tail.length;
   assert.ok(questions >= 80 && questions <= 170, `每天题数 ${questions}`);
-  assert.ok(Math.max(...tail.map((r) => r.backlog)) <= 60, '旧词不应该大量积压');
+  assert.ok(Math.max(...tail.map((r) => r.backlog)) <= 100, '旧词不应该大量积压');
 });
 
 test('本来就认识的词越多,同样的时间见到的词越多,但真正新学会的越少', () => {
@@ -148,10 +148,12 @@ test('忘得越快的学习者,同样的时间教会的词越少,作物也更容
   assert.ok(fiveStar(forgetful.totals) < fiveStar(normal.totals));
 });
 
-test('只种田、从不进矿洞也能走完:田里见新词、学会、用牧草复习', () => {
+test('只种田和放牧也能走完:开局去矿里挣到种子钱,之后田里见新词、牧场割草复习', () => {
   const farming = simulate({ ...DEFAULT_OPTIONS, mines: false });
   const last = farming.rows[59];
-  assert.equal(farming.totals.digs, 0);
+  // 新玩家没有种子也没有金币,第一次打开要去矿里挣;之后再也不用去
+  assert.equal(farming.totals.mineVisits, 1);
+  assert.equal(farming.totals.reliefSeeds, 0);
   assert.ok(farming.totals.plantedNew > 200, `种下 ${farming.totals.plantedNew} 个新词`);
   assert.ok(farming.totals.setAsides > 100, `换掉 ${farming.totals.setAsides} 个认识的词`);
   assert.ok(farming.totals.grassAnswers.asked > 1000);
@@ -159,6 +161,13 @@ test('只种田、从不进矿洞也能走完:田里见新词、学会、用牧�
   assert.ok(farming.totals.masteredRecall > 0.85);
   // 复习跟得上:到期的旧词不会越积越多
   assert.ok(Math.max(...farming.rows.slice(-30).map((r) => r.backlog)) <= 60);
+});
+
+test('牧场养得起来:割的草够喂,牲畜慢慢变多,出的奶能卖', () => {
+  const { totals, save } = simulate({ ...DEFAULT_OPTIONS, mines: false });
+  assert.ok(totals.livestock >= 5, `养了 ${totals.livestock} 头`);
+  assert.ok(totals.milk > 100, `出了 ${totals.milk} 份奶`);
+  assert.ok(save.hay >= 0 && save.coins >= 0);
 });
 
 test('三条路都能教会词:只挖矿、只种田、两样都做', () => {

@@ -3,6 +3,9 @@ import {
   HOUR_MS,
   Deck,
   GrassSession,
+  RATION,
+  buyLivestock,
+  livestockCost,
   MineSession,
   ReviewSession,
   SaveData,
@@ -17,9 +20,11 @@ import {
   plant,
   plantCandidate,
   plotCost,
-  sellAllForage,
   sellAllOre,
+  sellHay,
+  sellMilk,
   setAside,
+  settlePasture,
   sellAllProduce,
   thirstyCards,
   unlockPlot,
@@ -51,7 +56,7 @@ export interface SimOptions {
   cramGain: boolean; // 同一天内反复答对,记忆强度涨不涨。false 用来看"当场练习完全没用"时结论还成不成立
   drills: boolean; // 词袋装满之后,要不要接着练词袋里的词。false 表示这时就离开矿洞
   plants: boolean; // 要不要种田。false 表示从不种,词袋里的词全靠在矿里练
-  mines: boolean; // 要不要挖矿。false 表示从不进矿洞:新词在田里种,旧词用牧草复习
+  mines: boolean; // 要不要挖矿。false 表示只种田和放牧:新词在田里种,旧词去牧场割草复习。只有没钱买种子时才去矿里挣一点
   plantsNew: boolean; // 词袋空了、田里还有空地时,要不要种没见过的新词
   sessionHours: number[]; // 每天在哪些整点打开游戏。8 点和 20 点分属两个游戏日
   digsPerSession: number; // 每次打开最多在矿里答几道题(新词、复习、练习都算)。规则上没有上限,这是学习者自己的耐心
@@ -99,7 +104,12 @@ export interface SimTotals {
   missedReview: number; // 旧词答错、进了词袋的次数
   plantedNew: number; // 种下的没见过的新词
   setAsides: number; // 种田时换掉、放到一边隔天再考的新词
-  grassAnswers: Tally; // 用牧草复习
+  grassAnswers: Tally; // 割牧草复习
+  mineVisits: number; // 只种田的学习者因为没钱买种子而去矿里的次数
+  milk: number; // 牲畜一共出了几份奶
+  hayMowed: number; // 一共割了多少份草料
+  haySold: number; // 其中直接卖掉的
+  livestock: number; // 结束时养了几头牲畜
   drills: number; // 在矿里练词袋里的词,一共答了几题
   graduated: number; // 练到连续答对、离开词袋的次数
   checksPassed: number; // 离开词袋后隔天再考,答对的次数
@@ -131,6 +141,8 @@ export interface SimTotals {
 
 // 报表里"牢固"的门槛:掌握度到这一级,休息间隔是 30 天以上
 const SOLID_MASTERY = 4;
+/** 学习者按最近这么多天割到的草来决定养几头牲畜。 */
+const HERD_WINDOW_DAYS = 3;
 
 export const DEFAULT_OPTIONS: SimOptions = {
   days: 60,
@@ -187,6 +199,7 @@ export function simulate(options: SimOptions): { rows: DayRow[]; totals: SimTota
   const deck = syntheticDeck(20000);
   const base = Date.UTC(2026, 0, 1);
   const save = createSave(deck.id, base + options.sessionHours[0] * HOUR_MS, 0);
+  const recentHay: { day: number; hay: number }[] = [];
   const params = options.model === 'fsrs6' ? FSRS6 : FSRS5;
   const rows: DayRow[] = [];
   const totals: SimTotals = {
@@ -200,6 +213,11 @@ export function simulate(options: SimOptions): { rows: DayRow[]; totals: SimTota
     plantedNew: 0,
     setAsides: 0,
     grassAnswers: tally(),
+    mineVisits: 0,
+    milk: 0,
+    hayMowed: 0,
+    haySold: 0,
+    livestock: 0,
     drills: 0,
     graduated: 0,
     checksPassed: 0,
@@ -294,10 +312,10 @@ export function simulate(options: SimOptions): { rows: DayRow[]; totals: SimTota
   };
 
   /** 手里没有基础种子时去弄一颗:买,买不起又没东西可卖就领兜底的。弄不到返回 false。 */
-  const getSeed = (now: number): boolean => {
+  const getSeed = (): boolean => {
     if (save.seeds.choice > 0) return true;
     if (buySeeds(save)) totals.seedsBought++;
-    else if (claimReliefSeed(save, deck, now)) totals.reliefSeeds++;
+    else if (claimReliefSeed(save)) totals.reliefSeeds++;
     else return false;
     return true;
   };
@@ -329,7 +347,7 @@ export function simulate(options: SimOptions): { rows: DayRow[]; totals: SimTota
         candidate = plantCandidate(save, deck, now);
       }
       if (!candidate) break;
-      if (!getSeed(now)) break;
+      if (!getSeed()) break;
       const result = plant(save, deck, i, now, { cardId: candidate.card.id });
       if (!result.ok) break;
       if (result.source === 'new') totals.plantedNew++;
@@ -413,16 +431,36 @@ export function simulate(options: SimOptions): { rows: DayRow[]; totals: SimTota
         if (thirsty.length > 0) row.farmQuestions += waterRound(thirsty, now);
         row.earned += sellAllProduce(save);
         totals.sessions++;
-        if (!options.mines) {
-          // 只种田:旧词用牧草复习,新词在种下时见
+        // 只种田和放牧的学习者,只有在没钱买种子、田里也没东西在长的时候才去矿里挣一点
+        const broke =
+          save.seeds.choice === 0 && save.coins < 2 && save.hay === 0 && !save.plots.some((p) => p.crop);
+        if (!options.mines && !broke) {
+          totals.milk += settlePasture(save, now);
+          row.earned += sellMilk(save);
+          const hayBefore = save.hay;
           row.farmQuestions += grassRound(now, row);
-          row.earned += sellAllForage(save);
+          totals.hayMowed += save.hay - hayBefore;
+          recentHay.push({ day, hay: save.hay - hayBefore });
+          while (recentHay[0].day <= day - HERD_WINDOW_DAYS) recentHay.shift();
+          // 按最近几天平均每个游戏日割到的草来定养几头:够多养一头吃的,钱也够,才再买。
+          // 只看当次割了多少会买多:积了几天的草一次割完,看上去养得起二十头,其实平均只够六头吃
+          const hayPerGameDay = recentHay.reduce((sum, r) => sum + r.hay, 0) / (HERD_WINDOW_DAYS * 2);
+          while (
+            hayPerGameDay >= (save.livestock + 1) * RATION &&
+            save.coins >= livestockCost(save.livestock) + 50 &&
+            buyLivestock(save, now)
+          );
+          // 留两天的口粮,多的草料卖掉;还没有牲畜时草料全卖
+          const haySold = sellHay(save, now, Math.max(0, save.hay - save.livestock * RATION * 2));
+          totals.haySold += haySold;
+          row.earned += haySold;
           row.planted += plantAll(now, row);
           totals.dueLeft += dueVeins(save, now).length;
           totals.bagPeak = Math.max(totals.bagPeak, activeProgress(save).wordBag.length);
           expand();
           continue;
         }
+        if (!options.mines) totals.mineVisits++;
         row.planted += plantAll(now, row);
 
         const mine = new MineSession(save, deck, rng);
@@ -509,6 +547,7 @@ export function simulate(options: SimOptions): { rows: DayRow[]; totals: SimTota
   });
   totals.masteredRecall = mastered ? totals.masteredRecall / mastered : 0;
   totals.solidRecall = solid ? totals.solidRecall / solid : 0;
+  totals.livestock = save.livestock;
   totals.rememberedNow = rememberedAt(end);
   totals.rememberedIn30 = rememberedAt(end + 30);
   totals.gainedNow = rememberedAt(end, true);

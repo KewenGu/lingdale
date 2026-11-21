@@ -1,7 +1,7 @@
 import { INITIAL_PLOTS } from './constants';
 import { cropKind, cropType } from './crops';
 
-// 金币来自卖东西:矿石、作物、牧草。答题本身不给金币。用途是买种子和解锁地块。
+// 金币来自卖东西:矿石、作物、草料、奶。答题本身不给金币。用途是买种子、解锁地块、买牲畜。
 
 export const PLOT_COST_BASE = 40;
 export const PLOT_COST_STEP = 2;
@@ -22,9 +22,26 @@ export function orePrice(grade: number): number {
   return ORE_PRICES[Math.max(0, Math.min(ORE_PRICES.length - 1, grade))];
 }
 
-/** 牧草的售价和同品级的矿石一样:在田里复习和在矿里复习,回报相同。 */
-export function foragePrice(grade: number): number {
+/**
+ * 一捆牧草顶多少份草料。和同品级矿石的售价一样:在牧场复习和在矿里复习,到手的价值相同;
+ * 记得越久的词,割下的草越顶饿。草料可以直接卖,一份一个金币。
+ */
+export function hayValue(grade: number): number {
   return orePrice(grade);
+}
+
+/** 一头牲畜一个游戏日吃这么多份草料,吃够了下一个游戏日出一份奶。 */
+export const RATION = 30;
+
+/** 一份奶的售价。比它吃掉的草料值钱一半,这是养牲畜的好处。 */
+export const MILK_PRICE = 45;
+
+export const LIVESTOCK_COST_BASE = 200;
+export const LIVESTOCK_COST_STEP = 100;
+
+/** 已经有 owned 头牲畜时,再买一头的价格。 */
+export function livestockCost(owned: number): number {
+  return LIVESTOCK_COST_BASE + LIVESTOCK_COST_STEP * owned;
 }
 
 /** 已解锁 unlockedCount 块地时,解锁下一块的价格。 */

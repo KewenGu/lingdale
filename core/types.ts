@@ -42,7 +42,7 @@ export interface ReviewLog {
   cardId: string;
   at: number;
   grade: Grade;
-  // 在矿里挖的,在田里浇水,在矿里练词袋里的词(练习不改变掌握度),还是在田里种牧草复习
+  // 在矿里挖的,在田里浇水,在矿里练词袋里的词(练习不改变掌握度),还是在牧场割牧草复习
   place: 'mine' | 'farm' | 'drill' | 'grass';
   fresh: boolean; // 是不是第一次见到这个词(只可能出现在矿里)
   mastery: number; // 作答时的掌握度
@@ -85,7 +85,10 @@ export interface SaveData {
   seeds: Record<QuestionType, number>; // 商店买的种子,按品种分。种子决定长成哪类作物,带上词袋里的一个词
   produce: Record<string, number[]>; // 收获后还没卖的作物:作物 id → 各星级的数量(下标是星数)
   ore: number[]; // 矿石库存,下标是品级,值是数量
-  forage: number[]; // 牧草的库存,下标是品级(复习答对后的掌握度)
+  hay: number; // 草垛里的草料,割牧草得来。一份值一个金币
+  livestock: number; // 养了几头牲畜
+  milk: number; // 还没卖的奶
+  pastureDay: number; // 牲畜吃草吃到了哪个游戏日。见 pasture.ts 的 settlePasture
   updatedAt: number;
 }
 

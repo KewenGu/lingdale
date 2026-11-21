@@ -8,15 +8,12 @@ export function createSave(deckId: string, now: number, tzOffsetMs: number): Sav
     plots.push({ unlocked: i < INITIAL_PLOTS, crop: null });
   }
   const ore: number[] = [];
-  const forage: number[] = [];
-  for (let grade = 0; grade <= MAX_MASTERY; grade++) {
-    ore.push(0);
-    forage.push(0);
-  }
+  for (let grade = 0; grade <= MAX_MASTERY; grade++) ore.push(0);
+  const today = gameDay(now, tzOffsetMs);
   return {
     schemaVersion: SCHEMA_VERSION,
     tzOffsetMs,
-    startDay: gameDay(now, tzOffsetMs),
+    startDay: today,
     activeDeckId: deckId,
     progress: {},
     plots,
@@ -25,7 +22,10 @@ export function createSave(deckId: string, now: number, tzOffsetMs: number): Sav
     seeds: { choice: 0, reverse: 0, spell: 0 },
     produce: {},
     ore,
-    forage,
+    hay: 0,
+    livestock: 0,
+    milk: 0,
+    pastureDay: today,
     updatedAt: now,
   };
 }

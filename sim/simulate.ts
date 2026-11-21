@@ -105,6 +105,15 @@ console.log(`  矿里复习      ${pctList(totals.reviewByMastery, 1) || '-'}`);
 console.log(
   `  练习          ${pct(totals.drillAnswers)};练到离开词袋 ${totals.graduated} 次,隔天再考答对 ${totals.checksPassed} 次、答错回词袋 ${totals.checksFailed} 次`,
 );
+console.log(
+  `  割牧草        ${pct(totals.grassAnswers)}(${totals.grassAnswers.asked} 题);种下没见过的新词 ${totals.plantedNew} 个,换掉 ${totals.setAsides} 个`,
+);
+if (totals.grassAnswers.asked > 0) {
+  console.log(
+    `牧场:割到草料 ${totals.hayMowed} 份,直接卖掉 ${totals.haySold} 份;结束时养了 ${totals.livestock} 头牲畜,一共出奶 ${totals.milk} 份;` +
+      `因为没钱买种子去了矿里 ${totals.mineVisits} 次`,
+  );
+}
 console.log('');
 console.log('按记忆模型核对(期望值):');
 console.log(

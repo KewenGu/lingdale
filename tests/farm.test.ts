@@ -164,7 +164,7 @@ test('有到期的旧词没复习时,种下不给新词:复习优先于新词', 
   assert.deepEqual(plantCandidate(save, deck, next)!.source, 'bag');
   assert.ok(plant(save, deck, 0, next).ok);
 
-  // 把到期的旧词复习掉(矿里挖或种牧草都行),新词就来了
+  // 把到期的旧词复习掉(矿里挖或去牧场割草都行),新词就来了
   digNext(save, deck, true, next);
   const candidate = plantCandidate(save, deck, next)!;
   assert.deepEqual([candidate.card.id, candidate.source], ['w2', 'new']);
@@ -220,37 +220,43 @@ test('种子店:三种种子按等级解锁,越难越贵;钱不够一颗都不�
   assert.deepEqual([save.coins, save.seeds.spell, seedOffers(save, T0)[2].owned], [74, 2, 2]);
 });
 
-test('兜底:有地可种,却没种子、买不起、也没东西可卖时,商店送一颗基础种子', () => {
+test('兜底:词袋里有词要种,却没种子、买不起、也没东西可卖时,商店送一颗基础种子', () => {
   const { deck, save } = setup();
+  assert.equal(claimReliefSeed(save), false); // 词袋是空的,不需要
   digNext(save, deck, true, T0);
   digNext(save, deck, false, T0);
-  assert.equal(claimReliefSeed(save, deck, T0), false); // 手里有矿石可以卖
+  assert.equal(claimReliefSeed(save), false); // 手里有矿石可以卖
   sellAllOre(save);
-  assert.equal(claimReliefSeed(save, deck, T0), false); // 买得起
+  assert.equal(claimReliefSeed(save), false); // 买得起
   save.coins = 1;
-  assert.equal(claimReliefSeed(save, deck, T0), true);
+  save.hay = 5;
+  assert.equal(claimReliefSeed(save), false); // 草料也能卖
+  save.hay = 0;
+  assert.equal(claimReliefSeed(save), true);
   assert.equal(save.seeds.choice, 1);
-  assert.equal(claimReliefSeed(save, deck, T0), false); // 已经有种子了
+  assert.equal(claimReliefSeed(save), false); // 已经有种子了
   assert.ok(plant(save, deck, 0, T0).ok);
+  assert.equal(claimReliefSeed(save), false); // 词都种下了
 });
 
-test('一上来就种田、不去挖矿也行:没钱没货时商店送种子,种的是新词', () => {
+test('兜底不是开局的本钱:新玩家没种子没金币,田里的新词要先去矿里挣到钱才种得了', () => {
   const { deck, save } = setup();
-  assert.equal(claimReliefSeed(save, deck, T0), true);
-  const planted = plant(save, deck, 0, T0);
-  assert.ok(planted.ok);
-  assert.deepEqual([planted.card.id, planted.source], ['w0', 'new']);
-  // 种完又是没钱没货:还能再领
-  assert.equal(claimReliefSeed(save, deck, T0), true);
-});
-
-test('没有词可种时不送种子', () => {
-  const { deck, save } = setup(1);
+  assert.equal(plantCandidate(save, deck, T0)!.source, 'new');
+  assert.equal(claimReliefSeed(save), false);
+  assert.deepEqual(plant(save, deck, 0, T0), { ok: false, reason: 'no_seeds' });
+  // 挖一块矿石卖掉,就够买一颗基础种子
   digNext(save, deck, true, T0);
   sellAllOre(save);
-  save.coins = 0;
+  assert.equal(buySeeds(save), true);
+  const planted = plant(save, deck, 0, T0);
+  assert.ok(planted.ok);
+  assert.equal(planted.source, 'new');
+});
+
+test('没有词可种时种不了', () => {
+  const { deck, save } = setup(1);
+  digNext(save, deck, true, T0);
   assert.equal(plantCandidate(save, deck, T0), null);
-  assert.equal(claimReliefSeed(save, deck, T0), false);
   giveSeeds(save, 1);
   assert.deepEqual(plant(save, deck, 0, T0), { ok: false, reason: 'no_words' });
 });

@@ -10,7 +10,7 @@ export * from './save';
 export * from './words';
 export * from './farm';
 export * from './mine';
-export * from './grass';
+export * from './pasture';
 export * from './quiz';
 export * from './session';
 export * from './stats';

@@ -27,7 +27,7 @@ import { Card, CardState, Crop, Deck, Grade, QuestionType, SaveData } from './ty
 
 // 这个文件里的函数会直接修改传入的 save。
 //
-// 田是一个完整的学习的地方:见新词、把不会的学会、长期复习,在这里都能做。
+// 田是学新词的地方:见新词、把不会的学会。长期复习在牧场(也可以在矿里)。
 //   种子来自商店:按品种买,品种决定这株作物浇水时的题型。
 //   种下时一颗种子带上一个词:先取词袋里的(在矿里或复习时答错的),词袋空了就取卡组里还没见过的新词。
 //   有到期的旧词还没复习时不给新词:复习优先于新词,在矿里是矿脉的顺序,在田里是这一条。
@@ -35,7 +35,7 @@ import { Card, CardState, Crop, Deck, Grade, QuestionType, SaveData } from './ty
 //   浇水 = 答这个词。每个游戏日(现实 12 小时)可以浇一次,浇对 5 次收获。
 //   答错不生长并扣一星,连错两次枯萎、三次死亡(种子白费)。
 //   收获的作物按种类和星级卖钱;这个词按星级调整掌握度后去休息。
-//   休息结束的旧词,可以在矿里复习,也可以在田里种牧草复习(见 grass.ts)。
+//   休息结束的旧词,可以在矿里复习,也可以去牧场割牧草复习(见 pasture.ts)。
 // 作物的生长阶段、品质、健康状态、是否需要浇水都是实时算出来的,不存进存档。
 
 export type PlantFailure =
@@ -129,7 +129,7 @@ export function buySeeds(save: SaveData, questionType: QuestionType = 'choice', 
 
 function hasAnythingToSell(save: SaveData): boolean {
   for (const count of save.ore) if (count > 0) return true;
-  for (const count of save.forage) if (count > 0) return true;
+  if (save.hay > 0 || save.milk > 0) return true;
   for (const cropId of Object.keys(save.produce)) {
     for (const count of save.produce[cropId]) if (count > 0) return true;
   }
@@ -137,12 +137,12 @@ function hasAnythingToSell(save: SaveData): boolean {
 }
 
 /**
- * 防止卡死的兜底:有词可种、有空地,但一颗种子都没有、买不起基础种子、也没有任何东西可卖时,
+ * 防止卡死的兜底:词袋里有词要种、有空地,但一颗种子都没有、买不起基础种子、也没有任何东西可卖时,
  * 商店送一颗基础种子。条件不满足时返回 false。
- * 新玩家一上来就想种田、不想先去挖矿,靠的也是它。
+ * 它不是开局的启动资金:新玩家没有种子也没有金币,要先去矿里挣。
  */
-export function claimReliefSeed(save: SaveData, deck: Deck, now: number): boolean {
-  if (emptyPlots(save) === 0 || !plantCandidate(save, deck, now)) return false;
+export function claimReliefSeed(save: SaveData): boolean {
+  if (activeProgress(save).wordBag.length === 0 || emptyPlots(save) === 0) return false;
   for (const kind of CROP_KINDS) if ((save.seeds[kind.questionType] || 0) > 0) return false;
   if (save.coins >= cropKind('choice').seedPrice || hasAnythingToSell(save)) return false;
   save.seeds.choice = 1;

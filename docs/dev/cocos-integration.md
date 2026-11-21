@@ -124,7 +124,7 @@ import { buySeeds, claimReliefSeed, plant, plantCandidate, seedOffers, setAside 
 
 seedOffers(save, now);          // 三种种子:这个季节长成什么作物、价格、解锁了没有、手里有几颗
 buySeeds(save, 'reverse', 2);   // 金币不够或没解锁时返回 false
-claimReliefSeed(save, deck, now); // 进商店、点空地时调用。玩家没钱没货时送一颗基础种子并返回 true,其余情况什么都不做
+claimReliefSeed(save);          // 进商店时调用。词袋里有词却卡死时送一颗基础种子并返回 true,其余情况什么都不做
 
 // 玩家点一块空地、选好种子之后,先和他确认这颗种子带哪个词
 let skip = 0;
@@ -132,7 +132,7 @@ let candidate = plantCandidate(save, deck, now, skip);
 // candidate.card      要展示的词
 // candidate.source    'bag' 答错过的词,'new' 没见过的新词
 // candidate.mastery   答错过的词现在的掌握度
-// null                没有词可种:卡组见完了,或者有到期的旧词没复习(这时不给新词,引导他去种牧草或挖矿)
+// null                没有词可种:卡组见完了,或者有到期的旧词没复习(这时不给新词,引导他去牧场割草或去挖矿)
 
 // 玩家点"换一个"
 if (candidate.source === 'new') {
@@ -155,36 +155,48 @@ if (result.ok) {
 }
 ```
 
-- 有到期的旧词没复习时,田里不给新词(`reviews_due`)。这时空地上该出现的是"先去割几株牧草"的引导,而不是一个点不动的种子。
+- 有到期的旧词没复习时,田里不给新词(`reviews_due`)。这时空地上该出现的是"先去牧场割几株草"的引导,而不是一个点不动的种子。
 - 确认的时候**不要先把释义摆出来**再问"认不认识":那样谁都会说认识。先只给单词,玩家选了"种下"再翻开卡片。
 - "换一个"对新词是有后果的(隔天要考),按钮上的说法要让玩家明白,比如"我认识,明天考我"。
 - 词袋是规则内部的东西,不需要单独的画面:玩家看到的是"种下时会先轮到答错过的词"。
 
-### 牧草
+### 牧场
 
 ```ts
-import { GrassSession, sellAllForage, sellForage } from './core/index';
+import { GrassSession, buyLivestock, grassStatus, livestockCost, sellHay, sellMilk, settlePasture } from './core/index';
 
+// 进牧场、进商店时先结算:牲畜把这几个游戏日该吃的草吃了,该出的奶出了
+const newMilk = settlePasture(save, now);   // 这次出了几份奶,可以播一个"奶好了"的画面
+
+grassStatus(save, deck, now).due;   // 草地上有几株草,也就是有几个旧词该复习了。画草地用它
+save.hay;                           // 草垛里的草料
+save.livestock;                     // 养了几头牲畜
+save.milk;                          // 还没卖的奶
+livestockCost(save.livestock);      // 再买一头要多少金币
+buyLivestock(save, now);            // 钱不够返回 false
+
+// 割草
 const session = new GrassSession(save, deck, Math.random);
-session.closed(now);              // 'nothing_due' 没有到期的旧词;null 可以种
-
 let turn = session.current(now);
 while (turn) {
-  // turn.cardId / turn.mastery   这株牧草带的旧词和它的掌握度(答对收获的牧草高一级)
-  // turn.due                     到期的旧词一共还有几个
+  // turn.cardId / turn.mastery   这株草是哪个旧词,它现在的掌握度
+  // turn.due                     草地上还有几株
   const result = session.submit(await askPlayer(turn.question), now, elapsedMs);
-  // result.forageGrade   答对:收获的牧草品级
-  // result.bagged        答错:这个词进了词袋,要重新种
+  // result.grade / result.hay   答对:这捆牧草的品级,进草垛的草料份数
+  // result.bagged               答错:这个词进了词袋,要重新种
   turn = session.current(now);
 }
 
-save.forage;                // 各品级牧草的数量,下标是品级
-sellForage(save, 3, 2);     // 卖 2 捆 3 级牧草
-sellAllForage(save);        // 全卖
+sellHay(save, now, 100);    // 卖 100 份草料,一份一个金币;不传数量就全卖
+sellMilk(save);             // 全卖
 ```
 
-牧草是当场种、当场答、当场收的,不占种作物的地块,田种满了也能种:画面上它应该有自己的一块地方(牧场),
-不和作物的地块混在一起。牧草和矿里的旧矿脉用的是同一批到期的词,在一边复习过,另一边就不会再出现。
+- 牧场是单独的一页,和农场并列:一块草地,一栋房子。
+- **草地上画几株草,由到期的旧词有几个决定**,不是玩家种的。没有到期的词时草地是矮的。
+- 割草是当场答、当场收的。它和矿里的旧矿脉是同一批词,在一边复习过,另一边就没有了。
+- **牲畜吃草不需要玩家操作**,也不要做成要玩家一头头去喂。没喂够的牲畜只是没出奶,画面上不要让它显得可怜:
+  它在吃地上的草、在打盹,而不是饿着。
+- 卖草料之前牲畜会先吃当天的口粮(`sellHay` 自己会结算),所以玩家不会误把口粮卖掉。
 
 ### 浇水
 
@@ -229,7 +241,7 @@ sellAllProduce(save);                  // 全卖
 
 ### 什么时候存档
 
-每次会改变存档的操作之后都存:一次挖矿结束、播种、放到一边、一轮浇水结束、一轮牧草结束、买卖、解锁地块。存档是一份不大的 JSON,整份写入即可。
+每次会改变存档的操作之后都存:一次挖矿结束、播种、放到一边、一轮浇水结束、一轮割草结束、结算牧场、买卖、解锁地块。存档是一份不大的 JSON,整份写入即可。
 
 ## 时间
 

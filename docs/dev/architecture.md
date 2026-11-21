@@ -35,28 +35,28 @@
 | `constants.ts` | 时间、掌握度、矿石、作物相关的规则常量 | 无 |
 | `time.ts` | 游戏日、下次浇水时间、日历 | constants |
 | `crops.ts` | 种子种类表和作物表 | types |
-| `economy.ts` | 地块价格、作物、矿石和牧草的售价 | constants、crops |
+| `economy.ts` | 地块和牲畜的价格,作物、矿石、草料、奶的售价 | constants、crops |
 | `level.ts` | 经验来源、升级曲线、等级解锁、`addXp` | types |
 | `scheduler.ts` | 一个词的状态怎么随挖矿、浇水、收获、死亡变化。全是纯函数 | constants、time |
 | `deck.ts` | 按 id 查卡片 | types |
 | `save.ts` | 创建存档、序列化、读取词的状态、取下一个没见过的词 | constants、economy、time |
-| `words.ts` | 哪些旧词到期了、哪些还在休息。矿洞、牧草和"复习优先于新词"都用它 | save |
+| `words.ts` | 哪些旧词到期了、哪些还在休息。矿洞、牧场和"复习优先于新词"都用它 | save |
 | `farm.ts` | 田和商店:买种子、兜底种子、候选词、播种、放到一边、浇水、卖作物、解锁地块,以及作物的所有查询 | 以上全部 |
 | `mine.ts` | 矿洞:下一条矿脉、答错的额度、挖矿、练习、卖矿石 | farm、scheduler、economy、level、save |
-| `grass.ts` | 牧草:在田里复习到期的旧词、卖牧草 | farm、mine、scheduler、economy、level、save |
+| `pasture.ts` | 牧场:草地上有几株草、割牧草、牲畜吃草出奶、买牲畜、卖草料和奶 | scheduler、economy、level、save、words、time |
 | `quiz.ts` | 按题型出题、判对错 | constants、deck |
-| `session.ts` | 一次浇水会话(出题顺序、首次作答、重复练习)、一次挖矿会话、一次牧草会话 | farm、mine、grass、quiz |
+| `session.ts` | 一次浇水会话(出题顺序、首次作答、重复练习)、一次挖矿会话、一次割草会话 | farm、mine、pasture、quiz |
 | `stats.ts` | 从作答日志算统计 | constants、save、time |
 | `index.ts` | 统一导出 | |
 
 依赖方向是单向的,从上到下。`scheduler.ts` 不知道地块和金币的存在,`farm.ts` 和 `mine.ts` 不知道题目长什么样。
 
-矿洞和田是两个完整的学习的地方,规则上互不调用对方的玩法,只共用三样东西:
+矿洞、农场、牧场规则上互不调用对方的玩法,只共用三样东西:
 
 - **卡组里还没见过的词**(`nextUnseen`)。矿里挖新矿脉和田里种新词取的是同一个顺序。
 - **词袋**。在哪里答错的词都进词袋;种下或在矿里练出去都算离开。
-- **每个词的掌握度和到期时间**(`CardState`)。到期的旧词由 `words.ts` 的 `dueVeins` 给出,矿里的旧矿脉和田里的牧草用的是同一份;
-  两边也都用它来守"有旧词没复习就不给新词"。
+- **每个词的掌握度和到期时间**(`CardState`)。到期的旧词由 `words.ts` 的 `dueVeins` 给出,矿里的旧矿脉和牧场草地上的草用的是同一份;
+  矿洞和农场也都用它来守"有旧词没复习就不给新词"。
 
 以后新增一种玩法,也应该只通过这三样东西和别的玩法相连。检验的办法是它的测试里不需要先去别的地方做任何事。
 
@@ -84,7 +84,7 @@ CardState {
   lastReviewAt
 }
 ReviewLog { cardId, at, grade, place, fresh, mastery, stage, questionType, elapsedMs }
-  place         'mine' 挖矿、'farm' 浇水、'drill' 在矿里练习、'grass' 用牧草复习
+  place         'mine' 挖矿、'farm' 浇水、'drill' 在矿里练习、'grass' 在牧场割草
   fresh         是不是第一次见到这个词
 ```
 
@@ -100,7 +100,8 @@ SaveData {
   seeds: { choice, reverse, spell }    各品种种子的数量
   produce: { [cropId]: number[] }      各星级的库存数量
   ore: number[]                        各品级矿石的数量
-  forage: number[]                     各品级牧草的数量
+  hay, livestock, milk                 草垛里的草料、牲畜的头数、还没卖的奶
+  pastureDay                           牲畜吃草吃到了哪个游戏日
   updatedAt
 }
 Crop { id, deckId, cardId, plantedAt, cropType }
@@ -141,8 +142,12 @@ Crop { id, deckId, cardId, plantedAt, cropType }
 | 矿石的品级 | 答对后这个词的掌握度 |
 | 玩家等级 | `xp` |
 | 现在是哪个季节 | `startDay` 和当前时间 |
+| 草地上有几株草 | 到期的旧词有几个 |
 
 同一个事实只存一份,就不会出现两份数据对不上的缺陷。
+
+牲畜吃草是一个例外:它会把草料变成奶,不能每次现算,所以存了"吃到了哪个游戏日"(`pastureDay`),
+由 `settlePasture` 把落下的日子一次补上。它可以重复调用,结果只取决于存档和传入的时间。
 
 ### 4. 用单词当键时检查自有属性
 

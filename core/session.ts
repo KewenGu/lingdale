@@ -1,6 +1,6 @@
 import { answer, AnswerResult, cropOfCard, cropQuestionType } from './farm';
 import { isCorrect, makeQuestion, Rng } from './quiz';
-import { GrassClosed, GrassResult, grassStatus, growGrass } from './grass';
+import { GrassClosed, GrassResult, grassStatus, mowGrass } from './pasture';
 import { DigResult, MineClosed, Vein, dig, mineStatus } from './mine';
 import { Deck, Grade, Question, QuestionType, SaveData } from './types';
 
@@ -134,13 +134,13 @@ export class MineSession {
 export interface GrassTurn {
   question: Question;
   cardId: string;
-  mastery: number; // 这个旧词现在的掌握度;答对收获的牧草比它高一级
-  due: number; // 到期的旧词一共还有几个
+  mastery: number; // 这个旧词现在的掌握度;答对割下的牧草比它高一级
+  due: number; // 到期的旧词一共还有几个,也就是草地上还有几株草
 }
 
 /**
- * 在牧场上种牧草复习旧词。每次取最早到期的那个词出一道题,答完再取下一个,
- * 直到没有到期的旧词,或者玩家离开。
+ * 在牧场割牧草复习旧词。每次取最早到期的那个词出一道题,答完再取下一个,
+ * 直到草地上没有草了(没有到期的旧词),或者玩家离开。
  */
 export class GrassSession {
   private turn: GrassTurn | null = null;
@@ -152,13 +152,13 @@ export class GrassSession {
     private questionType: QuestionType = 'choice',
   ) {}
 
-  /** 现在不能种牧草的原因;能种时返回 null。 */
+  /** 现在不能割牧草的原因;有草可割时返回 null。 */
   closed(now: number): GrassClosed | null {
     const status = grassStatus(this.save, this.deck, now);
     return status.open ? null : status.reason;
   }
 
-  /** 当前这道题;不能种牧草时返回 null。重复调用返回同一道题。 */
+  /** 当前这道题;没有草可割时返回 null。重复调用返回同一道题。 */
   current(now: number): GrassTurn | null {
     if (this.turn) return this.turn;
     const status = grassStatus(this.save, this.deck, now);
@@ -171,15 +171,15 @@ export class GrassSession {
   /** 提交玩家的回答:选择题传选项下标,拼写题传输入的文字。 */
   submit(response: number | string, now: number, elapsedMs: number = 0): GrassResult {
     const turn = this.current(now);
-    if (!turn) throw new Error('现在不能种牧草');
+    if (!turn) throw new Error('草地上现在没有草可割');
     return this.submitCorrect(isCorrect(turn.question, response), now, elapsedMs);
   }
 
   /** 直接按对错提交。 */
   submitCorrect(correct: boolean, now: number, elapsedMs: number = 0): GrassResult {
     const turn = this.current(now);
-    if (!turn) throw new Error('现在不能种牧草');
+    if (!turn) throw new Error('草地上现在没有草可割');
     this.turn = null;
-    return growGrass(this.save, this.deck, turn.cardId, correct, now, turn.question.type, elapsedMs);
+    return mowGrass(this.save, this.deck, turn.cardId, correct, now, turn.question.type, elapsedMs);
   }
 }
