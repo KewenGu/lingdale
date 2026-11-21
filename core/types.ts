@@ -31,6 +31,7 @@ export interface CardState {
   dueAt: number; // 在田里:下次可以浇水的时间;在休息:休息结束、重新出现在矿里的时间
   wrongStreak: number; // 这一轮里连续答错的次数,答对或 hard 后清零
   cycleWrongs: number; // 这一轮里答错的总次数,决定收获品质
+  drillStreak: number; // 在词袋里:在矿里练习时连续答对了几次;不在词袋里时为 0
   reps: number; // 累计作答次数
   lapses: number; // 累计答错次数
   lastReviewAt: number;
@@ -41,7 +42,8 @@ export interface ReviewLog {
   cardId: string;
   at: number;
   grade: Grade;
-  place: 'mine' | 'farm'; // 在矿里挖的,还是在田里浇水
+  // 在矿里挖的,在田里浇水,在矿里练词袋里的词(练习不改变掌握度),在牧场割牧草复习,还是做鸡饲料时复习
+  place: 'mine' | 'farm' | 'drill' | 'grass' | 'feed';
   fresh: boolean; // 是不是第一次见到这个词(只可能出现在矿里)
   mastery: number; // 作答时的掌握度
   stage: number; // 作答前这一轮已浇对的次数;矿里的是 0
@@ -71,6 +73,24 @@ export interface DeckProgress {
   logs: ReviewLog[];
 }
 
+/** 牲畜的种类。牛和羊住小屋、吃牧草;鸡住鸡舍、吃饲料。各自的数值见 economy.ts 的 ANIMAL_TYPES。 */
+export type AnimalKind = 'cow' | 'sheep' | 'chicken';
+
+/** 牲畜的产出:牛奶、羊毛、鸡蛋。 */
+export type AnimalGood = 'milk' | 'wool' | 'eggs';
+
+/**
+ * 一头牲畜。
+ * 长没长大、饿不饿都由这几个数算出来,不另外存(见 pasture.ts 的 isGrown、animalCondition)。
+ */
+export interface Animal {
+  kind: AnimalKind;
+  fedDays: number; // 吃饱过多少个游戏日,一直往上记。吃饱的日子才长,够数就长大;长大后的产出节奏也从它算
+  hungryDays: number; // 已经连续多少个游戏日没吃上草
+  sickDays: number | null; // 病了多少个游戏日;没病是 null
+  pregnantDays: number | null; // 怀孕之后吃饱了多少个游戏日;没怀是 null
+}
+
 export interface SaveData {
   schemaVersion: number;
   tzOffsetMs: number; // 本地时区相对 UTC 的偏移,平台层在每次启动时更新
@@ -83,6 +103,12 @@ export interface SaveData {
   seeds: Record<QuestionType, number>; // 商店买的种子,按品种分。种子决定长成哪类作物,带上词袋里的一个词
   produce: Record<string, number[]>; // 收获后还没卖的作物:作物 id → 各星级的数量(下标是星数)
   ore: number[]; // 矿石库存,下标是品级,值是数量
+  hay: number; // 草垛里有几捆牧草,割牧草得来
+  feed: number; // 鸡饲料有几份,用作物做出来的
+  herd: Animal[]; // 所有牲畜(牛、羊、鸡),按来的先后排
+  goods: Record<AnimalGood, number>; // 还没卖的牛奶、羊毛、鸡蛋
+  medicine: number; // 手里的动物药
+  pastureDay: number; // 牲畜吃草吃到了哪个游戏日。见 pasture.ts 的 settlePasture
   updatedAt: number;
 }
 

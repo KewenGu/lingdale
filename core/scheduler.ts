@@ -44,6 +44,7 @@ export function blankState(now: number): CardState {
     dueAt: now,
     wrongStreak: 0,
     cycleWrongs: 0,
+    drillStreak: 0,
     reps: 0,
     lapses: 0,
     lastReviewAt: now,
@@ -59,6 +60,7 @@ export function rest(state: CardState, mastery: number, now: number, tzOffsetMs:
     dueAt: gameDayStart(gameDay(now, tzOffsetMs) + restGameDays, tzOffsetMs),
     wrongStreak: 0,
     cycleWrongs: 0,
+    drillStreak: 0,
     reps: state.reps,
     lapses: state.lapses,
     lastReviewAt: state.lastReviewAt,
@@ -73,6 +75,7 @@ export function mined(state: CardState, correct: boolean, now: number, tzOffsetM
     dueAt: now,
     wrongStreak: 0,
     cycleWrongs: 0,
+    drillStreak: 0,
     reps: state.reps + 1,
     lapses: state.lapses + (correct ? 0 : 1),
     lastReviewAt: now,
@@ -80,6 +83,42 @@ export function mined(state: CardState, correct: boolean, now: number, tzOffsetM
   if (correct) return rest(answered, masteryAfterHit(state.mastery), now, tzOffsetMs);
   answered.mastery = masteryAfterLapse(state.mastery);
   return answered;
+}
+
+/**
+ * 词袋里的词在矿里练了一次。只记连续答对的次数,不改掌握度,也不计入累计作答:
+ * 几分钟内的连对靠的是短期记忆,不能当成记住了。
+ */
+export function drilled(state: CardState, correct: boolean, now: number): CardState {
+  return {
+    mastery: state.mastery,
+    stage: 0,
+    dueAt: state.dueAt,
+    wrongStreak: 0,
+    cycleWrongs: 0,
+    drillStreak: correct ? state.drillStreak + 1 : 0,
+    reps: state.reps,
+    lapses: state.lapses,
+    lastReviewAt: now,
+  };
+}
+
+/**
+ * 下一个游戏日(至少隔 6 小时)当成旧词再考一次,那一次才算数。掌握度不变。
+ * 用在两处:词袋里的词在矿里练够了;种田时玩家把一个没见过的新词放到一边。
+ */
+export function graduate(state: CardState, now: number, tzOffsetMs: number): CardState {
+  return {
+    mastery: state.mastery,
+    stage: 0,
+    dueAt: nextWaterTime(now, tzOffsetMs),
+    wrongStreak: 0,
+    cycleWrongs: 0,
+    drillStreak: 0,
+    reps: state.reps,
+    lapses: state.lapses,
+    lastReviewAt: now,
+  };
 }
 
 /** 词被种下,开始一轮新的生长。品质从五星算起。 */
@@ -90,6 +129,7 @@ export function startCycle(state: CardState, now: number, tzOffsetMs: number): C
     dueAt: nextWaterTime(now, tzOffsetMs),
     wrongStreak: 0,
     cycleWrongs: 0,
+    drillStreak: 0,
     reps: state.reps,
     lapses: state.lapses,
     lastReviewAt: now,
@@ -109,6 +149,7 @@ export function water(state: CardState, grade: Grade, now: number, tzOffsetMs: n
     dueAt: nextWaterTime(now, tzOffsetMs),
     wrongStreak: wrong ? state.wrongStreak + 1 : 0,
     cycleWrongs: state.cycleWrongs + (wrong ? 1 : 0),
+    drillStreak: 0,
     reps: state.reps + 1,
     lapses: state.lapses + (wrong ? 1 : 0),
     lastReviewAt: now,

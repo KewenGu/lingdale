@@ -78,9 +78,9 @@ test('记得越久的词,答对的经验越多', () => {
   assert.equal(digNext(save, deck, true, T0 + gameDays(30)).result.xp, 3);
 });
 
-test('升级节奏:第一周每天都有进展,第一个月约 20 级', () => {
+test('升级节奏:第一周每天都有进展,第一个月 20 到 32 级', () => {
   const { rows } = simulate({ ...DEFAULT_OPTIONS, days: 30 });
   assert.ok(rows[0].level >= 2);
   assert.ok(rows[6].level >= 6, `第 7 天只有 ${rows[6].level} 级`);
-  assert.ok(rows[29].level >= 17 && rows[29].level <= 28, `第 30 天是 ${rows[29].level} 级`);
+  assert.ok(rows[29].level >= 20 && rows[29].level <= 32, `第 30 天是 ${rows[29].level} 级`);
 });

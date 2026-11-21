@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import {
+  BAG_EXTRA,
   MineSession,
   ReviewSession,
   activeProgress,
@@ -140,16 +141,16 @@ test('会话:hard 不生长也不扣星;作物死亡或收获后不再排回队�
   );
 });
 
-test('挖矿会话:一题一条矿脉,答对出矿,答错进词袋且不重复练习,额度用完就关门', () => {
+test('挖矿会话:一题一条矿脉,答对出矿,答错进词袋;词袋装满后换成练词袋里的词', () => {
   const deck = makeDeck(50);
   const save = createSave(deck.id, T0, 0);
-  save.plots.forEach((plot, i) => (plot.unlocked = i < 1)); // 只有一块地,只能答错一次
+  save.plots.forEach((plot, i) => (plot.unlocked = i < 1)); // 只有一块地,词袋只收得下一个词
   const mine = new MineSession(save, deck, noLuck);
 
   const first = mine.current(T0)!;
   assert.deepEqual(
     [first.vein.cardId, first.vein.source, first.question.type, first.allowance],
-    ['w0', 'new', 'choice', 1],
+    ['w0', 'new', 'choice', 1 + BAG_EXTRA],
   );
   assert.equal(mine.current(T0), first); // 重复调用是同一道题
   if (first.question.type === 'spell') return;
@@ -160,19 +161,28 @@ test('挖矿会话:一题一条矿脉,答对出矿,答错进词袋且不重复�
   assert.equal(second.vein.cardId, 'w1');
   if (second.question.type === 'spell') return;
   const miss = mine.submit((second.question.correctIndex + 1) % 4, T0);
-  assert.deepEqual([miss.correct, miss.oreGrade, miss.bagged, miss.allowance], [false, null, true, 0]);
-
-  assert.equal(mine.current(T0), null);
-  assert.equal(mine.closed(T0), 'no_room');
-  assert.throws(() => mine.submit(0, T0));
+  assert.deepEqual(
+    [miss.correct, miss.oreGrade, miss.bagged, miss.allowance],
+    [false, null, true, BAG_EXTRA],
+  );
   assert.deepEqual(activeProgress(save).wordBag, ['w1']);
+
+  // 再答错 10 个新词,词袋装满。矿洞不关门,下一条矿脉是词袋里的词
+  for (let i = 0; i < BAG_EXTRA; i++) assert.equal(mine.submitCorrect(false, T0).bagged, true);
+  assert.equal(mine.closed(T0), null);
+  const drill = mine.current(T0)!;
+  assert.deepEqual([drill.vein.cardId, drill.vein.source, drill.allowance], ['w1', 'drill', 0]);
+  if (drill.question.type === 'spell') return;
+  const practiced = mine.submit(drill.question.correctIndex, T0);
+  assert.deepEqual([practiced.correct, practiced.oreGrade, practiced.drillStreak], [true, null, 1]);
+  assert.equal(mine.current(T0)!.vein.cardId, 'w2', '练习轮到下一个词');
 
   // 用拼写题挖矿也可以
   save.plots[1].unlocked = true;
   const spelling = new MineSession(save, deck, noLuck, 'spell');
   const turn = spelling.current(T0)!;
   assert.equal(turn.question.type, 'spell');
-  assert.equal(spelling.submit('WORD2', T0).correct, true);
+  assert.equal(spelling.submit(turn.vein.cardId.replace('w', 'WORD'), T0).correct, true);
 });
 
 test('存档可以序列化后原样读回', () => {

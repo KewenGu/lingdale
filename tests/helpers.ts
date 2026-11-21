@@ -9,9 +9,9 @@ export const hours = (n: number) => n * HOUR_MS;
 /** n 个游戏日之后的同一时刻。 */
 export const gameDays = (n: number) => n * GAME_DAY_MS;
 
-/** 不走运的随机数:挖矿时不会多升一个品级。 */
+/** 不走运的随机数:挖出来的矿石总是 1 级。 */
 export const noLuck = () => 0.99;
-/** 走运的随机数。 */
+/** 走运的随机数:挖出来的矿石总是这条矿脉能出的最高一级,也就是答对后的掌握度。 */
 export const lucky = () => 0;
 
 export function makeDeck(size: number, id = 'test'): Deck {
@@ -21,7 +21,7 @@ export function makeDeck(size: number, id = 'test'): Deck {
 }
 
 /** 挖当前这条矿脉,返回挖的是哪个词和结果。 */
-export function digNext(save: SaveData, deck: Deck, correct: boolean, now: number, rng = noLuck) {
+export function digNext(save: SaveData, deck: Deck, correct: boolean, now: number, rng = lucky) {
   const status = mineStatus(save, deck, now);
   if (!status.open) throw new Error(`矿洞关着: ${status.reason}`);
   const result = dig(save, deck, status.vein.cardId, correct, now, rng);

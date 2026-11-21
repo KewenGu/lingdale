@@ -1,31 +1,40 @@
-import { LUCKY_ORE_CHANCE, MAX_LOGS, MAX_MASTERY } from './constants';
+import { BAG_EXTRA, DRILL_SET, DRILL_STREAK, MAX_LOGS, MAX_MASTERY, TOP_ORE_CHANCE } from './constants';
 import { orePrice } from './economy';
 import { emptyPlots } from './farm';
 import { Milestone, addXp, xpForAnswer } from './level';
 import { Rng } from './quiz';
-import { activeProgress, getState } from './save';
-import { blankState, mined } from './scheduler';
-import { Deck, QuestionType, SaveData } from './types';
+import { activeProgress, getState, nextUnseen } from './save';
+import { dueVeins } from './words';
+import { blankState, drilled, graduate, mined } from './scheduler';
+import { CardState, Deck, QuestionType, SaveData } from './types';
 
 // 这个文件里的函数会直接修改传入的 save。
 //
 // 矿负责"筛"和"复习":每条矿脉是一个词,挖一次答一道题。
-//   答对 → 爆出矿石。矿石的品级就是这个词的掌握度,记得越久品级越高。然后这个词去休息,到期再回到矿里。
+//   答对 → 爆出矿石。品级是掷出来的,最高到这个词的掌握度:记得越久,越容易出高级的。然后这个词去休息,到期再回到矿里。
 //   答错 → 这个词进词袋,等着去商店买种子把它种下。
-//   矿脉先出该复习的旧词(最早到期的在前),没有才出卡组里的下一个新词。
-//   挖新矿没有每日上限,但答错有上限:还能答错的次数 = 空地块数 - 词袋里还没种下的词数。
-//   用完了矿洞就关门,要先把词种下、或等作物收获腾出地来。
+//
+// 矿脉的顺序:
+//   1. 该复习的旧词(最早到期的在前)。复习不受任何限制:一个到期的旧词记不记得是既成事实,
+//      不去考它也不会少一个要学的词,只会让忘掉的词晚些被发现。
+//   2. 卡组里的下一个新词,前提是词袋还装得下。词袋最多比空地多装 BAG_EXTRA 个词;
+//      没有这个上限,矿里送来的生词会比田能学会的快,词袋会无限堆积。
+//   3. 词袋装满了:拿词袋最前面的 DRILL_SET 个词出来轮着练。这样田种满了也一直有题可做。
+//      练习不出矿石、不改掌握度。连续答对 DRILL_STREAK 次,这个词离开词袋,
+//      下一个游戏日回到矿里再考一次:那一次答对才升级,答错就回词袋。
+//      几分钟内的连对靠的是短期记忆,隔天还答得出才算数。
 
-export type VeinSource = 'review' | 'new';
+export type VeinSource = 'review' | 'new' | 'drill';
 
 export interface Vein {
   cardId: string;
   source: VeinSource;
   mastery: number; // 这个词现在的掌握度;新词是 0
+  drillStreak: number; // 练习矿脉:已经连续答对了几次;其他矿脉是 0
 }
 
-/** 矿洞为什么挖不了:田里没地方再种新的词了,或者没有矿脉可挖(没有到期的旧词,卡组也挖完了)。 */
-export type MineClosed = 'no_room' | 'exhausted';
+/** 矿洞为什么挖不了:没有到期的旧词,卡组里的新词挖完了,词袋里也没有词可练。 */
+export type MineClosed = 'exhausted';
 
 export type MineStatus =
   { open: true; vein: Vein; allowance: number } | { open: false; reason: MineClosed; allowance: number };
@@ -35,40 +44,24 @@ export interface DigResult {
   source: VeinSource;
   masteryBefore: number;
   masteryAfter: number;
-  oreGrade: number | null; // 答对时爆出的矿石品级
-  lucky: boolean; // 这次是否运气好,多升了一个品级
-  bagged: boolean; // 答错时这个词进了词袋
-  allowance: number; // 这次之后还能再答错几次
+  oreGrade: number | null; // 答对时爆出的矿石品级,掷出来的,最高到答对后的掌握度;练习不出矿石
+  lucky: boolean; // 这次是否运气好:爆出了这条矿脉能出的最高一级(2 级以上才算)
+  bagged: boolean; // 答错,这个词进了词袋
+  drillStreak: number; // 练习矿脉:这次之后连续答对了几次
+  graduated: boolean; // 练够了,这个词离开词袋,下一个游戏日再考
+  allowance: number; // 这次之后答错的额度
   xp: number;
   levelBefore: number;
   levelAfter: number;
   unlocked: Milestone[];
 }
 
-/** 还能再答错几次:空地块数减去词袋里还没种下的词数。到 0 矿洞就关门。 */
+/**
+ * 答错的额度:词袋还装得下几个词,也就是新词还能答错几次。到 0 就不再出新词,改成练词袋里的词。
+ * 词袋最多比空地多装 BAG_EXTRA 个词。复习不受它限制。
+ */
 export function mineAllowance(save: SaveData): number {
-  return Math.max(0, emptyPlots(save) - activeProgress(save).wordBag.length);
-}
-
-/** 休息结束、重新出现在矿里的旧词,最早到期的排在前面。 */
-export function dueVeins(save: SaveData, now: number): string[] {
-  const progress = activeProgress(save);
-  const elsewhere = new Set<string>(progress.wordBag);
-  for (const plot of save.plots) {
-    if (plot.crop) elsewhere.add(plot.crop.cardId);
-  }
-  return Object.keys(progress.cards)
-    .filter((id) => !elsewhere.has(id) && progress.cards[id].dueAt <= now)
-    .sort((a, b) => progress.cards[a].dueAt - progress.cards[b].dueAt);
-}
-
-/** 卡组里下一个还没见过的词;挖完了返回 null。不修改存档。 */
-function nextNewCard(save: SaveData, deck: Deck): { cardId: string; cursor: number } | null {
-  const progress = activeProgress(save);
-  for (let i = progress.cursor; i < deck.cards.length; i++) {
-    if (!getState(progress, deck.cards[i].id)) return { cardId: deck.cards[i].id, cursor: i };
-  }
-  return null;
+  return Math.max(0, emptyPlots(save) + BAG_EXTRA - activeProgress(save).wordBag.length);
 }
 
 /** 矿洞现在能不能挖,能挖的话下一条矿脉是哪个词。不修改存档。 */
@@ -76,21 +69,63 @@ export function mineStatus(save: SaveData, deck: Deck, now: number): MineStatus 
   if (deck.id !== save.activeDeckId) {
     throw new Error(`卡组 ${deck.id} 不是当前卡组 ${save.activeDeckId}`);
   }
+  const progress = activeProgress(save);
   const allowance = mineAllowance(save);
-  if (allowance <= 0) return { open: false, reason: 'no_room', allowance };
   const due = dueVeins(save, now);
   if (due.length > 0) {
-    const mastery = activeProgress(save).cards[due[0]].mastery;
-    return { open: true, vein: { cardId: due[0], source: 'review', mastery }, allowance };
+    const mastery = progress.cards[due[0]].mastery;
+    return { open: true, vein: { cardId: due[0], source: 'review', mastery, drillStreak: 0 }, allowance };
   }
-  const fresh = nextNewCard(save, deck);
-  if (!fresh) return { open: false, reason: 'exhausted', allowance };
-  return { open: true, vein: { cardId: fresh.cardId, source: 'new', mastery: 0 }, allowance };
+  const fresh = allowance > 0 ? nextUnseen(save, deck) : null;
+  if (fresh) {
+    return {
+      open: true,
+      vein: { cardId: fresh.cardId, source: 'new', mastery: 0, drillStreak: 0 },
+      allowance,
+    };
+  }
+  // 词袋装满了,或者新词挖完了:练词袋里排在最前面的词。最前面的 DRILL_SET 个轮着出
+  if (progress.wordBag.length > 0) {
+    const cardId = progress.wordBag[0];
+    const state = getState(progress, cardId) || blankState(now);
+    return {
+      open: true,
+      vein: { cardId, source: 'drill', mastery: state.mastery, drillStreak: state.drillStreak },
+      allowance,
+    };
+  }
+  return { open: false, reason: 'exhausted', allowance };
 }
 
 /**
- * 挖当前这条矿脉并记下答题结果。只能挖 mineStatus 给出的那个词。
- * rng 只用来决定答对时是否运气好、多升一个品级。
+ * 掌握度是 mastery 的词答对时,爆出各级矿石的概率。下标是品级。
+ * 最高到 mastery;从最高一级往下,每一级有 TOP_ORE_CHANCE 的概率就是它,都没中是 1 级。
+ * 界面可以用它告诉玩家这条矿脉可能出什么。
+ */
+export function oreOdds(mastery: number): number[] {
+  const top = Math.max(1, Math.min(mastery, MAX_MASTERY));
+  const odds: number[] = [];
+  for (let grade = 0; grade <= MAX_MASTERY; grade++) odds.push(0);
+  let left = 1;
+  for (let grade = top; grade > 1; grade--) {
+    odds[grade] = left * TOP_ORE_CHANCE;
+    left -= odds[grade];
+  }
+  odds[1] = left;
+  return odds;
+}
+
+/** 按 oreOdds 的概率掷一块矿石的品级。 */
+export function rollOreGrade(mastery: number, rng: Rng): number {
+  for (let grade = Math.max(1, Math.min(mastery, MAX_MASTERY)); grade > 1; grade--) {
+    if (rng() < TOP_ORE_CHANCE) return grade;
+  }
+  return 1;
+}
+
+/**
+ * 挖当前这条矿脉并记下答题结果。只能挖 mineStatus 给出的那个词。练习矿脉也从这里走。
+ * rng 只用来掷答对时爆出的矿石是几级。
  */
 export function dig(
   save: SaveData,
@@ -103,11 +138,7 @@ export function dig(
   elapsedMs: number = 0,
 ): DigResult {
   const status = mineStatus(save, deck, now);
-  if (!status.open) {
-    throw new Error(
-      status.reason === 'no_room' ? '田里没有空位再种新的词,矿洞现在挖不了' : '现在没有矿脉可挖',
-    );
-  }
+  if (!status.open) throw new Error('现在没有矿脉可挖');
   if (status.vein.cardId !== cardId) {
     throw new Error(`现在该挖的是 ${status.vein.cardId},不是 ${cardId}`);
   }
@@ -115,21 +146,43 @@ export function dig(
   const progress = activeProgress(save);
   const source = status.vein.source;
   const before = getState(progress, cardId) || blankState(now);
+  const drill = source === 'drill';
   if (source === 'new') {
-    const fresh = nextNewCard(save, deck);
+    const fresh = nextUnseen(save, deck);
     if (fresh) progress.cursor = fresh.cursor + 1;
   }
-  const after = mined(before, correct, now, save.tzOffsetMs);
+
+  let after: CardState;
+  let graduated = false;
+  let bagged = false;
+  if (drill) {
+    after = drilled(before, correct, now);
+    const drillStreak = after.drillStreak;
+    progress.wordBag.splice(progress.wordBag.indexOf(cardId), 1);
+    if (drillStreak >= DRILL_STREAK) {
+      graduated = true;
+      after = graduate(after, now, save.tzOffsetMs);
+    } else {
+      // 插回第 DRILL_SET 位:词袋最前面的几个词轮着练,练走一个,后面的才补进来
+      progress.wordBag.splice(DRILL_SET - 1, 0, cardId);
+    }
+  } else {
+    after = mined(before, correct, now, save.tzOffsetMs);
+    if (!correct) {
+      progress.wordBag.push(cardId);
+      bagged = true;
+    }
+  }
   progress.cards[cardId] = after;
 
   progress.logs.push({
     cardId,
     at: now,
     grade: correct ? 'good' : 'again',
-    place: 'mine',
+    place: drill ? 'drill' : 'mine',
     fresh: source === 'new',
     mastery: before.mastery,
-    stage: 0,
+    stage: drill ? before.drillStreak : 0,
     questionType,
     elapsedMs,
   });
@@ -137,17 +190,16 @@ export function dig(
     progress.logs.splice(0, progress.logs.length - MAX_LOGS);
   }
 
+  // 练习不出矿石也不给经验:它练出来的是这个词离开词袋。矿石和经验留给隔着时间答对的那一次
   let oreGrade: number | null = null;
   let lucky = false;
-  if (correct) {
-    lucky = after.mastery < MAX_MASTERY && rng() < LUCKY_ORE_CHANCE;
-    oreGrade = after.mastery + (lucky ? 1 : 0);
+  if (correct && !drill) {
+    oreGrade = rollOreGrade(after.mastery, rng);
+    lucky = oreGrade > 1 && oreGrade === Math.min(after.mastery, MAX_MASTERY);
     save.ore[oreGrade] = (save.ore[oreGrade] || 0) + 1;
-  } else {
-    progress.wordBag.push(cardId);
   }
 
-  const gained = addXp(save, xpForAnswer(before.mastery, correct ? 'good' : 'again'));
+  const gained = addXp(save, drill ? 0 : xpForAnswer(before.mastery, correct ? 'good' : 'again'));
   save.updatedAt = now;
   return {
     correct,
@@ -156,7 +208,9 @@ export function dig(
     masteryAfter: after.mastery,
     oreGrade,
     lucky,
-    bagged: !correct,
+    bagged,
+    drillStreak: drill && !graduated ? after.drillStreak : 0,
+    graduated,
     allowance: mineAllowance(save),
     xp: gained.xp,
     levelBefore: gained.levelBefore,

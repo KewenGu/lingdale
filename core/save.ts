@@ -1,6 +1,6 @@
 import { INITIAL_PLOTS, MAX_MASTERY, SCHEMA_VERSION, TOTAL_PLOTS } from './constants';
 import { gameDay } from './time';
-import { CardState, DeckProgress, Plot, SaveData } from './types';
+import { CardState, Deck, DeckProgress, Plot, SaveData } from './types';
 
 export function createSave(deckId: string, now: number, tzOffsetMs: number): SaveData {
   const plots: Plot[] = [];
@@ -9,10 +9,11 @@ export function createSave(deckId: string, now: number, tzOffsetMs: number): Sav
   }
   const ore: number[] = [];
   for (let grade = 0; grade <= MAX_MASTERY; grade++) ore.push(0);
+  const today = gameDay(now, tzOffsetMs);
   return {
     schemaVersion: SCHEMA_VERSION,
     tzOffsetMs,
-    startDay: gameDay(now, tzOffsetMs),
+    startDay: today,
     activeDeckId: deckId,
     progress: {},
     plots,
@@ -21,6 +22,12 @@ export function createSave(deckId: string, now: number, tzOffsetMs: number): Sav
     seeds: { choice: 0, reverse: 0, spell: 0 },
     produce: {},
     ore,
+    hay: 0,
+    feed: 0,
+    herd: [],
+    goods: { milk: 0, wool: 0, eggs: 0 },
+    medicine: 0,
+    pastureDay: today,
     updatedAt: now,
   };
 }
@@ -40,6 +47,25 @@ export function activeProgress(save: SaveData): DeckProgress {
  */
 export function getState(progress: DeckProgress, cardId: string): CardState | undefined {
   return Object.prototype.hasOwnProperty.call(progress.cards, cardId) ? progress.cards[cardId] : undefined;
+}
+
+/**
+ * 卡组里第 skip + 1 个还没见过的词;没有了返回 null。不修改存档。
+ * 矿洞出新词、田里种新词都从这里取,所以两边看到的是同一个顺序。
+ */
+export function nextUnseen(
+  save: SaveData,
+  deck: Deck,
+  skip: number = 0,
+): { cardId: string; cursor: number } | null {
+  const progress = activeProgress(save);
+  let left = skip;
+  for (let i = progress.cursor; i < deck.cards.length; i++) {
+    if (getState(progress, deck.cards[i].id)) continue;
+    if (left === 0) return { cardId: deck.cards[i].id, cursor: i };
+    left--;
+  }
+  return null;
 }
 
 export function unlockedCount(save: SaveData): number {
