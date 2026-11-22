@@ -206,6 +206,94 @@
     });
   })();
 
+  // ---------- 四男四女:设计表和两家模型画的线稿加平涂(AI 生成,文件在 generated/leads/) ----------
+  (function () {
+    var G = 'generated/leads/',
+      MODELS = [
+        {
+          key: 'oa',
+          name: 'OpenAI',
+          model: 'gpt-image-2.6-sunburst',
+          holder: 'leads-oa',
+          sil: 'leads-sil-oa',
+        },
+        { key: 'ark', name: '豆包', model: 'doubao-seedream-5-5', holder: 'leads-ark', sil: 'leads-sil-ark' },
+      ];
+    // 设计表:每一栏八个人互不重合
+    var rows = LD.LEADS.map(function (p) {
+      return (
+        '<tr><td>' +
+        esc(p.name) +
+        '<br><span class="src">' +
+        esc(p.gender + ',' + p.age + ' 岁') +
+        '</span></td>' +
+        '<td>' +
+        esc(p.place) +
+        '<br><span class="src">' +
+        esc(p.topics) +
+        '</span></td>' +
+        '<td><b>' +
+        esc(p.type) +
+        '</b><br>' +
+        esc(p.line) +
+        '</td>' +
+        '<td>' +
+        esc(p.voice) +
+        '</td>' +
+        '<td>' +
+        esc(p.hairColor + '。' + p.hair) +
+        '</td>' +
+        '<td>' +
+        esc(p.build) +
+        '<br><span class="src">' +
+        esc(p.skin + ';眼睛' + p.eyes) +
+        '</span></td>' +
+        '<td>' +
+        esc(p.color) +
+        '</td>' +
+        '<td>' +
+        esc(p.prop) +
+        '</td></tr>'
+      );
+    });
+    $('leads-table').innerHTML = rows.join('');
+    MODELS.forEach(function (m) {
+      LD.LEADS.forEach(function (p) {
+        var fig = el('figure'),
+          frame = el('div', 'gcard ai');
+        frame.innerHTML =
+          '<img src="' +
+          G +
+          m.key +
+          '-' +
+          p.id +
+          '.webp" alt="' +
+          esc(p.name + ',线稿加平涂,' + m.name + ' 生成') +
+          '" loading="lazy">';
+        fig.appendChild(frame);
+        fig.appendChild(
+          el(
+            'figcaption',
+            null,
+            '<b>' + esc(p.name) + ' · ' + esc(p.type) + '</b>' + esc(p.place + ',' + p.age + ' 岁。'),
+          ),
+        );
+        $(m.holder).appendChild(fig);
+        var s = el('div', 'gsil');
+        s.innerHTML =
+          '<img src="' +
+          G +
+          m.key +
+          '-' +
+          p.id +
+          '.webp" alt="' +
+          esc(p.name + '的轮廓') +
+          '" loading="lazy">';
+        $(m.sil).appendChild(s);
+      });
+    });
+  })();
+
   // ---------- 图像生成模型出的立绘(AI 生成,文件在 generated/) ----------
   (function () {
     var G = 'generated/',

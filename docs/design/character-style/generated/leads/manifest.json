@@ -1,0 +1,330 @@
+[
+ {
+  "file": "oa-maidong.webp",
+  "model": "gpt-image-2.6-sunburst",
+  "date": "2026-11-22",
+  "seconds": 28.5,
+  "usage": {
+   "input_tokens": 308,
+   "input_tokens_details": {
+    "image_tokens": 0,
+    "text_tokens": 308
+   },
+   "output_tokens": 1372,
+   "output_tokens_details": {
+    "image_tokens": 1372,
+    "text_tokens": 0
+   },
+   "total_tokens": 1680
+  },
+  "prompt": "Character illustration in a Japanese animation style: clean, even dark-brown line art, flat cel shading with a single hard-edged shadow tone per color and one highlight band on the hair; no gradients, no painterly brushwork, no texture. Bright, limited palette. Half-body portrait from the top of the head to the waist, body turned slightly to one side, looking at the viewer, portrait orientation. Transparent background, nothing behind the person. An adult with mature adult facial proportions, not childlike, in ordinary, modest everyday work clothes; warm and approachable, attractive in a natural way. Not sexualized, no exaggerated body proportions, no ornate decoration, no text, no watermark. Only this one person in the frame. The person: a 30-year-old man who runs the seed shop in a small farming town. Average height, level shoulders, relaxed posture. Warm light skin, clean-shaven. Chestnut-brown medium-length hair tied loosely into a short low ponytail resting over his left shoulder, held by a tomato-red hair tie; side-parted fringe with one loose strand falling between the eyes. Amber eyes with slightly downturned outer corners, a small mole under his right eye. A yellow pencil tucked behind his right ear. Cream-white shirt with sleeves rolled to the elbows under a deep green bib apron; the apron chest pocket holds three white seed packets with a red, an orange and a purple band. Gentle, unhurried expression with a faint closed-mouth smile.",
+  "size": [
+   683,
+   1024
+  ]
+ },
+ {
+  "file": "oa-jingtian.webp",
+  "model": "gpt-image-2.6-sunburst",
+  "date": "2026-11-22",
+  "seconds": 30.5,
+  "usage": {
+   "input_tokens": 287,
+   "input_tokens_details": {
+    "image_tokens": 0,
+    "text_tokens": 287
+   },
+   "output_tokens": 1372,
+   "output_tokens_details": {
+    "image_tokens": 1372,
+    "text_tokens": 0
+   },
+   "total_tokens": 1659
+  },
+  "prompt": "Character illustration in a Japanese animation style: clean, even dark-brown line art, flat cel shading with a single hard-edged shadow tone per color and one highlight band on the hair; no gradients, no painterly brushwork, no texture. Bright, limited palette. Half-body portrait from the top of the head to the waist, body turned slightly to one side, looking at the viewer, portrait orientation. Transparent background, nothing behind the person. An adult with mature adult facial proportions, not childlike, in ordinary, modest everyday work clothes; warm and approachable, attractive in a natural way. Not sexualized, no exaggerated body proportions, no ornate decoration, no text, no watermark. Only this one person in the frame. The person: a 24-year-old man who works in the small mine at the edge of a farming town. Tall, broad-shouldered and sturdy, standing with his chest out and one fist on his hip. Sun-tanned skin, clean-shaven. Very short dark-brown buzz cut, thick straight eyebrows, big round bright dark-brown eyes, a small adhesive bandage across the bridge of his nose. Clear work goggles with an orange strap pushed up onto his forehead. A pumpkin-orange short-sleeved work shirt worn open over a white T-shirt, and a light gray towel draped around his neck. Big, open, confident grin.",
+  "size": [
+   683,
+   1024
+  ]
+ },
+ {
+  "file": "oa-yuanzhi.webp",
+  "model": "gpt-image-2.6-sunburst",
+  "date": "2026-11-22",
+  "seconds": 28.5,
+  "usage": {
+   "input_tokens": 282,
+   "input_tokens_details": {
+    "image_tokens": 0,
+    "text_tokens": 282
+   },
+   "output_tokens": 1372,
+   "output_tokens_details": {
+    "image_tokens": 1372,
+    "text_tokens": 0
+   },
+   "total_tokens": 1654
+  },
+  "prompt": "Character illustration in a Japanese animation style: clean, even dark-brown line art, flat cel shading with a single hard-edged shadow tone per color and one highlight band on the hair; no gradients, no painterly brushwork, no texture. Bright, limited palette. Half-body portrait from the top of the head to the waist, body turned slightly to one side, looking at the viewer, portrait orientation. Transparent background, nothing behind the person. An adult with mature adult facial proportions, not childlike, in ordinary, modest everyday work clothes; warm and approachable, attractive in a natural way. Not sexualized, no exaggerated body proportions, no ornate decoration, no text, no watermark. Only this one person in the frame. The person: a 29-year-old man, the veterinarian of a small farming town. Tall and slender with very upright posture, holding a clipboard against his side. Pale skin, clean-shaven. Straight silver-gray hair neatly parted in the middle and reaching just below the ears. Narrow, long gray eyes behind thin rectangular metal-framed glasses. A crisp white lab coat over a dark ink-green shirt buttoned to the top with a narrow gray tie; a stethoscope around his neck; a small sheep-shaped enamel pin on the coat lapel. Serious, composed expression, lips closed, only the faintest hint of a smile.",
+  "size": [
+   683,
+   1024
+  ]
+ },
+ {
+  "file": "oa-sumu.webp",
+  "model": "gpt-image-2.6-sunburst",
+  "date": "2026-11-22",
+  "seconds": 27.2,
+  "usage": {
+   "input_tokens": 305,
+   "input_tokens_details": {
+    "image_tokens": 0,
+    "text_tokens": 305
+   },
+   "output_tokens": 1372,
+   "output_tokens_details": {
+    "image_tokens": 1372,
+    "text_tokens": 0
+   },
+   "total_tokens": 1677
+  },
+  "prompt": "Character illustration in a Japanese animation style: clean, even dark-brown line art, flat cel shading with a single hard-edged shadow tone per color and one highlight band on the hair; no gradients, no painterly brushwork, no texture. Bright, limited palette. Half-body portrait from the top of the head to the waist, body turned slightly to one side, looking at the viewer, portrait orientation. Transparent background, nothing behind the person. An adult with mature adult facial proportions, not childlike, in ordinary, modest everyday work clothes; warm and approachable, attractive in a natural way. Not sexualized, no exaggerated body proportions, no ornate decoration, no text, no watermark. Only this one person in the frame. The person: a 27-year-old man who plays music at the tea house of a small farming town. Average height, lean and loose-limbed, weight on one leg with his head tilted, one hand in his pocket. Deep brown skin, clean-shaven. Short, tightly curled hair dyed golden blond on top and shaved very short at the sides; one eyebrow has a small notch; upturned, smiling golden-brown eyes; a small stud earring in one ear. A corn-yellow shirt with an open collar and sleeves pushed up, under a dark brown waistcoat left unbuttoned; a small silver harmonica hanging from a cord around his neck. Playful, teasing expression: a lopsided grin with one eyebrow raised.",
+  "size": [
+   683,
+   1024
+  ]
+ },
+ {
+  "file": "oa-xiaoman.webp",
+  "model": "gpt-image-2.6-sunburst",
+  "date": "2026-11-22",
+  "seconds": 26.5,
+  "usage": {
+   "input_tokens": 278,
+   "input_tokens_details": {
+    "image_tokens": 0,
+    "text_tokens": 278
+   },
+   "output_tokens": 1372,
+   "output_tokens_details": {
+    "image_tokens": 1372,
+    "text_tokens": 0
+   },
+   "total_tokens": 1650
+  },
+  "prompt": "Character illustration in a Japanese animation style: clean, even dark-brown line art, flat cel shading with a single hard-edged shadow tone per color and one highlight band on the hair; no gradients, no painterly brushwork, no texture. Bright, limited palette. Half-body portrait from the top of the head to the waist, body turned slightly to one side, looking at the viewer, portrait orientation. Transparent background, nothing behind the person. An adult with mature adult facial proportions, not childlike, in ordinary, modest everyday work clothes; warm and approachable, attractive in a natural way. Not sexualized, no exaggerated body proportions, no ornate decoration, no text, no watermark. Only this one person in the frame. The person: a 23-year-old woman who delivers the mail in a small farming town. Tall and slim with a long neck, energetic posture leaning slightly forward as if about to set off, one hand on the strap of her bag. Light skin with a band of freckles across the nose. Straight black chin-length bob with a corn-yellow hair clip on one side; large dark gray eyes with slightly upturned outer corners. A soft teal postal cap with a short brim; a teal work jacket over a white shirt; the canvas strap of a mail bag crossing her chest. Bright, curious expression with an open smile.",
+  "size": [
+   683,
+   1024
+  ]
+ },
+ {
+  "file": "oa-qingdai.webp",
+  "model": "gpt-image-2.6-sunburst",
+  "date": "2026-11-22",
+  "seconds": 28.1,
+  "usage": {
+   "input_tokens": 254,
+   "input_tokens_details": {
+    "image_tokens": 0,
+    "text_tokens": 254
+   },
+   "output_tokens": 1372,
+   "output_tokens_details": {
+    "image_tokens": 1372,
+    "text_tokens": 0
+   },
+   "total_tokens": 1626
+  },
+  "prompt": "Character illustration in a Japanese animation style: clean, even dark-brown line art, flat cel shading with a single hard-edged shadow tone per color and one highlight band on the hair; no gradients, no painterly brushwork, no texture. Bright, limited palette. Half-body portrait from the top of the head to the waist, body turned slightly to one side, looking at the viewer, portrait orientation. Transparent background, nothing behind the person. An adult with mature adult facial proportions, not childlike, in ordinary, modest everyday work clothes; warm and approachable, attractive in a natural way. Not sexualized, no exaggerated body proportions, no ornate decoration, no text, no watermark. Only this one person in the frame. The person: a 28-year-old woman, the projectionist at the cinema of a small farming town. Average height, narrow shoulders, upright posture with her arms loosely crossed. Deep brown skin. A full head of voluminous natural black curls; heavy-lidded dark brown eyes; large round gold hoop earrings. An aubergine-purple turtleneck sweater with a small round gold brooch shaped like a film reel. Cool, discerning expression, one corner of the mouth very slightly raised.",
+  "size": [
+   683,
+   1024
+  ]
+ },
+ {
+  "file": "oa-lianqiao.webp",
+  "model": "gpt-image-2.6-sunburst",
+  "date": "2026-11-22",
+  "seconds": 26.5,
+  "usage": {
+   "input_tokens": 295,
+   "input_tokens_details": {
+    "image_tokens": 0,
+    "text_tokens": 295
+   },
+   "output_tokens": 1372,
+   "output_tokens_details": {
+    "image_tokens": 1372,
+    "text_tokens": 0
+   },
+   "total_tokens": 1667
+  },
+  "prompt": "Character illustration in a Japanese animation style: clean, even dark-brown line art, flat cel shading with a single hard-edged shadow tone per color and one highlight band on the hair; no gradients, no painterly brushwork, no texture. Bright, limited palette. Half-body portrait from the top of the head to the waist, body turned slightly to one side, looking at the viewer, portrait orientation. Transparent background, nothing behind the person. An adult with mature adult facial proportions, not childlike, in ordinary, modest everyday work clothes; warm and approachable, attractive in a natural way. Not sexualized, no exaggerated body proportions, no ornate decoration, no text, no watermark. Only this one person in the frame. The person: a 29-year-old woman, the carpenter of a small farming town. Tall with strong shoulders and arms, standing squarely with her thumbs hooked in the straps of her overalls. Sun-tanned olive skin with a few freckles. Copper-red hair in a single thick, long braid hanging forward over one shoulder; a tomato-red bandana folded and tied as a headband across her forehead; sharp green eyes with upturned outer corners. A tomato-red plaid flannel shirt with rolled sleeves under sturdy tan canvas overalls; a yellow measuring tape clipped to one strap and a pair of leather work gloves tucked into the bib pocket. Steady, capable expression with a confident half-smile.",
+  "size": [
+   683,
+   1024
+  ]
+ },
+ {
+  "file": "oa-rendong.webp",
+  "model": "gpt-image-2.6-sunburst",
+  "date": "2026-11-22",
+  "seconds": 27.8,
+  "usage": {
+   "input_tokens": 297,
+   "input_tokens_details": {
+    "image_tokens": 0,
+    "text_tokens": 297
+   },
+   "output_tokens": 1372,
+   "output_tokens_details": {
+    "image_tokens": 1372,
+    "text_tokens": 0
+   },
+   "total_tokens": 1669
+  },
+  "prompt": "Character illustration in a Japanese animation style: clean, even dark-brown line art, flat cel shading with a single hard-edged shadow tone per color and one highlight band on the hair; no gradients, no painterly brushwork, no texture. Bright, limited palette. Half-body portrait from the top of the head to the waist, body turned slightly to one side, looking at the viewer, portrait orientation. Transparent background, nothing behind the person. An adult with mature adult facial proportions, not childlike, in ordinary, modest everyday work clothes; warm and approachable, attractive in a natural way. Not sexualized, no exaggerated body proportions, no ornate decoration, no text, no watermark. Only this one person in the frame. The person: a 25-year-old woman, the apprentice at the bakery of a small farming town. She is clearly a grown adult: petite and soft-figured with adult proportions, shoulders drawn in slightly, both hands holding a small notebook against her chest. Fair, rosy skin. Long, loose, wavy honey-blonde hair falling past her shoulders; round honey-brown eyes; naturally pink cheeks with a small smudge of flour on one cheek. A pale pink triangular kerchief tied over the top of her head; a cream blouse with short puffed sleeves and a pale pink ribbon at the collar, under a pale pink pinafore dress. Shy, gentle expression with a small hesitant smile.",
+  "size": [
+   683,
+   1024
+  ]
+ },
+ {
+  "file": "ark-maidong.webp",
+  "model": "doubao-seedream-5-5-261028",
+  "date": "2026-11-22",
+  "seconds": 27.4,
+  "usage": {
+   "input_images": 0,
+   "generated_images": 1,
+   "output_tokens": 12150,
+   "total_tokens": 12150
+  },
+  "prompt": "日系动画风格的角色立绘:干净均匀的深褐色线稿,平涂上色,每种颜色只有一层硬边的暗部,头发上一道高光;没有渐变,没有厚涂的笔触,没有纹理。配色明亮而有限。半身像,从头顶到腰,身体略微侧向一边,看着观众,竖版。纯白色背景,人物后面什么都没有。人物是成年人,是成年人的脸部比例,不是孩子气的长相,穿日常得体的工作服;气质亲切,自然地好看。不要性感化,不要夸张的身材,不要华丽的装饰,不要文字。画面里只有这一个人。人物:30 岁的男性,小镇种子店的老板。中等个子,肩膀平,站姿放松。暖白色的皮肤,没有胡子。栗色的半长发,在颈后松松地扎成一小束,搭在他左肩上,用一根番茄红的发绳系着;刘海偏分,有一缕垂在两眼之间。琥珀色的眼睛,眼尾略微下垂,右眼下面有一颗小痣。右耳后面别着一支黄色的铅笔。穿米白色的衬衫,袖子卷到手肘,外面系一条深绿色的围裙,围裙胸前的口袋里插着三包白色的种子袋,袋子顶上各有一条红、橙、紫色的色带。神情温和,慢性子,抿着嘴淡淡地笑。",
+  "size": [
+   683,
+   1024
+  ]
+ },
+ {
+  "file": "ark-jingtian.webp",
+  "model": "doubao-seedream-5-5-261028",
+  "date": "2026-11-22",
+  "seconds": 23.3,
+  "usage": {
+   "input_images": 0,
+   "generated_images": 1,
+   "output_tokens": 12150,
+   "total_tokens": 12150
+  },
+  "prompt": "日系动画风格的角色立绘:干净均匀的深褐色线稿,平涂上色,每种颜色只有一层硬边的暗部,头发上一道高光;没有渐变,没有厚涂的笔触,没有纹理。配色明亮而有限。半身像,从头顶到腰,身体略微侧向一边,看着观众,竖版。纯白色背景,人物后面什么都没有。人物是成年人,是成年人的脸部比例,不是孩子气的长相,穿日常得体的工作服;气质亲切,自然地好看。不要性感化,不要夸张的身材,不要华丽的装饰,不要文字。画面里只有这一个人。人物:24 岁的男性,在小镇边上的小矿洞里干活的矿工。高大,肩宽,结实,挺着胸,一只手握拳叉在腰上。晒黑的小麦色皮肤,没有胡子。贴着头皮的深褐色寸头,又粗又直的眉毛,又圆又亮的深褐色大眼睛,鼻梁上横贴着一小块创可贴。一副透明的工作护目镜推在额头上,带子是橙色的。穿南瓜橙色的短袖工作衬衫,敞着,里面是白色的 T 恤,脖子上搭着一条浅灰色的毛巾。咧着嘴,笑得又大又自信。",
+  "size": [
+   683,
+   1024
+  ]
+ },
+ {
+  "file": "ark-yuanzhi.webp",
+  "model": "doubao-seedream-5-5-261028",
+  "date": "2026-11-22",
+  "seconds": 20.3,
+  "usage": {
+   "input_images": 0,
+   "generated_images": 1,
+   "output_tokens": 12150,
+   "total_tokens": 12150
+  },
+  "prompt": "日系动画风格的角色立绘:干净均匀的深褐色线稿,平涂上色,每种颜色只有一层硬边的暗部,头发上一道高光;没有渐变,没有厚涂的笔触,没有纹理。配色明亮而有限。半身像,从头顶到腰,身体略微侧向一边,看着观众,竖版。纯白色背景,人物后面什么都没有。人物是成年人,是成年人的脸部比例,不是孩子气的长相,穿日常得体的工作服;气质亲切,自然地好看。不要性感化,不要夸张的身材,不要华丽的装饰,不要文字。画面里只有这一个人。人物:29 岁的男性,小镇上的兽医。高,瘦,站得笔直,一只手把写字板夹在身侧。皮肤偏白,没有胡子。银灰色的直发,整齐地中分,长度到耳朵下面。灰色的眼睛细而长,戴一副细金属框的长方形眼镜。穿一件挺括的白大褂,里面是墨绿色的衬衫,扣子扣到最上面一颗,系一条窄窄的灰色领带;脖子上挂着听诊器;白大褂的领子上别着一枚小羊形状的徽章。神情严肃,沉着,嘴闭着,几乎不笑。",
+  "size": [
+   683,
+   1024
+  ]
+ },
+ {
+  "file": "ark-sumu.webp",
+  "model": "doubao-seedream-5-5-261028",
+  "date": "2026-11-22",
+  "seconds": 31.2,
+  "usage": {
+   "input_images": 0,
+   "generated_images": 1,
+   "output_tokens": 12150,
+   "total_tokens": 12150
+  },
+  "prompt": "日系动画风格的角色立绘:干净均匀的深褐色线稿,平涂上色,每种颜色只有一层硬边的暗部,头发上一道高光;没有渐变,没有厚涂的笔触,没有纹理。配色明亮而有限。半身像,从头顶到腰,身体略微侧向一边,看着观众,竖版。纯白色背景,人物后面什么都没有。人物是成年人,是成年人的脸部比例,不是孩子气的长相,穿日常得体的工作服;气质亲切,自然地好看。不要性感化,不要夸张的身材,不要华丽的装饰,不要文字。画面里只有这一个人。人物:27 岁的男性,在小镇的茶馆里弹琴的琴师。中等个子,精瘦,站得很随意,重心压在一条腿上,头歪着,一只手插在口袋里。深褐色的皮肤,没有胡子。头顶是一丛染成金色的短短的小卷发,两侧剃得很短;一边眉毛上有一道小小的断口;金褐色的眼睛,笑起来往上挑;一只耳朵上戴一枚小耳钉。穿玉米黄色的衬衫,领口敞着,袖子推到手肘,外面套一件没扣扣子的深褐色马甲;脖子上用一根绳子挂着一只银色的小口琴。神情顽皮,在逗人:歪着嘴笑,一边眉毛挑起来。",
+  "size": [
+   683,
+   1024
+  ]
+ },
+ {
+  "file": "ark-xiaoman.webp",
+  "model": "doubao-seedream-5-5-261028",
+  "date": "2026-11-22",
+  "seconds": 27.6,
+  "usage": {
+   "input_images": 0,
+   "generated_images": 1,
+   "output_tokens": 12150,
+   "total_tokens": 12150
+  },
+  "prompt": "日系动画风格的角色立绘:干净均匀的深褐色线稿,平涂上色,每种颜色只有一层硬边的暗部,头发上一道高光;没有渐变,没有厚涂的笔触,没有纹理。配色明亮而有限。半身像,从头顶到腰,身体略微侧向一边,看着观众,竖版。纯白色背景,人物后面什么都没有。人物是成年人,是成年人的脸部比例,不是孩子气的长相,穿日常得体的工作服;气质亲切,自然地好看。不要性感化,不要夸张的身材,不要华丽的装饰,不要文字。画面里只有这一个人。人物:23 岁的女性,小镇上的邮差。瘦高,脖子长,姿态有活力,身体微微前倾,像马上要出发,一只手搭在邮包的带子上。皮肤白,鼻梁上有一排雀斑。齐下巴的黑色直短发,一侧别一枚玉米黄的发夹;深灰色的大眼睛,眼尾略微上挑。戴一顶蓝绿色的短檐软帽;穿蓝绿色的工作外套,里面是白衬衫;一条帆布的邮包带子斜挎在胸前。神情明亮,好奇,笑得开朗。",
+  "size": [
+   683,
+   1024
+  ]
+ },
+ {
+  "file": "ark-qingdai.webp",
+  "model": "doubao-seedream-5-5-261028",
+  "date": "2026-11-22",
+  "seconds": 27.3,
+  "usage": {
+   "input_images": 0,
+   "generated_images": 1,
+   "output_tokens": 12150,
+   "total_tokens": 12150
+  },
+  "prompt": "日系动画风格的角色立绘:干净均匀的深褐色线稿,平涂上色,每种颜色只有一层硬边的暗部,头发上一道高光;没有渐变,没有厚涂的笔触,没有纹理。配色明亮而有限。半身像,从头顶到腰,身体略微侧向一边,看着观众,竖版。纯白色背景,人物后面什么都没有。人物是成年人,是成年人的脸部比例,不是孩子气的长相,穿日常得体的工作服;气质亲切,自然地好看。不要性感化,不要夸张的身材,不要华丽的装饰,不要文字。画面里只有这一个人。人物:28 岁的女性,小镇放映厅的放映员。中等个子,肩窄,站得直,双臂松松地抱在胸前。深褐色的皮肤。一头蓬松的黑色天然卷发;深褐色的眼睛,眼皮半垂着;戴一对大的金色圆环耳环。穿茄紫色的高领毛衣,胸前别一枚小小的、像胶片盘的金色圆别针。神情冷淡,有主见,一边嘴角极轻微地抬起。",
+  "size": [
+   683,
+   1024
+  ]
+ },
+ {
+  "file": "ark-lianqiao.webp",
+  "model": "doubao-seedream-5-5-261028",
+  "date": "2026-11-22",
+  "seconds": 26.7,
+  "usage": {
+   "input_images": 0,
+   "generated_images": 1,
+   "output_tokens": 12150,
+   "total_tokens": 12150
+  },
+  "prompt": "日系动画风格的角色立绘:干净均匀的深褐色线稿,平涂上色,每种颜色只有一层硬边的暗部,头发上一道高光;没有渐变,没有厚涂的笔触,没有纹理。配色明亮而有限。半身像,从头顶到腰,身体略微侧向一边,看着观众,竖版。纯白色背景,人物后面什么都没有。人物是成年人,是成年人的脸部比例,不是孩子气的长相,穿日常得体的工作服;气质亲切,自然地好看。不要性感化,不要夸张的身材,不要华丽的装饰,不要文字。画面里只有这一个人。人物:29 岁的女性,小镇上的木匠。个子高,肩膀和手臂有力,站得很稳,两个拇指勾在背带裤的带子上。晒过的橄榄色皮肤,脸上有几粒雀斑。铜红色的头发编成一条又粗又长的麻花辫,从一边肩膀垂到身前;额头上扎着一条折起来的番茄红头带;绿色的眼睛很有神,眼尾上扬。穿番茄红的格子法兰绒衬衫,袖子卷着,外面是结实的卡其色帆布背带裤;一条背带上夹着一个黄色的卷尺,胸前的口袋里塞着一双皮手套。神情沉稳,干练,带着自信的浅笑。",
+  "size": [
+   683,
+   1024
+  ]
+ },
+ {
+  "file": "ark-rendong.webp",
+  "model": "doubao-seedream-5-5-261028",
+  "date": "2026-11-22",
+  "seconds": 27.1,
+  "usage": {
+   "input_images": 0,
+   "generated_images": 1,
+   "output_tokens": 12150,
+   "total_tokens": 12150
+  },
+  "prompt": "日系动画风格的角色立绘:干净均匀的深褐色线稿,平涂上色,每种颜色只有一层硬边的暗部,头发上一道高光;没有渐变,没有厚涂的笔触,没有纹理。配色明亮而有限。半身像,从头顶到腰,身体略微侧向一边,看着观众,竖版。纯白色背景,人物后面什么都没有。人物是成年人,是成年人的脸部比例,不是孩子气的长相,穿日常得体的工作服;气质亲切,自然地好看。不要性感化,不要夸张的身材,不要华丽的装饰,不要文字。画面里只有这一个人。人物:25 岁的女性,小镇面包店的学徒。一看就是成年人:个子小,身形圆润,是成年人的身材比例,肩膀微微收着,两只手把一个小本子抱在胸前。皮肤白里透红。蜂蜜金色的长卷发披散着,垂到肩膀下面;蜂蜜褐色的圆眼睛;脸颊天生泛红,一边脸颊上沾着一点面粉。头上系一块淡粉色的三角头巾;穿米白色的短泡泡袖上衣,领口系一条淡粉色的丝带,外面是淡粉色的背带裙。神情害羞,温柔,带一点迟疑的浅笑。",
+  "size": [
+   683,
+   1024
+  ]
+ }
+]
