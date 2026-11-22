@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>牧场画面参考图导出</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Noto+Sans+SC:wght@400;500;700;900&family=ZCOOL+KuaiLe&display=swap">
+<style>
+/*
+  美术规范里牧场这一边的参考图(../art-direction/pasture*.png)从这一页导出。每个带 id 的 .sheet 或 .solo 是一张图,id 就是文件名。
+  版式沿用规范的"社交媒体画面":草地色的底、纸白的纸片、硬边投影、站酷快乐体的标题,页脚写明是示意稿。
+  导出方法见 README。
+*/
+:root {
+  --grass: #cfe6a6;
+  --paper: #fffaf0;
+  --ink: #27402f;
+  --shadow: rgba(31, 61, 43, 0.3);
+  --title: 'ZCOOL KuaiLe', 'Noto Sans SC', sans-serif;
+  --ui: 'Baloo 2', 'Noto Sans SC', sans-serif;
+}
+body {
+  margin: 0;
+  padding: 30px;
+  background: #5c6670;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 30px;
+}
+#ld-defs {
+  position: absolute;
+}
+svg {
+  display: block;
+  width: 100%;
+}
+.solo {
+  flex: none;
+  width: 390px;
+}
+.sheet {
+  flex: none;
+  box-sizing: border-box;
+  padding: 30px 32px 22px;
+  background: var(--grass);
+  color: var(--ink);
+  font: 700 15px/1.45 var(--ui);
+}
+.sheet h1 {
+  margin: 0 0 20px;
+  font: 400 38px/1.1 var(--title);
+}
+.row {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 300px;
+  gap: 26px;
+}
+.row.wrap3 {
+  grid-auto-flow: row;
+  grid-template-columns: repeat(3, 300px);
+  row-gap: 30px;
+}
+.p .frame {
+  border-radius: 26px;
+  overflow: hidden;
+  box-shadow: 5px 8px 0 var(--shadow);
+}
+.p b {
+  display: block;
+  margin-top: 14px;
+  font-size: 18px;
+}
+.p span {
+  display: block;
+  font-weight: 500;
+  font-size: 13.5px;
+}
+.no {
+  display: inline-grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  margin-right: 8px;
+  border-radius: 50%;
+  background: #ffd24a;
+  font: 800 15px/1 var(--ui);
+}
+.animals {
+  width: 1010px;
+}
+.animals .cols {
+  display: grid;
+  grid-template-columns: 500px 1fr;
+  gap: 26px;
+  align-items: start;
+}
+.animals .paper {
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 5px 8px 0 var(--shadow);
+}
+.animals p {
+  margin: 12px 0 22px;
+  font-weight: 500;
+  font-size: 13.5px;
+}
+.animals p b {
+  display: block;
+  font-size: 18px;
+}
+.foot {
+  margin-top: 20px;
+  display: flex;
+  justify-content: space-between;
+  font: 700 13px/1 var(--ui);
+  opacity: 0.8;
+}
+</style>
+</head>
+<body>
+<svg id="ld-defs" width="0" height="0" aria-hidden="true" focusable="false"></svg>
+<script src="../art-exploration/scene.js"></script>
+<script src="../art-exploration/style-paper.js"></script>
+<script src="../mine-screens/mine-scene.js"></script>
+<script src="../mine-screens/mine-paper.js"></script>
+<script src="../mine-screens/screens.js"></script>
+<script src="pasture-scene.js"></script>
+<script src="pasture-paper.js"></script>
+<script src="screens.js"></script>
+<script>
+(function () {
+  'use strict';
+  var LD = window.LD, PS = LD.pastureScreens, sc = LD.pastureScene, W = LD.grassWords, esc = LD.esc;
+  document.getElementById('ld-defs').innerHTML = LD.styles.paper.defs() + LD.mine.defs();
+
+  function copy(o, extra) {
+    var q = {}, key;
+    for (key in o) if (Object.prototype.hasOwnProperty.call(o, key)) q[key] = o[key];
+    for (key in extra || {}) if (Object.prototype.hasOwnProperty.call(extra, key)) q[key] = extra[key];
+    return q;
+  }
+  function solo(id, markup) {
+    var d = document.createElement('div');
+    d.className = 'solo';
+    d.id = id;
+    d.innerHTML = markup;
+    document.body.appendChild(d);
+  }
+  function foot() {
+    return '<div class="foot"><span>灵谷小镇 Lingdale · 示意稿,不是成品</span><span>代码绘制</span></div>';
+  }
+  function sheet(id, title, items, wrap) {
+    var d = document.createElement('div');
+    d.className = 'sheet';
+    d.id = id;
+    d.innerHTML =
+      '<h1>' + esc(title) + '</h1><div class="row' + (wrap ? ' wrap3' : '') + '">' +
+      items.map(function (it) {
+        return '<div class="p"><div class="frame">' + it.svg + '</div><b>' + esc(it.name) + '</b><span>' + esc(it.note || '') + '</span></div>';
+      }).join('') + '</div>' + foot();
+    document.body.appendChild(d);
+  }
+
+  solo('pasture', PS.pasture(sc));
+  solo('pasture-town', PS.town(sc, LD.mineScene));
+
+  sheet('pasture-grass', '草地', [
+    { name: '有草', note: '41 株,矮、中、高混着长', svg: PS.pasture(sc) },
+    { name: '草很多', note: '几天没来,280 株;最多画 58 株', svg: PS.pasture(copy(LD.pastureBack, { grass: [0, 92, 124, 64] })) },
+    { name: '没有草', note: '到期的旧词都复习完了', svg: PS.pasture(LD.pastureMown) },
+  ]);
+  sheet('pasture-mow', '割草答题', [
+    { name: '点了一株高草', note: '四个选项是四垄草', svg: PS.quiz(sc, W.tall, 'idle') },
+    { name: '答对', note: '那一垄割成草茬,三捆草弹出来', svg: PS.quiz(sc, W.tall, 'hit') },
+    { name: '答错', note: '草没割成,这个词进词袋', svg: PS.quiz(sc, W.mid, 'miss') },
+  ]);
+  sheet('pasture-enough', '够不够吃', [
+    { name: '够吃,但饲料只剩一顿', note: '饲料桶上探出一个感叹号', svg: PS.pasture(sc) },
+    { name: '点草垛', note: '够吃几顿、吃到什么时候,点开才看到', svg: PS.stockCard(sc) },
+    { name: '存粮空了一天', note: '两处都是感叹号,牲畜头上是空碗', svg: PS.pasture(LD.pastureHungry) },
+    { name: '点空了的草垛', note: '见底时才有"去商店救急"', svg: PS.stockCard(LD.pastureHungry) },
+    { name: '9 天没来', note: '6 只刚病,4 只饿着', svg: PS.pasture(LD.pastureAway) },
+    { name: '24 天没来', note: '剩下的 4 只今天不治就来不及', svg: PS.pasture(LD.pastureLost) },
+  ], true);
+  sheet('pasture-away', '几天没来再打开', [
+    { name: '3 天', note: '存粮够吃,什么事都没有', svg: PS.report(LD.pastureBack) },
+    { name: '9 天', note: '病了,都来得及', svg: PS.report(LD.pastureAway) },
+    { name: '24 天', note: '6 只没撑住', svg: PS.report(LD.pastureLost) },
+  ]);
+  sheet('pasture-feed', '做鸡饲料', [
+    { name: '挑一份作物', note: '默认选中最便宜的', svg: PS.feedPick(sc, 0) },
+    { name: '挑了五星的', note: '和一个鸡蛋一个价,提醒一句', svg: PS.feedPick(sc, 3, true) },
+    { name: '答对', note: '做成 2 份饲料', svg: PS.quiz(sc, W.low, 'hit', 'wood') },
+  ]);
+  sheet('pasture-trade', '买卖', [
+    { name: '小屋:买和卖', note: '一行一只,每一行都能卖', svg: PS.houseSheet(sc, 'barn') },
+    { name: '病了的小牛', note: '用药;草垛空着时先提醒', svg: PS.animalCard(LD.pastureAway, LD.pastureAway.herd[4], 'sick') },
+    { name: '好好的大牛', note: '怀小牛之前说清代价', svg: PS.animalCard(sc, sc.herd[0], 'breed') },
+    { name: '鸡舍:买和卖', note: '和小屋一样', svg: PS.houseSheet(sc, 'coop') },
+    { name: '商店:牧场用品', note: '动物药,和救急的牧草、饲料', svg: PS.shopSupplies(LD.pastureAway) },
+    { name: '商店:卖东西', note: '牛奶、羊毛、鸡蛋;牧草和饲料另算', svg: PS.shopSell(sc) },
+  ], true);
+
+  // 牲畜的样张
+  var d = document.createElement('div');
+  d.className = 'sheet animals';
+  d.id = 'pasture-animals';
+  d.innerHTML =
+    '<h1>牲畜的各种状态</h1><div class="cols"><div><div class="paper">' + PS.statesSheet({}) + '</div>' +
+    '<p><b>牛、羊、鸡的五个样子</b>下面是毛长到哪了,和牧场里的几样东西</p></div>' +
+    '<div><div class="paper">' + PS.grassSheet() + '</div><p><b>草的三种高矮</b>几根穗就是几捆</p></div></div>' + foot();
+  document.body.appendChild(d);
+})();
+</script>
+</body>
+</html>

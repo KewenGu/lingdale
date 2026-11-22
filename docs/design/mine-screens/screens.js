@@ -723,6 +723,21 @@
     shopBuy: shopBuy,
     shopSell: shopSell,
     onboarding: onboarding,
-    kit: { pill: pill, button: button, copy: copy, townIcon: townIcon, plate: plate },
+    // 牧场的画面(../pasture-screens/screens.js)要在同一张地图上加一个地点,所以把地图上的几样东西也递出去。
+    kit: {
+      pill: pill,
+      button: button,
+      copy: copy,
+      townIcon: townIcon,
+      plate: plate,
+      stones: stones,
+      townMine: townMine,
+      townFarm: townFarm,
+      townShop: townShop,
+      townHome: townHome,
+      townLot: townLot,
+      tilePic: tilePic,
+      drawer: drawer,
+    },
   };
 })();

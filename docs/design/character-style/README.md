@@ -511,11 +511,11 @@
 | 说明里提到的 | 看到了吗 |
 |---|---|
 | `docs/design/style-test/` | 看到了,在分支 `claude/vigilant-ramanujan-c71grr` 上,没有合并。它测的是放宽规则的彩纸撑不撑得住"升级"和"换装",结论是走得通,并且画过一个纸娃娃形的角色。上面引用的是它的 README |
-| `docs/design/pasture-screens/` | 看到了,在分支 `claude/gracious-cerf-3ei3e6` 上,没有合并。和人物无关,没有引用 |
+| `docs/design/pasture-screens/` | 当时在分支 `claude/gracious-cerf-3ei3e6` 上,2026-11-22 已经合并进 `main`,这个分支也合并了。和人物无关,没有引用 |
 | `docs/design/home-screens/` | 没看到。任何分支和合并请求里都没有。`style-test` 的 README 也写着没找到 |
 | `docs/design/town-map/` | 没看到。小镇地图现有的一稿在 [`../mine-screens/`](../mine-screens/README.md) 里 |
 
-这个目录基于 `main`,没有依赖上面两个没合并的分支。它们合并之后,[选题库](../../marketing/02-content-backlog.md)的编号会撞(`pasture-screens` 那个分支也加了第 19 条),合并时要改一个。
+这个目录原先基于 `main`。`pasture-screens` 合并之后,[选题库](../../marketing/02-content-backlog.md)里两边都占了第 19 条,合并时把人物画风这一条改成了第 20 条。
 
 ## 这些画面是怎么来的
 
