@@ -9,5 +9,5 @@
     "noEmit": true,
     "resolveJsonModule": true
   },
-  "include": ["core/**/*.ts", "tests/**/*.ts", "sim/**/*.ts"]
+  "include": ["core/**/*.ts", "tests/**/*.ts", "sim/**/*.ts", "scripts/**/*.ts"]
 }

@@ -9,14 +9,17 @@
   },
   "scripts": {
     "test": "tsx --test tests/*.test.ts",
-    "typecheck": "tsc -p tsconfig.core.json && tsc -p tsconfig.json",
-    "format": "prettier --write \"core/**/*.ts\" \"tests/**/*.ts\" \"sim/**/*.ts\"",
-    "format:check": "prettier --check \"core/**/*.ts\" \"tests/**/*.ts\" \"sim/**/*.ts\"",
+    "typecheck": "tsc -p tsconfig.core.json && tsc -p tsconfig.json && tsc -p tsconfig.web.json",
+    "format": "prettier --write \"core/**/*.ts\" \"tests/**/*.ts\" \"sim/**/*.ts\" \"scripts/**/*.ts\" \"web/**/*.ts\"",
+    "format:check": "prettier --check \"core/**/*.ts\" \"tests/**/*.ts\" \"sim/**/*.ts\" \"scripts/**/*.ts\" \"web/**/*.ts\"",
     "check": "npm run typecheck && npm run format:check && npm test",
-    "sim": "tsx sim/simulate.ts"
+    "sim": "tsx sim/simulate.ts",
+    "guess": "tsx sim/guess-rate.ts",
+    "play": "tsx scripts/build-web.ts"
   },
   "devDependencies": {
     "@types/node": "^26.6.6",
+    "esbuild": "^0.28.2",
     "prettier": "^3.10.1",
     "tsx": "^4.23.15",
     "typescript": "^7.0.2"

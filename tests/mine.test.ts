@@ -484,3 +484,14 @@ test('练习记进日志,但不算进正确率统计', () => {
   assert.deepEqual([logs[logs.length - 1].place, logs[logs.length - 1].grade], ['drill', 'again']);
   assert.equal(statsBetween(save, T0, T0 + 1).reviews, reviewsBefore);
 });
+
+test('统计里单独数出新词:今天见了几个新词,复习和练习不算', () => {
+  const { deck, save } = setup();
+  dig(save, deck, 'w0', true, T0, noLuck);
+  dig(save, deck, 'w1', false, T0, noLuck);
+  const later = dayStart(8);
+  dig(save, deck, 'w0', true, later, noLuck); // 复习
+  assert.equal(statsBetween(save, T0, T0 + 1).fresh, 2);
+  const after = statsBetween(save, later, later + 1);
+  assert.deepEqual([after.reviews, after.fresh], [1, 0]);
+});
