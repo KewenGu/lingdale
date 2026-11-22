@@ -59,6 +59,36 @@
       true,
     );
   });
+  // 和彩纸并排:整屏一对一对摆,再各放大一块
+  var ZOOM = { farm: '0 140 390 290', pasture: '0 130 390 290', mine: '0 90 390 290' };
+  function crop(markup, box) {
+    return markup.replace('viewBox="0 0 390 844"', 'viewBox="' + box + '"');
+  }
+  SCREENS.forEach(function (s) {
+    phone($('vs-shots'), s.paper(), s.name + ',彩纸', '<b>' + esc(s.name) + ' · 彩纸</b>代码绘制。');
+    phone(
+      $('vs-shots'),
+      LD.cel[s.key](G + s.key + '.webp'),
+      s.name + ',现在',
+      '<b>' + esc(s.name) + ' · 现在</b>场景是 AI 生成的。',
+      true,
+    );
+    [
+      [crop(s.paper(), ZOOM[s.key]), '彩纸', false],
+      [crop(LD.cel[s.key](G + s.key + '.webp'), ZOOM[s.key]), '现在', true],
+    ].forEach(function (a) {
+      var f = phone(
+        $('vs-zoom'),
+        a[0],
+        s.name + '局部,' + a[1],
+        '<b>' + esc(s.name) + ' · ' + a[1] + '</b>',
+        a[2],
+      );
+      f.style.aspectRatio = '390 / 290';
+      f.style.borderRadius = '14px';
+    });
+  });
+
   // 色调:第一版(偏深)和现在的(彩纸的色值),一对一对摆
   SCREENS.forEach(function (s) {
     phone(

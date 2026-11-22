@@ -25,6 +25,7 @@
 | 截图 | 内容 |
 |---|---|
 | [`three-screens.jpg`](shots/three-screens.jpg) | 新画风的三屏 |
+| [`vs-paper.jpg`](shots/vs-paper.jpg)、[`vs-paper-zoom.jpg`](shots/vs-paper-zoom.jpg) | 和彩纸并排:三屏各一对(左彩纸,右现在),以及各放大一块 |
 | [`tone.jpg`](shots/tone.jpg) | 色调:第一版和现在的,三屏各一对 |
 | [`farm.jpg`](shots/farm.jpg)、[`pasture.jpg`](shots/pasture.jpg)、[`mine.jpg`](shots/mine.jpg) | 每一屏的三联:彩纸的原稿、模型画出来的原样、叠上界面之后 |
 | [`small.jpg`](shots/small.jpg) | 农场缩到每块地约 28pt,彩纸和新画风(截图放大了 3 倍) |
