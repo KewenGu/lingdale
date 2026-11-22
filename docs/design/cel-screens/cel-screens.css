@@ -156,7 +156,12 @@ table.cmp.wide {
   border-radius: 12px;
   background: #a9cf7c;
 }
+/* 矿石里有白的(银、钻石),垫在矿壁的颜色上才看得见 */
+.mine-sprites {
+  background: #b19576;
+}
 @media (max-width: 720px) {
+  #mine-states,
   #pasture-saves {
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
     max-width: 390px !important;

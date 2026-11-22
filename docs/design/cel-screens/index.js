@@ -318,6 +318,63 @@
     $('pasture-count').textContent = names.length;
   })();
 
+  // ---------- 用素材拼出来的矿洞 ----------
+  (function () {
+    var SP = 'sprites-mine/',
+      BG = SP + 'mine-bg.webp',
+      A = LD.celMineSprites || {},
+      sc = LD.mineScene,
+      V = LD.veins;
+    phone($('mine-built'), LD.screens.mine(sc, V.old, 'idle'), '矿洞,彩纸', '<b>彩纸的原稿</b>代码绘制。');
+    phone(
+      $('mine-built'),
+      LD.cel.mine(G + 'mine.webp'),
+      '矿洞,整屏重画',
+      '<b>整屏重画</b>模型一次画出整张图。',
+      true,
+    );
+    phone(
+      $('mine-built'),
+      LD.cel.mineSprites(SP, BG, sc, V.old, 'idle'),
+      '矿洞,素材拼的',
+      '<b>素材拼的</b>词牌、石板、矿石、镐都按这一题摆上去。',
+      true,
+    );
+    [
+      ['first', 'idle', '新词,等着挖', '牌子上垫的是铜:新词答对出最低的一级。石板上没有矿。'],
+      ['old', 'hit', '答对', '石板挖开,出银矿石;这个词去休息 15 天。'],
+      ['old', 'lucky', '答对,运气好', '矿石多升一级,出的是金;词的掌握度不多升。'],
+      ['old', 'miss', '答错', '选的那条砸了个坑;正确的翻成米白;词进词袋。'],
+    ].forEach(function (s) {
+      phone(
+        $('mine-states'),
+        LD.cel.mineSprites(SP, BG, sc, V[s[0]], s[1]),
+        '矿洞,' + s[2],
+        '<b>' + esc(s[2]) + '</b>' + esc(s[3]),
+        true,
+      );
+    });
+    var names = Object.keys(A),
+      html = '';
+    names.forEach(function (n) {
+      html +=
+        '<img src="' +
+        SP +
+        n +
+        '.webp" alt="' +
+        esc(n) +
+        '" title="' +
+        esc(n) +
+        '" style="width:' +
+        A[n].w +
+        'px;height:' +
+        A[n].h +
+        'px" loading="lazy">';
+    });
+    $('mine-sprites').innerHTML = html;
+    $('mine-count').textContent = names.length;
+  })();
+
   // 缩小到一屏 120 块地的大小:每块地约 28pt
   [
     ['彩纸', LD.screens.farm(LD.scene, LD.mineScene, 2), false],

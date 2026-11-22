@@ -17,7 +17,11 @@
     PS = LD.pastureScreens,
     P = LD.pasture.kit,
     g = K.g,
-    at = k.at;
+    at = k.at,
+    // 挖开的石板后面露出的颜色:背景里洞最深处量出来的
+    CAVE = '#2c221c',
+    // 挖出来的矿石比平时放大多少
+    BURST = 2.4;
 
   /** 把彩纸界面的硬边投影换成线稿加投影。只改滤镜的名字,图形一个不动。 */
   function cel(markup) {
@@ -293,6 +297,156 @@
     return o + cel(U.out()) + cel(K.hud(sc) + PS.bar(sc, 'mow')) + '</svg>';
   }
 
+  // ---------- 用素材拼的矿洞 ----------
+
+  /** 矿洞的一个素材,中心落在 (x, y)。ax、ay 是素材上对准这个点的位置(0 到 1),不给就是正中。 */
+  function minePic(base, name, x, y, k2, rot, ax, ay) {
+    var q = (LD.celMineSprites || {})[name];
+    if (!q) return '';
+    k2 = k2 || 1;
+    var w = q.w * k2,
+      h = q.h * k2;
+    return at(x, y, pic(base, name, -w * (ax == null ? 0.5 : ax), -h * (ay == null ? 0.5 : ay), w, h), rot);
+  }
+  /** 镐:镐头的中心落在 (x, y),和彩纸那把镐是同一个握法,所以位置和角度可以照搬。 */
+  function minePick(base, x, y, rot, s) {
+    return minePic(base, 'pick', x, y, s, rot, 0.5, 0.13);
+  }
+  /**
+   * 一条石板。位置、歪多少、字怎么排都和彩纸那一屏相同(字就是彩纸那套代码排的),只把石板换成素材。
+   * 返回三层:洞(挖开的那条后面露出的深色)、石板、字和标记。
+   */
+  function mineSlab(base, y, label, seed, st, v) {
+    var x = 18,
+      w = 354,
+      h = 76,
+      // 和 mine-paper.js 的 slab 用同一个随机数,歪的角度才对得上字
+      rot = (LD.rng(seed * 53 + 11)() - 0.5) * 1.4 + (st === 'miss' ? 2.2 : 0),
+      tf = 'translate(' + x + ' ' + y + ') rotate(' + K.f(rot) + ' ' + w / 2 + ' ' + h / 2 + ')',
+      body = pic(
+        base,
+        'slab-' + st,
+        -0.8,
+        -0.8,
+        (LD.celMineSprites['slab-' + st] || {}).w,
+        (LD.celMineSprites['slab-' + st] || {}).h,
+      ),
+      mark = '';
+    // 旧词的石板上露着一点矿:哪一级由这个词的掌握度决定,四条都有
+    if (v.source === 'review' && st === 'idle')
+      body +=
+        minePic(base, 'ore-' + (v.mastery + 1), w - 50, h / 2 + 1, 0.86, -10) +
+        minePic(base, 'ore-' + (v.mastery + 1), w - 23, h / 2 + 9, 0.56, 14);
+    if (st === 'answer') mark = cel(g('', k.check(w - 34, h / 2, 13), K.SH));
+    return {
+      hole:
+        st === 'hit'
+          ? '<ellipse cx="' +
+            (x + w - 58) +
+            '" cy="' +
+            (y + h / 2 + 4) +
+            '" rx="50" ry="' +
+            h * 0.5 +
+            '" fill="' +
+            CAVE +
+            '" stroke="#4a3328" stroke-width="1.4" transform="rotate(-4 ' +
+            (x + w - 58) +
+            ' ' +
+            (y + h / 2 + 4) +
+            ')"/>'
+          : '',
+      body: g(tf, body),
+      text: k.slab(x, y, w, h, label, seed, st, v).text + g(tf, mark),
+    };
+  }
+  /**
+   * v 是一条矿脉,st 是这一题的状态:idle 等着挖 / hit 答对 / lucky 答对而且运气好 / miss 答错。
+   * 排法照搬彩纸那一屏(../mine-screens/screens.js 的 mine)。opt.bare 只要场景,不叠字和界面。
+   */
+  function mineSprites(base, bg, sc, v, st, opt) {
+    opt = opt || {};
+    st = st || 'idle';
+    var wrong = (v.answer + 3) % 4,
+      sel = st === 'idle' ? null : st === 'miss' ? wrong : v.answer,
+      right = st === 'hit' || st === 'lucky',
+      grade = v.mastery + 1 + (st === 'lucky' ? 1 : 0),
+      now =
+        st === 'miss'
+          ? S.kit.copy(sc, { allowance: sc.allowance - 1, bag: sc.bag.concat([{ word: v.word }]) })
+          : sc,
+      ys = [296, 384, 472, 560],
+      o = open(bg),
+      holes = '',
+      slabs = '',
+      texts = '',
+      cx = 195,
+      cy = 183,
+      signTf = 'rotate(-1.2 ' + cx + ' ' + cy + ')',
+      top = '',
+      U = new k.Layer(),
+      over = '';
+    v.options.forEach(function (label, i) {
+      var s = mineSlab(base, ys[i], label, i + 1, k.optionState(v, i, sel), v);
+      holes += s.hole;
+      slabs += s.body;
+      texts += s.text;
+    });
+    o += holes + slabs + (opt.bare ? '' : texts);
+    // 词牌:两根木条挂在梁上。右上角垫一块石片,上面是答对会出的那一级矿石
+    o += g(
+      signTf,
+      minePic(base, 'sign', cx - 135, 107, 1, 0, 0, 0) +
+        minePic(base, 'pad', cx + 124, cy - 49, 1.12, 5) +
+        minePic(base, 'ore-' + (v.mastery + 1), cx + 124, cy - 51, 1.25, 5),
+    );
+    if (sel == null) top += minePick(base, 354, 222, 22, 1.05);
+    else if (right) {
+      top += minePick(base, 226, ys[sel] + 26, 58, 1.12);
+      top += minePic(base, 'ore-' + grade, 306, ys[sel] + 6, BURST, -6);
+    } else top += minePick(base, 318, ys[sel] + 16, -40, 1.12);
+    o += top;
+    if (opt.bare) return o + '</svg>';
+
+    // 从这里往下都是代码画的:词牌上的字和标签、矿石的名字、提示、按钮、顶部和底部的界面
+    var tag = k.veinTag(v, cx - 83, 114),
+      back = sel != null,
+      sign =
+        K.txt(cx, cy + (back ? 2 : 10), v.word, 40, K.C.ink, { a: 'middle' }) +
+        K.txt(cx, cy + (back ? 24 : 34), v.ph, 15, K.C.ink, { a: 'middle', w: 500 }) +
+        (back ? K.txt(cx, cy + 47, v.options[v.answer], 16, K.C.ink, { a: 'middle', w: 700 }) : '');
+    o += g(signTf, cel(g('', tag.shape, K.SH)) + tag.text + sign);
+    if (right) {
+      var oh = (LD.celMineSprites['ore-' + grade] || { h: 30 }).h * BURST,
+        ly = ys[sel] + 6 + oh / 2 + 4;
+      U.add(S.kit.pill(306, ly, LD.ORES[grade].name, 15, K.C.white, K.C.ink, 15, 27));
+      if (st === 'lucky') {
+        U.s += k.clover(306 + 34, ys[sel] + 6 - oh / 2 + 4, 1.5, 16);
+        var rb = S.kit.pill(250, ys[sel] - 30, '运气好,矿石多升一级', 13, K.C.yellow, K.C.ink, 14, 28),
+          rtf = 'rotate(-3 250 ' + (ys[sel] - 16) + ')';
+        U.s += g(rtf, rb.shape);
+        U.t += g(rtf, rb.text);
+      }
+      U.add(
+        S.kit.pill(
+          195,
+          656,
+          v.word + ' 去休息,' + LD.REST_DAYS[v.mastery + 1] + ' 天后回到矿里',
+          13,
+          K.C.white,
+          K.C.ink,
+          16,
+          30,
+        ),
+      );
+    } else if (sel != null) {
+      var wt = S.kit.pill(0, 0, v.word, 15, K.C.white, K.C.ink, 13, 30);
+      U.add(S.kit.pill(128, 652, '进了词袋,种到田里学会它', 13, K.C.white, K.C.ink, 15, 32));
+      U.add(S.kit.button(268, 648, 104, 40, '继续挖', true));
+      over = g('translate(172 694) rotate(-13)', g('', wt.shape, K.SH) + wt.text);
+    }
+    return o + cel(U.out() + K.hud(sc) + S.bar('mine', now, 2, { bagPop: st === 'miss' }) + over) + '</svg>';
+  }
+
   /** 线稿加投影的滤镜。cel-ui 给界面的纸片用,cel-line 只加一圈线(星带用,它原本就不带投影)。 */
   function defs() {
     function line(id, shadow) {
@@ -320,6 +474,7 @@
     farmSprites: farmSprites,
     spriteOf: spriteOf,
     pastureSprites: pastureSprites,
+    mineSprites: mineSprites,
     animalSprite: animalSprite,
     defs: defs,
   };
