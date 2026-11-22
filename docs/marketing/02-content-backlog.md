@@ -248,12 +248,13 @@
 - **讲什么:** 第一轮先把屏幕切成几条再往里摆东西,三种构图都是一行一行的,全部被否;
   第二轮先画地形(山、湖、河),再摆路,最后才摆房子;第三轮又被说"不够精致",改成站在山头上远看的样子,房子画出侧面和屋顶;第四轮给镇上加石板路、石桥、台阶、路灯和花坛;
   没开放的地方为什么画成没上色的纸模型;湖为什么不是蓝的。
-- **素材:** [`assets/town-map/`](assets/town-map/) 里的三轮对比图(`01-first-round-rows.png`、`02-redrawn-valley.png`、`03-hilltop-view.png`、`04-town-details.png`、`04-town-details-zoom.png`),
+- **素材:** [`assets/town-map/`](assets/town-map/) 里的三轮对比图(`01-first-round-rows.png`、`02-redrawn-valley.png`、`03-hilltop-view.png`、`04-town-details.png`、`04-town-details-zoom.png`、`05-coloured-no-names.png`),
   [方案比较页](../design/town-map/options.html)和[精修稿的页面](../design/town-map/index.html)(可以录屏),
   [小镇地图的说明](../design/town-map/README.md)。
 - **状态:** 待做
 - **备注:** 精修稿还没有定稿,负责人还没认可;定了之后补决策记录的链接和最终的图。
-  地图上的旅店、饭店、电影院、镇公所、广场、湖边钓鱼都还没有设计,不能展示成已有的功能,"全部开放之后"那张假想图不对外用。
+  地图上的旅店、饭店、电影院、镇公所、广场、湖边钓鱼都还没有设计,不能展示成已有的功能。负责人定了它们在地图上照样上色、只是不写名字,
+  所以用最新的图时配文里必须写明现在能进的只有矿洞、农场、牧场、商店。
   参考过别的游戏的地图只学排法,提到时说"类似的种田游戏",不用它们的画面。
   画面是代码画的示意稿,代码由 AI 协助编写,没有用图像生成工具;发布时按平台规定声明,并写明是示意稿。
 

@@ -78,8 +78,9 @@
     if (w) this.shade(x + ((depth || 0) * s) / 2, y, w * s);
     this.add(y, at(x, y, shape, rot || 0, s));
   };
+  /** 没开放的地方的名签。负责人定了不写名字,所以只有画"上一版"作记录时(named)才画。 */
   Scene.prototype.tag = function (x, y, name) {
-    this.tags.add(T.tag(x, y, name));
+    if (this.named) this.tags.add(T.tag(x, y, name));
   };
   Scene.prototype.out = function () {
     this.items.sort(function (a, b) {
@@ -141,13 +142,17 @@
   }
 
   function toneOf(key, opt) {
-    return opt.open === 'all' ? B.TONES[key] : B.MODEL;
+    return opt.closed === 'model' ? B.MODEL : B.TONES[key];
   }
 
+  /**
+   * opt.closed 'model' 时画上一版的样子:没开放的地方不上色、下面有名签。只留作记录。
+   */
   function build(sc, opt, sk) {
     var S = new Scene(sk.t < 0.5 ? 1 : -1),
       lying = sc.hungry > 0,
       i;
+    S.named = opt.closed === 'model';
 
     // ----- 一层层的地 -----
     // 最远的山:最浅
@@ -284,21 +289,23 @@
     S.ground += g('', plots, K.SH);
 
     // ----- 广场、空地 -----
-    S.ground += g('', at(174, 400, P.plazaFloor(43, 20, opt.open === 'all' ? { a: C.wood, b: C.woodD } : { a: C.white, b: C.whiteD })), K.SHT);
+    S.ground += g('', at(174, 400, P.plazaFloor(43, 20, { a: C.white, b: C.whiteD })), K.SHT);
     S.put(174, 403, P.plazaTree(), 0.8, 0, 26);
     S.tag(174, 424, '中心广场');
     S.ground += g('', at(66, 240, T.lot(3), 0, 0.5) + at(116, 228, T.lot(9), 0, 0.44) + at(366, 430, T.lot(5), 0, 0.5), K.SHT);
     S.tag(92, 242, '空地 · 以后开放');
 
     // ----- 湖边:栈桥、小棚、小船 -----
-    S.put(210, 214, T.pier(opt.open === 'all' ? T.tone(C.woodD, C.red, C.wood, C.woodD) : T.MODEL), 0.5, -32);
+    S.put(210, 214, T.pier(opt.closed === 'model' ? T.MODEL : T.tone(C.woodD, C.red, C.wood, C.woodD)), 0.5, -32);
     S.put(190, 218, B.hut(toneOf('hut', opt)), 0.62, 0, 30, 14);
-    S.ground += at(268, 204, T.boat(opt.open === 'all' ? T.tone(C.woodD, C.red, C.wood, C.woodD) : T.MODEL), -6, 0.56);
+    S.ground += at(268, 204, T.boat(opt.closed === 'model' ? T.MODEL : T.tone(C.woodD, C.red, C.wood, C.woodD)), -6, 0.56);
     S.tag(178, 222, '湖边钓鱼');
 
     // ----- 镇上:沿着缓坡错落,远的小、近的大 -----
     S.put(186, 322, B.hall(toneOf('hall', opt)), 0.58, 0, 130, 26);
     S.tag(216, 340, '镇公所');
+    // 没开放的地方和开放的一样上色,只是下面不写名字(负责人 2026-11-22 定的,见 README)。
+    // 能进的地方有带状况的名牌,不能进的什么字都没有。
     S.put(54, 304, B.cottage(toneOf('cottage0', opt), 0), 0.48, -2, 62, 22);
     S.put(120, 290, B.cottage(toneOf('cottage1', opt), 1), 0.46, 1, 56, 20);
     S.put(254, 298, B.cottage(toneOf('cottage2', opt), 2), 0.46, -1, 60, 22);
