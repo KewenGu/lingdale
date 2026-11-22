@@ -77,6 +77,76 @@
     return o + cel(K.hud(sc) + PS.bar(sc, 'mow')) + '</svg>';
   }
 
+  // ---------- 用一个个素材拼出来的农场 ----------
+  // 上面那三屏的场景是模型一次画出来的整张图。这里换一种做法,也是游戏里真正要用的做法:
+  // 背景一张,地块三种(干土、湿土、空地),每种作物的每个状态各一张带透明底的小图,按存档一块一块摆上去。
+  // 哪块地是什么状态由数据决定,所以不会画错;素材在 sprites/,清单在 sprites/atlas.js。
+
+  /** 一块地上该用哪个素材。种子和发芽所有作物共用;种子没有不生长和枯萎的样子。 */
+  function spriteOf(p) {
+    var health = p.health === 'wilted' ? 'wilted' : p.health === 'stunted' ? 'stunted' : 'healthy';
+    if (p.stage <= 0) return 'seed';
+    if (p.stage === 1) return 'sprout-' + health;
+    return p.crop + '-' + p.stage + '-' + health;
+  }
+  function pic(base, name, x, y, w, h) {
+    return (
+      '<image href="' +
+      base +
+      name +
+      '.webp" x="' +
+      K.f(x) +
+      '" y="' +
+      K.f(y) +
+      '" width="' +
+      K.f(w) +
+      '" height="' +
+      K.f(h) +
+      '"/>'
+    );
+  }
+  /**
+   * plots  一屏的地块(和彩纸那一屏同一份示意存档)
+   * opt.bare 只要场景,不叠界面;opt.missing 用来收集清单里没有的素材名
+   */
+  function farmSprites(base, bg, plots, opt) {
+    opt = opt || {};
+    var A = LD.celSprites || {},
+      o = open(bg),
+      tiles = '',
+      crops = '',
+      tags = '',
+      marks = '';
+    plots.forEach(function (p, i) {
+      var x = 15 + (i % 5) * 73,
+        y = 164 + Math.floor(i / 5) * 88,
+        kind = !p ? 'empty' : p.thirsty ? 'dry' : 'wet',
+        t = A['tile-' + kind];
+      // 地块:素材比 68pt 宽一点(带着厚度和不整齐的边),居中摆,底边对齐
+      if (t) tiles += pic(base, 'tile-' + kind, x + 34 - t.w / 2, y + 72 - t.h, t.w, t.h);
+      if (!p) return;
+      var name = spriteOf(p),
+        s = A[name];
+      // 作物:脚踩在地块中间偏下的位置,高的可以探出地块上沿
+      if (s) crops += pic(base, name, x + 34 - s.w / 2, y + 57 - s.h, s.w, s.h);
+      else if (opt.missing) opt.missing.push(name);
+      var tf = 'translate(' + x + ' ' + y + ')',
+        m = K.markers(p);
+      tags += g(tf, K.starTag(p));
+      if (m) marks += g(tf, m);
+    });
+    o += tiles + crops;
+    if (opt.bare) return o + '</svg>';
+    o += g('', tags, ' filter="url(#cel-line)"') + cel(g('', marks, K.SH));
+    // 底部按钮上的数要跟着这一屏的地块走:能浇水的有几株
+    var sc = S.kit.copy(LD.mineScene, {
+      thirsty: plots.filter(function (p) {
+        return p && p.thirsty;
+      }).length,
+    });
+    return o + cel(K.hud(LD.scene) + S.bar('farm', sc, 2)) + '</svg>';
+  }
+
   /** 线稿加投影的滤镜。cel-ui 给界面的纸片用,cel-line 只加一圈线(星带用,它原本就不带投影)。 */
   function defs() {
     function line(id, shadow) {
@@ -97,5 +167,12 @@
     return line('cel-ui', true) + line('cel-line', false);
   }
 
-  LD.cel = { farm: farm, mine: mine, pasture: pasture, defs: defs };
+  LD.cel = {
+    farm: farm,
+    mine: mine,
+    pasture: pasture,
+    farmSprites: farmSprites,
+    spriteOf: spriteOf,
+    defs: defs,
+  };
 })();

@@ -1,0 +1,622 @@
+{
+ "note": "每一张出图的提示词。素材是把这些图按背景色抠掉、切开得到的,做法见 README。没有用的出图:stunted-grape-1、wilted-cabbage-1、wilted-cabbage-2、wilted-leek-1、wilted-leek-2(画错了,重出);chunky-potato、chunky-tomato(试\"圆胖\"的提示词);a-tomato(一开始试的九宫格)。",
+ "calls": 49,
+ "output_tokens": 602423,
+ "sheets": [
+  {
+   "sheet": "healthy-turnip",
+   "what": "萝卜的三个阶段,健康。切成 turnip-2/3/4-healthy.webp",
+   "model": "doubao-seedream-5-5-261028",
+   "date": "2026-11-22",
+   "reference": "农场的重画",
+   "seconds": 50.3,
+   "usage": {
+    "input_images": 1,
+    "generated_images": 1,
+    "output_tokens": 12096,
+    "total_tokens": 12096
+   },
+   "prompt": "游戏素材图:一行三个小图,等距排开,互不接触、互不遮挡,每一个都完整。背景是纯色的浅蓝色(#a8d8f0),整张图背景完全一样,没有渐变,没有地面,没有方形的土块,没有阴影。三个画的是同一种作物:萝卜(低矮的一丛直立的长叶)的三个生长阶段,从左到右一个比一个大。只画植株本身和根部的一小撮土,从侧面略微俯视,三株都健康,叶子鲜绿挺立。左边是幼苗:两三片直立的小长叶。中间是成株:一丛茂盛的直立长叶,还看不到根。右边是成熟:叶子茂盛,白色带淡粉色的圆根肩从土里露出来。画法和参考图里的作物完全一致:日系动画风格的游戏插画,偏插画的赛璐璐,干净的浅褐色细线稿,平涂为主,每种颜色一层硬边的暗部。配色浅、亮、柔和、对比度低:叶子是明亮的绿色,暗部只比亮部深一点点,不要深色的投影。没有文字,没有数字,没有边框,没有格子线。"
+  },
+  {
+   "sheet": "healthy-potato",
+   "what": "土豆的三个阶段,健康。切成 potato-2/3/4-healthy.webp",
+   "model": "doubao-seedream-5-5-261028",
+   "date": "2026-11-22",
+   "reference": "农场的重画",
+   "seconds": 47.5,
+   "usage": {
+    "input_images": 1,
+    "generated_images": 1,
+    "output_tokens": 12096,
+    "total_tokens": 12096
+   },
+   "prompt": "游戏素材图:一行三个小图,等距排开,互不接触、互不遮挡,每一个都完整。背景是纯色的浅蓝色(#a8d8f0),整张图背景完全一样,没有渐变,没有地面,没有方形的土块,没有阴影。三个画的是同一种作物:土豆(蓬松的圆形矮灌丛)的三个生长阶段,从左到右一个比一个大。只画植株本身和根部的一小撮土,从侧面略微俯视,三株都健康,叶子鲜绿挺立。左边是幼苗:几片小圆叶的矮苗。中间是成株:蓬松的圆灌丛,没有花。右边是成熟:圆灌丛上开着几朵小白花,根部的土边露出两个黄褐色的土豆。画法和参考图里的作物完全一致:日系动画风格的游戏插画,偏插画的赛璐璐,干净的浅褐色细线稿,平涂为主,每种颜色一层硬边的暗部。配色浅、亮、柔和、对比度低:叶子是明亮的绿色,暗部只比亮部深一点点,不要深色的投影。没有文字,没有数字,没有边框,没有格子线。"
+  },
+  {
+   "sheet": "healthy-strawberry",
+   "what": "草莓的三个阶段,健康。切成 strawberry-2/3/4-healthy.webp",
+   "model": "doubao-seedream-5-5-261028",
+   "date": "2026-11-22",
+   "reference": "农场的重画",
+   "seconds": 47.7,
+   "usage": {
+    "input_images": 1,
+    "generated_images": 1,
+    "output_tokens": 12096,
+    "total_tokens": 12096
+   },
+   "prompt": "游戏素材图:一行三个小图,等距排开,互不接触、互不遮挡,每一个都完整。背景是纯色的浅蓝色(#a8d8f0),整张图背景完全一样,没有渐变,没有地面,没有方形的土块,没有阴影。三个画的是同一种作物:草莓(贴着地面的三出叶)的三个生长阶段,从左到右一个比一个大。只画植株本身和根部的一小撮土,从侧面略微俯视,三株都健康,叶子鲜绿挺立。左边是幼苗:一小丛贴地的三出叶。中间是成株:更大的一丛贴地的三出叶,没有果。右边是成熟:叶丛间有小白花和三颗红色的草莓。画法和参考图里的作物完全一致:日系动画风格的游戏插画,偏插画的赛璐璐,干净的浅褐色细线稿,平涂为主,每种颜色一层硬边的暗部。配色浅、亮、柔和、对比度低:叶子是明亮的绿色,暗部只比亮部深一点点,不要深色的投影。没有文字,没有数字,没有边框,没有格子线。"
+  },
+  {
+   "sheet": "healthy-tomato",
+   "what": "番茄的三个阶段,健康。切成 tomato-2/3/4-healthy.webp",
+   "model": "doubao-seedream-5-5-261028",
+   "date": "2026-11-22",
+   "reference": "农场的重画",
+   "seconds": 42.1,
+   "usage": {
+    "input_images": 1,
+    "generated_images": 1,
+    "output_tokens": 12096,
+    "total_tokens": 12096
+   },
+   "prompt": "游戏素材图:一行三个小图,等距排开,互不接触、互不遮挡,每一个都完整。背景是纯色的浅蓝色(#a8d8f0),整张图背景完全一样,没有渐变,没有地面,没有方形的土块,没有阴影。三个画的是同一种作物:番茄(沿着一根细木支架向上长)的三个生长阶段,从左到右一个比一个大。只画植株本身和根部的一小撮土,从侧面略微俯视,三株都健康,叶子鲜绿挺立。左边是幼苗:一株矮矮的小苗,旁边一根细木支架。中间是成株:沿支架长高的植株,有几颗青色的小果。右边是成熟:沿支架长高的植株,挂着几颗红色的圆番茄。画法和参考图里的作物完全一致:日系动画风格的游戏插画,偏插画的赛璐璐,干净的浅褐色细线稿,平涂为主,每种颜色一层硬边的暗部。配色浅、亮、柔和、对比度低:叶子是明亮的绿色,暗部只比亮部深一点点,不要深色的投影。没有文字,没有数字,没有边框,没有格子线。"
+  },
+  {
+   "sheet": "healthy-corn",
+   "what": "玉米的三个阶段,健康。切成 corn-2/3/4-healthy.webp",
+   "model": "doubao-seedream-5-5-261028",
+   "date": "2026-11-22",
+   "reference": "农场的重画",
+   "seconds": 65.9,
+   "usage": {
+    "input_images": 1,
+    "generated_images": 1,
+    "output_tokens": 12096,
+    "total_tokens": 12096
+   },
+   "prompt": "游戏素材图:一行三个小图,等距排开,互不接触、互不遮挡,每一个都完整。背景是纯色的浅蓝色(#a8d8f0),整张图背景完全一样,没有渐变,没有地面,没有方形的土块,没有阴影。三个画的是同一种作物:玉米(一根直立的高秆,长叶向两边弯)的三个生长阶段,从左到右一个比一个大。只画植株本身和根部的一小撮土,从侧面略微俯视,三株都健康,叶子鲜绿挺立。左边是幼苗:矮矮的直秆,两三片向两边弯的长叶。中间是成株:高高的直秆,长叶向两边弯,没有玉米棒。右边是成熟:高高的直秆,顶上有穗,秆上有一根露出黄色籽粒的玉米棒。画法和参考图里的作物完全一致:日系动画风格的游戏插画,偏插画的赛璐璐,干净的浅褐色细线稿,平涂为主,每种颜色一层硬边的暗部。配色浅、亮、柔和、对比度低:叶子是明亮的绿色,暗部只比亮部深一点点,不要深色的投影。没有文字,没有数字,没有边框,没有格子线。"
+  },
+  {
+   "sheet": "healthy-melon",
+   "what": "西瓜的三个阶段,健康。切成 melon-2/3/4-healthy.webp",
+   "model": "doubao-seedream-5-5-261028",
+   "date": "2026-11-22",
+   "reference": "农场的重画",
+   "seconds": 62.2,
+   "usage": {
+    "input_images": 1,
+    "generated_images": 1,
+    "output_tokens": 12096,
+    "total_tokens": 12096
+   },
+   "prompt": "游戏素材图:一行三个小图,等距排开,互不接触、互不遮挡,每一个都完整。背景是纯色的浅蓝色(#a8d8f0),整张图背景完全一样,没有渐变,没有地面,没有方形的土块,没有阴影。三个画的是同一种作物:西瓜(贴着地面的藤和裂叶)的三个生长阶段,从左到右一个比一个大。只画植株本身和根部的一小撮土,从侧面略微俯视,三株都健康,叶子鲜绿挺立。左边是幼苗:一小段贴地的藤,两三片裂叶。中间是成株:更长的贴地的藤和裂叶,没有瓜。右边是成熟:贴地的藤和裂叶,旁边一个深浅绿条纹的圆西瓜。画法和参考图里的作物完全一致:日系动画风格的游戏插画,偏插画的赛璐璐,干净的浅褐色细线稿,平涂为主,每种颜色一层硬边的暗部。配色浅、亮、柔和、对比度低:叶子是明亮的绿色,暗部只比亮部深一点点,不要深色的投影。没有文字,没有数字,没有边框,没有格子线。"
+  },
+  {
+   "sheet": "healthy-eggplant",
+   "what": "茄子的三个阶段,健康。切成 eggplant-2/3/4-healthy.webp",
+   "model": "doubao-seedream-5-5-261028",
+   "date": "2026-11-22",
+   "reference": "农场的重画",
+   "seconds": 61.4,
+   "usage": {
+    "input_images": 1,
+    "generated_images": 1,
+    "output_tokens": 12096,
+    "total_tokens": 12096
+   },
+   "prompt": "游戏素材图:一行三个小图,等距排开,互不接触、互不遮挡,每一个都完整。背景是纯色的浅蓝色(#a8d8f0),整张图背景完全一样,没有渐变,没有地面,没有方形的土块,没有阴影。三个画的是同一种作物:茄子(中等高的灌丛,大叶)的三个生长阶段,从左到右一个比一个大。只画植株本身和根部的一小撮土,从侧面略微俯视,三株都健康,叶子鲜绿挺立。左边是幼苗:几片大叶的小苗。中间是成株:中等高的大叶灌丛,开着一朵紫色的小花,没有果。右边是成熟:大叶灌丛上垂着两根深紫色的长茄子。画法和参考图里的作物完全一致:日系动画风格的游戏插画,偏插画的赛璐璐,干净的浅褐色细线稿,平涂为主,每种颜色一层硬边的暗部。配色浅、亮、柔和、对比度低:叶子是明亮的绿色,暗部只比亮部深一点点,不要深色的投影。没有文字,没有数字,没有边框,没有格子线。"
+  },
+  {
+   "sheet": "healthy-pumpkin",
+   "what": "南瓜的三个阶段,健康。切成 pumpkin-2/3/4-healthy.webp",
+   "model": "doubao-seedream-5-5-261028",
+   "date": "2026-11-22",
+   "reference": "农场的重画",
+   "seconds": 43.4,
+   "usage": {
+    "input_images": 1,
+    "generated_images": 1,
+    "output_tokens": 12096,
+    "total_tokens": 12096
+   },
+   "prompt": "游戏素材图:一行三个小图,等距排开,互不接触、互不遮挡,每一个都完整。背景是纯色的浅蓝色(#a8d8f0),整张图背景完全一样,没有渐变,没有地面,没有方形的土块,没有阴影。三个画的是同一种作物:南瓜(贴着地面的藤和大圆叶)的三个生长阶段,从左到右一个比一个大。只画植株本身和根部的一小撮土,从侧面略微俯视,三株都健康,叶子鲜绿挺立。左边是幼苗:一小段贴地的藤,两片大圆叶。中间是成株:更长的贴地的藤和几片大圆叶,没有瓜。右边是成熟:贴地的藤和大圆叶,旁边一个橙色带棱的扁圆南瓜。画法和参考图里的作物完全一致:日系动画风格的游戏插画,偏插画的赛璐璐,干净的浅褐色细线稿,平涂为主,每种颜色一层硬边的暗部。配色浅、亮、柔和、对比度低:叶子是明亮的绿色,暗部只比亮部深一点点,不要深色的投影。没有文字,没有数字,没有边框,没有格子线。"
+  },
+  {
+   "sheet": "healthy-grape",
+   "what": "葡萄的三个阶段,健康。切成 grape-2/3/4-healthy.webp",
+   "model": "doubao-seedream-5-5-261028",
+   "date": "2026-11-22",
+   "reference": "农场的重画",
+   "seconds": 45.5,
+   "usage": {
+    "input_images": 1,
+    "generated_images": 1,
+    "output_tokens": 12096,
+    "total_tokens": 12096
+   },
+   "prompt": "游戏素材图:一行三个小图,等距排开,互不接触、互不遮挡,每一个都完整。背景是纯色的浅蓝色(#a8d8f0),整张图背景完全一样,没有渐变,没有地面,没有方形的土块,没有阴影。三个画的是同一种作物:葡萄(攀在一个小木架上的藤)的三个生长阶段,从左到右一个比一个大。只画植株本身和根部的一小撮土,从侧面略微俯视,三株都健康,叶子鲜绿挺立。左边是幼苗:小木架下刚爬上去的一小段藤和两片叶子。中间是成株:爬满小木架的藤和叶子,没有果。右边是成熟:爬满小木架的藤和叶子,挂着一串紫色的葡萄。画法和参考图里的作物完全一致:日系动画风格的游戏插画,偏插画的赛璐璐,干净的浅褐色细线稿,平涂为主,每种颜色一层硬边的暗部。配色浅、亮、柔和、对比度低:叶子是明亮的绿色,暗部只比亮部深一点点,不要深色的投影。没有文字,没有数字,没有边框,没有格子线。"
+  },
+  {
+   "sheet": "healthy-cabbage",
+   "what": "白菜的三个阶段,健康。切成 cabbage-2/3/4-healthy.webp",
+   "model": "doubao-seedream-5-5-261028",
+   "date": "2026-11-22",
+   "reference": "农场的重画",
+   "seconds": 136.8,
+   "usage": {
+    "input_images": 1,
+    "generated_images": 1,
+    "output_tokens": 12096,
+    "total_tokens": 12096
+   },
+   "prompt": "游戏素材图:一行三个小图,等距排开,互不接触、互不遮挡,每一个都完整。背景是纯色的浅蓝色(#a8d8f0),整张图背景完全一样,没有渐变,没有地面,没有方形的土块,没有阴影。三个画的是同一种作物:白菜(一整颗包起来的菜头)的三个生长阶段,从左到右一个比一个大。只画植株本身和根部的一小撮土,从侧面略微俯视,三株都健康,叶子鲜绿挺立。左边是幼苗:几片散开的小嫩叶。中间是成株:叶子开始向里包的半大的菜。右边是成熟:一整颗包紧的白菜,白色的菜帮,淡黄绿色的叶子。画法和参考图里的作物完全一致:日系动画风格的游戏插画,偏插画的赛璐璐,干净的浅褐色细线稿,平涂为主,每种颜色一层硬边的暗部。配色浅、亮、柔和、对比度低:叶子是明亮的绿色,暗部只比亮部深一点点,不要深色的投影。没有文字,没有数字,没有边框,没有格子线。"
+  },
+  {
+   "sheet": "healthy-leek",
+   "what": "韭葱的三个阶段,健康。切成 leek-2/3/4-healthy.webp",
+   "model": "doubao-seedream-5-5-261028",
+   "date": "2026-11-22",
+   "reference": "农场的重画",
+   "seconds": 83.9,
+   "usage": {
+    "input_images": 1,
+    "generated_images": 1,
+    "output_tokens": 12096,
+    "total_tokens": 12096
+   },
+   "prompt": "游戏素材图:一行三个小图,等距排开,互不接触、互不遮挡,每一个都完整。背景是纯色的浅蓝色(#a8d8f0),整张图背景完全一样,没有渐变,没有地面,没有方形的土块,没有阴影。三个画的是同一种作物:韭葱(直立的扇形蓝绿色扁叶)的三个生长阶段,从左到右一个比一个大。只画植株本身和根部的一小撮土,从侧面略微俯视,三株都健康,叶子鲜绿挺立。左边是幼苗:三四根细细的直立扁叶。中间是成株:一把直立的扇形蓝绿色扁叶,还看不到葱白。右边是成熟:直立的扇形蓝绿色扁叶,下面露出一截白色的葱白。画法和参考图里的作物完全一致:日系动画风格的游戏插画,偏插画的赛璐璐,干净的浅褐色细线稿,平涂为主,每种颜色一层硬边的暗部。配色浅、亮、柔和、对比度低:叶子是明亮的绿色,暗部只比亮部深一点点,不要深色的投影。没有文字,没有数字,没有边框,没有格子线。"
+  },
+  {
+   "sheet": "healthy-snowpea",
+   "what": "雪豆的三个阶段,健康。切成 snowpea-2/3/4-healthy.webp",
+   "model": "doubao-seedream-5-5-261028",
+   "date": "2026-11-22",
+   "reference": "农场的重画",
+   "seconds": 35.9,
+   "usage": {
+    "input_images": 1,
+    "generated_images": 1,
+    "output_tokens": 12096,
+    "total_tokens": 12096
+   },
+   "prompt": "游戏素材图:一行三个小图,等距排开,互不接触、互不遮挡,每一个都完整。背景是纯色的浅蓝色(#a8d8f0),整张图背景完全一样,没有渐变,没有地面,没有方形的土块,没有阴影。三个画的是同一种作物:雪豆(沿着一根细杆攀爬,有卷须)的三个生长阶段,从左到右一个比一个大。只画植株本身和根部的一小撮土,从侧面略微俯视,三株都健康,叶子鲜绿挺立。左边是幼苗:细杆旁刚开始攀爬的小苗,有卷须。中间是成株:沿细杆爬高的藤,有卷须和叶子,没有豆荚。右边是成熟:沿细杆爬高的藤,开着小白花,挂着几个扁平的浅绿色豆荚。画法和参考图里的作物完全一致:日系动画风格的游戏插画,偏插画的赛璐璐,干净的浅褐色细线稿,平涂为主,每种颜色一层硬边的暗部。配色浅、亮、柔和、对比度低:叶子是明亮的绿色,暗部只比亮部深一点点,不要深色的投影。没有文字,没有数字,没有边框,没有格子线。"
+  },
+  {
+   "sheet": "stunted-turnip",
+   "what": "萝卜的三个阶段,不生长。切成 turnip-2/3/4-stunted.webp",
+   "model": "doubao-seedream-5-5-261028",
+   "date": "2026-11-22",
+   "reference": "healthy-turnip",
+   "seconds": 20.0,
+   "usage": {
+    "input_images": 1,
+    "generated_images": 1,
+    "output_tokens": 12096,
+    "total_tokens": 12096
+   },
+   "prompt": "修改这张图:三株植物的位置、大小、种类、画法和背景都保持完全不变,只做两处改动:每一株都整株明显地歪向右边(像没有精神),并且每一株各有一片叶子变成黄色。其余的叶子仍然是绿色的,果实不变。不要增加或减少任何东西,没有文字。"
+  },
+  {
+   "sheet": "stunted-potato",
+   "what": "土豆的三个阶段,不生长。切成 potato-2/3/4-stunted.webp",
+   "model": "doubao-seedream-5-5-261028",
+   "date": "2026-11-22",
+   "reference": "healthy-potato",
+   "seconds": 29.3,
+   "usage": {
+    "input_images": 1,
+    "generated_images": 1,
+    "output_tokens": 12096,
+    "total_tokens": 12096
+   },
+   "prompt": "修改这张图:三株植物的位置、大小、种类、画法和背景都保持完全不变,只做两处改动:每一株都整株明显地歪向右边(像没有精神),并且每一株各有一片叶子变成黄色。其余的叶子仍然是绿色的,果实不变。不要增加或减少任何东西,没有文字。"
+  },
+  {
+   "sheet": "stunted-strawberry",
+   "what": "草莓的三个阶段,不生长。切成 strawberry-2/3/4-stunted.webp",
+   "model": "doubao-seedream-5-5-261028",
+   "date": "2026-11-22",
+   "reference": "healthy-strawberry",
+   "seconds": 33.2,
+   "usage": {
+    "input_images": 1,
+    "generated_images": 1,
+    "output_tokens": 12096,
+    "total_tokens": 12096
+   },
+   "prompt": "修改这张图:三株植物的位置、大小、种类、画法和背景都保持完全不变,只做两处改动:每一株都整株明显地歪向右边(像没有精神),并且每一株各有一片叶子变成黄色。其余的叶子仍然是绿色的,果实不变。不要增加或减少任何东西,没有文字。"
+  },
+  {
+   "sheet": "stunted-tomato",
+   "what": "番茄的三个阶段,不生长。切成 tomato-2/3/4-stunted.webp",
+   "model": "doubao-seedream-5-5-261028",
+   "date": "2026-11-22",
+   "reference": "healthy-tomato",
+   "seconds": 22.6,
+   "usage": {
+    "input_images": 1,
+    "generated_images": 1,
+    "output_tokens": 12096,
+    "total_tokens": 12096
+   },
+   "prompt": "修改这张图:三株植物的位置、大小、种类、画法和背景都保持完全不变,只做两处改动:每一株都整株明显地歪向右边(像没有精神),并且每一株各有一片叶子变成黄色。其余的叶子仍然是绿色的,果实不变。不要增加或减少任何东西,没有文字。"
+  },
+  {
+   "sheet": "stunted-corn",
+   "what": "玉米的三个阶段,不生长。切成 corn-2/3/4-stunted.webp",
+   "model": "doubao-seedream-5-5-261028",
+   "date": "2026-11-22",
+   "reference": "healthy-corn",
+   "seconds": 25.9,
+   "usage": {
+    "input_images": 1,
+    "generated_images": 1,
+    "output_tokens": 12096,
+    "total_tokens": 12096
+   },
+   "prompt": "修改这张图:三株植物的位置、大小、种类、画法和背景都保持完全不变,只做两处改动:每一株都整株明显地歪向右边(像没有精神),并且每一株各有一片叶子变成黄色。其余的叶子仍然是绿色的,果实不变。不要增加或减少任何东西,没有文字。"
+  },
+  {
+   "sheet": "stunted-melon",
+   "what": "西瓜的三个阶段,不生长。切成 melon-2/3/4-stunted.webp",
+   "model": "doubao-seedream-5-5-261028",
+   "date": "2026-11-22",
+   "reference": "healthy-melon",
+   "seconds": 26.5,
+   "usage": {
+    "input_images": 1,
+    "generated_images": 1,
+    "output_tokens": 12096,
+    "total_tokens": 12096
+   },
+   "prompt": "修改这张图:三株植物的位置、大小、种类、画法和背景都保持完全不变,只做两处改动:每一株都整株明显地歪向右边(像没有精神),并且每一株各有一片叶子变成黄色。其余的叶子仍然是绿色的,果实不变。不要增加或减少任何东西,没有文字。"
+  },
+  {
+   "sheet": "stunted-eggplant",
+   "what": "茄子的三个阶段,不生长。切成 eggplant-2/3/4-stunted.webp",
+   "model": "doubao-seedream-5-5-261028",
+   "date": "2026-11-22",
+   "reference": "healthy-eggplant",
+   "seconds": 23.2,
+   "usage": {
+    "input_images": 1,
+    "generated_images": 1,
+    "output_tokens": 12096,
+    "total_tokens": 12096
+   },
+   "prompt": "修改这张图:三株植物的位置、大小、种类、画法和背景都保持完全不变,只做两处改动:每一株都整株明显地歪向右边(像没有精神),并且每一株各有一片叶子变成黄色。其余的叶子仍然是绿色的,果实不变。不要增加或减少任何东西,没有文字。"
+  },
+  {
+   "sheet": "stunted-pumpkin",
+   "what": "南瓜的三个阶段,不生长。切成 pumpkin-2/3/4-stunted.webp",
+   "model": "doubao-seedream-5-5-261028",
+   "date": "2026-11-22",
+   "reference": "healthy-pumpkin",
+   "seconds": 24.7,
+   "usage": {
+    "input_images": 1,
+    "generated_images": 1,
+    "output_tokens": 12096,
+    "total_tokens": 12096
+   },
+   "prompt": "修改这张图:三株植物的位置、大小、种类、画法和背景都保持完全不变,只做两处改动:每一株都整株明显地歪向右边(像没有精神),并且每一株各有一片叶子变成黄色。其余的叶子仍然是绿色的,果实不变。不要增加或减少任何东西,没有文字。"
+  },
+  {
+   "sheet": "stunted-grape",
+   "what": "葡萄的三个阶段,不生长。切成 grape-2/3/4-stunted.webp",
+   "model": "doubao-seedream-5-5-261028",
+   "date": "2026-11-22",
+   "reference": "healthy-grape",
+   "seconds": 32.1,
+   "usage": {
+    "input_images": 1,
+    "generated_images": 1,
+    "output_tokens": 12096,
+    "total_tokens": 12096
+   },
+   "prompt": "修改这张图:三株植物的位置、大小、种类、画法和背景都保持完全不变,只做两处改动:每一株都整株明显地歪向右边(像没有精神),并且每一株各有一片叶子变成黄色。其余的叶子仍然是绿色的,果实不变,支架和木架的每一根木头都原样不动。不要增加或减少任何东西,没有文字。"
+  },
+  {
+   "sheet": "stunted-cabbage",
+   "what": "白菜的三个阶段,不生长。切成 cabbage-2/3/4-stunted.webp",
+   "model": "doubao-seedream-5-5-261028",
+   "date": "2026-11-22",
+   "reference": "healthy-cabbage",
+   "seconds": 29.2,
+   "usage": {
+    "input_images": 1,
+    "generated_images": 1,
+    "output_tokens": 12096,
+    "total_tokens": 12096
+   },
+   "prompt": "修改这张图:三株植物的位置、大小、种类、画法和背景都保持完全不变,只做两处改动:每一株都整株明显地歪向右边(像没有精神),并且每一株各有一片叶子变成黄色。其余的叶子仍然是绿色的,果实不变。不要增加或减少任何东西,没有文字。"
+  },
+  {
+   "sheet": "stunted-leek",
+   "what": "韭葱的三个阶段,不生长。切成 leek-2/3/4-stunted.webp",
+   "model": "doubao-seedream-5-5-261028",
+   "date": "2026-11-22",
+   "reference": "healthy-leek",
+   "seconds": 24.8,
+   "usage": {
+    "input_images": 1,
+    "generated_images": 1,
+    "output_tokens": 12096,
+    "total_tokens": 12096
+   },
+   "prompt": "修改这张图:三株植物的位置、大小、种类、画法和背景都保持完全不变,只做两处改动:每一株都整株明显地歪向右边(像没有精神),并且每一株各有一片叶子变成黄色。其余的叶子仍然是绿色的,果实不变。不要增加或减少任何东西,没有文字。"
+  },
+  {
+   "sheet": "stunted-snowpea",
+   "what": "雪豆的三个阶段,不生长。切成 snowpea-2/3/4-stunted.webp",
+   "model": "doubao-seedream-5-5-261028",
+   "date": "2026-11-22",
+   "reference": "healthy-snowpea",
+   "seconds": 35.7,
+   "usage": {
+    "input_images": 1,
+    "generated_images": 1,
+    "output_tokens": 12096,
+    "total_tokens": 12096
+   },
+   "prompt": "修改这张图:三株植物的位置、大小、种类、画法和背景都保持完全不变,只做两处改动:每一株都整株明显地歪向右边(像没有精神),并且每一株各有一片叶子变成黄色。其余的叶子仍然是绿色的,果实不变。不要增加或减少任何东西,没有文字。"
+  },
+  {
+   "sheet": "wilted-turnip",
+   "what": "萝卜的三个阶段,枯萎。切成 turnip-2/3/4-wilted.webp",
+   "model": "doubao-seedream-5-5-261028",
+   "date": "2026-11-22",
+   "reference": "healthy-turnip",
+   "seconds": 29.6,
+   "usage": {
+    "input_images": 1,
+    "generated_images": 1,
+    "output_tokens": 12096,
+    "total_tokens": 12096
+   },
+   "prompt": "修改这张图:三株植物的位置、种类、画法和背景都保持完全不变,把三株都改成蔫了、枯萎的样子:茎向下弯,所有的叶子都变成黄色和黄褐色并且下垂,果实和花的颜色变得发灰、发暗。植株还在原来的位置,根部的土不变。不要增加或减少任何东西,没有文字。"
+  },
+  {
+   "sheet": "wilted-potato",
+   "what": "土豆的三个阶段,枯萎。切成 potato-2/3/4-wilted.webp",
+   "model": "doubao-seedream-5-5-261028",
+   "date": "2026-11-22",
+   "reference": "healthy-potato",
+   "seconds": 31.9,
+   "usage": {
+    "input_images": 1,
+    "generated_images": 1,
+    "output_tokens": 12096,
+    "total_tokens": 12096
+   },
+   "prompt": "修改这张图:三株植物的位置、种类、画法和背景都保持完全不变,把三株都改成蔫了、枯萎的样子:茎向下弯,所有的叶子都变成黄色和黄褐色并且下垂,果实和花的颜色变得发灰、发暗。植株还在原来的位置,根部的土不变。不要增加或减少任何东西,没有文字。"
+  },
+  {
+   "sheet": "wilted-strawberry",
+   "what": "草莓的三个阶段,枯萎。切成 strawberry-2/3/4-wilted.webp",
+   "model": "doubao-seedream-5-5-261028",
+   "date": "2026-11-22",
+   "reference": "healthy-strawberry",
+   "seconds": 33.0,
+   "usage": {
+    "input_images": 1,
+    "generated_images": 1,
+    "output_tokens": 12096,
+    "total_tokens": 12096
+   },
+   "prompt": "修改这张图:三株植物的位置、种类、画法和背景都保持完全不变,把三株都改成蔫了、枯萎的样子:茎向下弯,所有的叶子都变成黄色和黄褐色并且下垂,果实和花的颜色变得发灰、发暗。植株还在原来的位置,根部的土不变。不要增加或减少任何东西,没有文字。"
+  },
+  {
+   "sheet": "wilted-tomato",
+   "what": "番茄的三个阶段,枯萎。切成 tomato-2/3/4-wilted.webp",
+   "model": "doubao-seedream-5-5-261028",
+   "date": "2026-11-22",
+   "reference": "healthy-tomato",
+   "seconds": 35.0,
+   "usage": {
+    "input_images": 1,
+    "generated_images": 1,
+    "output_tokens": 12096,
+    "total_tokens": 12096
+   },
+   "prompt": "修改这张图:三株植物的位置、种类、画法和背景都保持完全不变,把三株都改成蔫了、枯萎的样子:茎向下弯,所有的叶子都变成黄色和黄褐色并且下垂,果实和花的颜色变得发灰、发暗。植株还在原来的位置,根部的土不变。不要增加或减少任何东西,没有文字。"
+  },
+  {
+   "sheet": "wilted-corn",
+   "what": "玉米的三个阶段,枯萎。切成 corn-2/3/4-wilted.webp",
+   "model": "doubao-seedream-5-5-261028",
+   "date": "2026-11-22",
+   "reference": "healthy-corn",
+   "seconds": 38.8,
+   "usage": {
+    "input_images": 1,
+    "generated_images": 1,
+    "output_tokens": 12096,
+    "total_tokens": 12096
+   },
+   "prompt": "修改这张图:三株植物的位置、种类、画法和背景都保持完全不变,把三株都改成蔫了、枯萎的样子:茎向下弯,所有的叶子都变成黄色和黄褐色并且下垂,果实和花的颜色变得发灰、发暗。植株还在原来的位置,根部的土不变。不要增加或减少任何东西,没有文字。"
+  },
+  {
+   "sheet": "wilted-melon",
+   "what": "西瓜的三个阶段,枯萎。切成 melon-2/3/4-wilted.webp",
+   "model": "doubao-seedream-5-5-261028",
+   "date": "2026-11-22",
+   "reference": "healthy-melon",
+   "seconds": 35.2,
+   "usage": {
+    "input_images": 1,
+    "generated_images": 1,
+    "output_tokens": 12096,
+    "total_tokens": 12096
+   },
+   "prompt": "修改这张图:三株植物的位置、种类、画法和背景都保持完全不变,把三株都改成蔫了、枯萎的样子:茎向下弯,所有的叶子都变成黄色和黄褐色并且下垂,果实和花的颜色变得发灰、发暗。植株还在原来的位置,根部的土不变。不要增加或减少任何东西,没有文字。"
+  },
+  {
+   "sheet": "wilted-eggplant",
+   "what": "茄子的三个阶段,枯萎。切成 eggplant-2/3/4-wilted.webp",
+   "model": "doubao-seedream-5-5-261028",
+   "date": "2026-11-22",
+   "reference": "healthy-eggplant",
+   "seconds": 42.1,
+   "usage": {
+    "input_images": 1,
+    "generated_images": 1,
+    "output_tokens": 12096,
+    "total_tokens": 12096
+   },
+   "prompt": "修改这张图:三株植物的位置、种类、画法和背景都保持完全不变,把三株都改成蔫了、枯萎的样子:茎向下弯,所有的叶子都变成黄色和黄褐色并且下垂,果实和花的颜色变得发灰、发暗。植株还在原来的位置,根部的土不变。不要增加或减少任何东西,没有文字。"
+  },
+  {
+   "sheet": "wilted-pumpkin",
+   "what": "南瓜的三个阶段,枯萎。切成 pumpkin-2/3/4-wilted.webp",
+   "model": "doubao-seedream-5-5-261028",
+   "date": "2026-11-22",
+   "reference": "healthy-pumpkin",
+   "seconds": 39.7,
+   "usage": {
+    "input_images": 1,
+    "generated_images": 1,
+    "output_tokens": 12096,
+    "total_tokens": 12096
+   },
+   "prompt": "修改这张图:三株植物的位置、种类、画法和背景都保持完全不变,把三株都改成蔫了、枯萎的样子:茎向下弯,所有的叶子都变成黄色和黄褐色并且下垂,果实和花的颜色变得发灰、发暗。植株还在原来的位置,根部的土不变。不要增加或减少任何东西,没有文字。"
+  },
+  {
+   "sheet": "wilted-grape",
+   "what": "葡萄的三个阶段,枯萎。切成 grape-2/3/4-wilted.webp",
+   "model": "doubao-seedream-5-5-261028",
+   "date": "2026-11-22",
+   "reference": "healthy-grape",
+   "seconds": 42.1,
+   "usage": {
+    "input_images": 1,
+    "generated_images": 1,
+    "output_tokens": 12096,
+    "total_tokens": 12096
+   },
+   "prompt": "修改这张图:三株植物的位置、种类、画法和背景都保持完全不变,把三株都改成蔫了、枯萎的样子:茎向下弯,所有的叶子都变成黄色和黄褐色并且下垂,果实和花的颜色变得发灰、发暗。植株还在原来的位置,根部的土不变。不要增加或减少任何东西,没有文字。"
+  },
+  {
+   "sheet": "wilted-cabbage",
+   "what": "白菜的三个阶段,枯萎。切成 cabbage-2/3/4-wilted.webp",
+   "model": "doubao-seedream-5-5-261028",
+   "date": "2026-11-22",
+   "reference": "healthy-cabbage",
+   "seconds": 37.9,
+   "usage": {
+    "input_images": 1,
+    "generated_images": 1,
+    "output_tokens": 12096,
+    "total_tokens": 12096
+   },
+   "prompt": "修改这张图:三株植物的位置、种类、画法和背景都保持完全不变,把三株都改成蔫了、枯萎的样子:茎向下弯,所有的叶子都变成黄色和黄褐色并且下垂,原来有果实和花的,颜色变得发灰、发暗;原来没有花、没有果实的,不要画出花和果实。植株还在原来的位置,根部的土不变。画面里没有支架和木棍,不要画出来。不要增加或减少任何东西,没有文字。"
+  },
+  {
+   "sheet": "wilted-leek",
+   "what": "韭葱的三个阶段,枯萎。切成 leek-2/3/4-wilted.webp",
+   "model": "doubao-seedream-5-5-261028",
+   "date": "2026-11-22",
+   "reference": "healthy-leek",
+   "seconds": 36.6,
+   "usage": {
+    "input_images": 1,
+    "generated_images": 1,
+    "output_tokens": 12096,
+    "total_tokens": 12096
+   },
+   "prompt": "修改这张图:三株植物的位置、种类、画法和背景都保持完全不变,把三株都改成蔫了、枯萎的样子:茎向下弯,所有的叶子都变成黄色和黄褐色并且下垂,原来有果实和花的,颜色变得发灰、发暗;原来没有花、没有果实的,不要画出花和果实。植株还在原来的位置,根部的土不变。画面里没有支架和木棍,不要画出来。不要增加或减少任何东西,没有文字。"
+  },
+  {
+   "sheet": "wilted-snowpea",
+   "what": "雪豆的三个阶段,枯萎。切成 snowpea-2/3/4-wilted.webp",
+   "model": "doubao-seedream-5-5-261028",
+   "date": "2026-11-22",
+   "reference": "healthy-snowpea",
+   "seconds": 42.1,
+   "usage": {
+    "input_images": 1,
+    "generated_images": 1,
+    "output_tokens": 12096,
+    "total_tokens": 12096
+   },
+   "prompt": "修改这张图:三株植物的位置、种类、画法和背景都保持完全不变,把三株都改成蔫了、枯萎的样子:茎向下弯,所有的叶子都变成黄色和黄褐色并且下垂,果实和花的颜色变得发灰、发暗。植株还在原来的位置,根部的土不变。不要增加或减少任何东西,没有文字。"
+  },
+  {
+   "sheet": "healthy-shared",
+   "what": "共用的种子和发芽,健康。切成 seed.webp、sprout-healthy.webp(第三个没有用)",
+   "model": "doubao-seedream-5-5-261028",
+   "date": "2026-11-22",
+   "reference": "农场的重画",
+   "seconds": 36.3,
+   "usage": {
+    "input_images": 1,
+    "generated_images": 1,
+    "output_tokens": 12096,
+    "total_tokens": 12096
+   },
+   "prompt": "游戏素材图:一行三个小图,等距排开,互不接触、互不遮挡,每一个都完整。背景是纯色的浅蓝色(#a8d8f0),整张图背景完全一样,没有渐变,没有地面,没有方形的土块,没有阴影。只画东西本身,从侧面略微俯视。左边:一个小土堆,里面刚种下种子,土堆旁边插着一块白色的小木牌,木牌上画着一片小绿叶,没有字。中间:一小撮土上刚冒出来的嫩芽,只有两片圆圆的子叶,鲜绿挺立。右边:和中间一样的嫩芽,稍大一点,两片圆圆的子叶中间冒出一点新叶。画法和参考图里的作物完全一致:日系动画风格的游戏插画,偏插画的赛璐璐,干净的浅褐色细线稿,平涂为主,每种颜色一层硬边的暗部。配色浅、亮、柔和、对比度低:叶子是明亮的绿色,暗部只比亮部深一点点,不要深色的投影。没有文字,没有数字,没有边框,没有格子线。"
+  },
+  {
+   "sheet": "stunted-shared",
+   "what": "发芽,不生长。切成 sprout-stunted.webp",
+   "model": "doubao-seedream-5-5-261028",
+   "date": "2026-11-22",
+   "reference": "healthy-shared.png",
+   "seconds": 42.0,
+   "usage": {
+    "input_images": 1,
+    "generated_images": 1,
+    "output_tokens": 12096,
+    "total_tokens": 12096
+   },
+   "prompt": "修改这张图:三样东西的位置、大小、画法和背景都保持完全不变,只做两处改动:中间和右边的两株嫩芽都整株明显地歪向右边,并且各有一片子叶变成黄色。左边的土堆和木牌不变。没有文字。"
+  },
+  {
+   "sheet": "wilted-shared",
+   "what": "发芽,枯萎。切成 sprout-wilted.webp",
+   "model": "doubao-seedream-5-5-261028",
+   "date": "2026-11-22",
+   "reference": "healthy-shared.png",
+   "seconds": 39.1,
+   "usage": {
+    "input_images": 1,
+    "generated_images": 1,
+    "output_tokens": 12096,
+    "total_tokens": 12096
+   },
+   "prompt": "修改这张图:三样东西的位置、画法和背景都保持完全不变,把中间和右边的两株嫩芽改成蔫了、枯萎的样子:茎向下弯,子叶全部变成黄色并且下垂。左边的土堆和木牌不变。没有文字。"
+  },
+  {
+   "sheet": "tiles",
+   "what": "三种地块。切成 tile-dry/wet/empty.webp",
+   "model": "doubao-seedream-5-5-261028",
+   "date": "2026-11-22",
+   "reference": "农场的重画",
+   "seconds": 38.7,
+   "usage": {
+    "input_images": 1,
+    "generated_images": 1,
+    "output_tokens": 12096,
+    "total_tokens": 12096
+   },
+   "prompt": "游戏素材图:一行三块方形的地块,等距排开,互不接触,三块的形状和大小完全相同,都是从正上方看的圆角方形的一块土,边缘略微不整齐,有一点厚度。背景是纯色的浅蓝色(#a8d8f0),整张图背景完全一样,没有渐变,没有地面,没有方形的土块,没有阴影。地块上没有任何植物、没有牌子。左边:浅砂色的干土(#e6c08a),表面干燥,有几粒小石子。中间:可可色的湿土(#a06a47),刚浇过水,颜色明显更深。右边:浅褐色的空地(#b5805a),上面翻出三道横向的垄。画法和参考图里的作物完全一致:日系动画风格的游戏插画,偏插画的赛璐璐,干净的浅褐色细线稿,平涂为主,每种颜色一层硬边的暗部。配色浅、亮、柔和、对比度低:叶子是明亮的绿色,暗部只比亮部深一点点,不要深色的投影。没有文字,没有数字,没有边框,没有格子线。"
+  },
+  {
+   "sheet": "farm-bg",
+   "what": "农场的背景。存成 farm-bg.webp,出图之后用 regreen.py 调过底色",
+   "model": "doubao-seedream-5-5-261028",
+   "date": "2026-11-22",
+   "reference": "src-farm-bg.png",
+   "seconds": 41.6,
+   "usage": {
+    "input_images": 1,
+    "generated_images": 1,
+    "output_tokens": 17527,
+    "total_tokens": 17527
+   },
+   "prompt": "把参考图重新画一遍。这是一款手机游戏农场画面的背景,竖屏。必须和参考图保持完全相同的构图:上方是一条窄窄的远景(天空、太阳、几座红屋顶的小房子、圆圆的树、一排白色的矮栅栏),下面是一大片平整的草地,草地上什么都没有,只在最下面有几丛小草和几朵小白花。不要在草地上画任何地块、作物、路和东西。配色:整体色调必须和参考图一致,浅、亮、柔和、对比度低,像彩色纸的颜色:草地是很浅的黄绿色(#cfe6a6),最下面一段是稍深一点的绿(#a9cf7c),天空是很浅的蓝(#d3ecf2)。暗部只比亮部深一点点,不要强烈的光影。线稿用柔和的浅褐色,线条细。画法:日系动画风格的游戏场景插画,偏插画的赛璐璐:干净的线稿,以平涂为主,每种颜色一层硬边的暗部。画面里没有任何文字、数字、按钮和界面,没有人物。"
+  }
+ ]
+}

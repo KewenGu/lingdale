@@ -131,6 +131,136 @@
       true,
     );
   });
+  // ---------- 用素材拼出来的农场 ----------
+  (function () {
+    var SP = 'sprites/',
+      BG = SP + 'farm-bg.webp',
+      A = LD.celSprites || {},
+      missing = [],
+      holder = $('built-shots');
+    phone(holder, LD.screens.farm(LD.scene, LD.mineScene, 2), '农场,彩纸', '<b>彩纸的原稿</b>代码绘制。');
+    phone(
+      holder,
+      LD.cel.farm(G + 'farm.webp'),
+      '农场,整屏重画',
+      '<b>整屏重画</b>模型一次画出整张图。出过四张,只有一张干湿全对。',
+      true,
+    );
+    phone(
+      holder,
+      LD.cel.farmSprites(SP, BG, LD.scene.plots, { missing: missing }),
+      '农场,素材拼的',
+      '<b>素材拼的</b>背景一张,地块三种,作物一个状态一张,按存档摆上去。',
+      true,
+    );
+    if (missing.length) console.warn('缺素材', missing);
+
+    // 另一个存档:把每块地的状态打乱重排,不用重新出图
+    var rnd = LD.rng(20261122),
+      ids = LD.CROPS.map(function (c) {
+        return c.id;
+      }),
+      plots = [];
+    for (var i = 0; i < 30; i++) {
+      if (rnd() < 0.1) {
+        plots.push(null);
+        continue;
+      }
+      var stage = Math.floor(rnd() * 5),
+        r = rnd(),
+        health = stage === 0 ? 'healthy' : r < 0.12 ? 'wilted' : r < 0.28 ? 'stunted' : 'healthy';
+      plots.push(
+        LD.plot(ids[Math.floor(rnd() * 12)], stage, {
+          health: health,
+          stars: health === 'wilted' ? 3 : health === 'stunted' ? 4 : 5,
+          thirsty: rnd() < 0.45,
+          harvestNext: stage === 4 && rnd() < 0.6,
+        }),
+      );
+    }
+    phone(
+      $('built-other'),
+      LD.cel.farmSprites(SP, BG, plots),
+      '农场,另一个存档',
+      '<b>换一个存档</b>十二种作物都种上,状态随机排。没有重新出图,只是换了摆法。',
+      true,
+    );
+    phone(
+      $('built-other'),
+      LD.cel.farmSprites(SP, BG, plots, { bare: true }),
+      '农场,另一个存档,不叠界面',
+      '<b>同上,不叠界面</b>只有背景、地块和作物。',
+      true,
+    );
+
+    // 素材一览:一种作物一行,三个阶段乘三种状态
+    var kinds = [
+        ['healthy', '健康'],
+        ['stunted', '不生长'],
+        ['wilted', '枯萎'],
+      ],
+      table = $('sprite-table'),
+      head = '<tr><th></th>';
+    kinds.forEach(function (k) {
+      head += '<th colspan="3">' + k[1] + '</th>';
+    });
+    table.innerHTML = head + '</tr>';
+    function cell(name) {
+      var s = A[name];
+      if (!s) return '<td class="none">缺</td>';
+      return (
+        '<td><img src="' +
+        SP +
+        name +
+        '.webp" alt="' +
+        esc(name) +
+        '" style="width:' +
+        s.w +
+        'px;height:' +
+        s.h +
+        'px" loading="lazy"></td>'
+      );
+    }
+    LD.CROPS.forEach(function (c) {
+      var row = '<tr><td class="name">' + esc(c.name) + '</td>';
+      kinds.forEach(function (k) {
+        [2, 3, 4].forEach(function (st) {
+          row += cell(c.id + '-' + st + '-' + k[0]);
+        });
+      });
+      table.innerHTML += row + '</tr>';
+    });
+    var shared =
+      '<tr><td class="name">共用</td>' +
+      cell('seed') +
+      cell('sprout-healthy') +
+      '<td></td>' +
+      '<td></td>' +
+      cell('sprout-stunted') +
+      '<td></td>' +
+      '<td></td>' +
+      cell('sprout-wilted') +
+      '<td></td></tr>';
+    table.innerHTML += shared;
+    var tiles = '';
+    ['dry', 'wet', 'empty'].forEach(function (t) {
+      var s = A['tile-' + t];
+      if (s)
+        tiles +=
+          '<img src="' +
+          SP +
+          'tile-' +
+          t +
+          '.webp" alt="地块" style="width:' +
+          s.w +
+          'px;height:' +
+          s.h +
+          'px;margin-right:14px">';
+    });
+    $('sprite-tiles').innerHTML = tiles;
+    $('sprite-count').textContent = Object.keys(A).length;
+  })();
+
   // 缩小到一屏 120 块地的大小:每块地约 28pt
   [
     ['彩纸', LD.screens.farm(LD.scene, LD.mineScene, 2), false],

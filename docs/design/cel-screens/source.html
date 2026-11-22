@@ -12,6 +12,8 @@ function strip(s){return s.replace(/<text[\s\S]*?<\/text>/g,'');}
 if(which==='farm'){ // 只有背景、地块、作物:没有星带、标记、顶部和底部
   var tiles='',crops='';LD.scene.plots.forEach(function(p,i){var tf='translate('+(15+(i%5)*73)+' '+(164+Math.floor(i/5)*88)+')';tiles+=g(tf,K.tileBase(p,i+1));if(p)crops+=g(tf,K.cropG(p,i+1));});
   svg=k.svgOpen()+K.farmBg()+g('',tiles,K.SHT)+g('',crops,K.SH)+'</svg>';
+} else if(which==='farm-bg'){ // 只有背景:天、远处的房子、栅栏、草地。给素材拼的那一屏当底
+  svg=k.svgOpen()+K.farmBg()+'</svg>';
 } else if(which==='farm-full'){ svg=LD.screens.farm(LD.scene,LD.mineScene,2);
 } else if(which==='pasture'){ var hud=K.hud;K.hud=function(){return ''};svg=k.svgOpen()+strip(LD.pastureScreens.pasture(LD.pastureScene,{under:true}))+'</svg>';K.hud=hud;
 } else if(which==='pasture-full'){ svg=LD.pastureScreens.pasture(LD.pastureScene);
