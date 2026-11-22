@@ -59,6 +59,24 @@
       true,
     );
   });
+  // 色调:第一版(偏深)和现在的(彩纸的色值),一对一对摆
+  SCREENS.forEach(function (s) {
+    phone(
+      $('tone-shots'),
+      LD.cel[s.key](G + s.key + '-v1.webp'),
+      s.name + ',第一版',
+      '<b>' + esc(s.name) + ' · 第一版</b>色调偏深,对比偏高。',
+      true,
+    );
+    phone(
+      $('tone-shots'),
+      LD.cel[s.key](G + s.key + '.webp'),
+      s.name + ',现在',
+      '<b>' + esc(s.name) + ' · 现在</b>彩纸的色值。',
+      true,
+    );
+  });
+
   // 每一屏:彩纸原稿、模型画出来的原样、叠上界面之后
   SCREENS.forEach(function (s) {
     var holder = $('cmp-' + s.key);
