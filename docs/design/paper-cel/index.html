@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>灵谷小镇:彩纸的世界,赛璐璐的人物</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Noto+Sans+SC:wght@400;500;700;900&family=Noto+Serif+SC:wght@600;900&family=ZCOOL+KuaiLe&display=swap">
+<link rel="stylesheet" href="../mine-screens/page.css">
+<link rel="stylesheet" href="../cel-screens/cel-screens.css">
+<link rel="stylesheet" href="paper-cel.css">
+</head>
+<body>
+<svg id="ld-defs" width="0" height="0" aria-hidden="true" focusable="false"></svg>
+
+<header class="top">
+  <div class="wrap">
+    <p class="eyebrow">灵谷小镇 Lingdale · 画风探索 · 彩纸的世界加赛璐璐的人物</p>
+    <h1>世界用彩纸,人物用线稿加平涂:贴得进去吗</h1>
+    <p class="lede">
+      项目负责人 2026-11-22 的问题(原话):"我其实有点喜欢那个彩纸的风格。现在的这个赛璐璐的画风有点不够吸引我,我们能不能探索一下彩纸的风格,加上赛璐璐的人物的画风?这个可行吗?"
+      这一页把已有的八个人物立绘直接放进彩纸的画面里看。
+    </p>
+    <div class="notice">
+      <strong>探索稿,不是决定。</strong>
+      现在生效的仍然是 <code>../../decisions/0028</code>(整个产品用偏插画的赛璐璐)。这一页只回答"这样搭配看起来行不行",要不要改由负责人定。
+    </div>
+    <div class="notice">
+      <strong>人物是 AI 生成的,世界和界面是代码画的。</strong>
+      立绘是之前那一轮出的(<code>../character-style/generated/leads/</code>,OpenAI 和豆包,2026-11-22),这次没有新出图。带"AI 生成"标的每一屏里,只有人物是生成的。
+      居民和对话的玩法都还没有设计,画面里的对话是示意。
+    </div>
+    <div class="verdict">
+      <p><strong>结论先说:看起来可行。</strong>线稿加平涂的立绘加一圈纸白的边,放进彩纸的种子店里像拼贴里的一张贴纸,不像之前半写实的立绘那样和货架不在一个世界。</p>
+      <p><strong>之前没试过这一种。</strong>上一轮贴不进去的是半写实的立绘;决定换整个画风的时候,线稿加平涂的立绘还没有往彩纸画面里放过(<code>0028</code> 里记着这一句)。</p>
+      <p><strong>没有验证的:</strong>只看了静止的半身像。换表情之后还是不是同一个人、小尺寸的全身小人、目标用户觉得吸不吸引,都没有做。"看起来可行"是我自己看的。详见<a href="#open">没做的和代价</a>。</p>
+    </div>
+    <nav class="jump" aria-label="页面目录">
+      <a href="#talk">对话里</a>
+      <a href="#more">换人、换模型</a>
+      <a href="#cast">八个人</a>
+      <a href="#small">小尺寸</a>
+      <a href="#why">为什么贴得进去</a>
+      <a href="#open">没做的和代价</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <section id="talk" class="band">
+    <div class="wrap">
+      <h2>对话里:同一个麦冬,四种放法</h2>
+      <p class="sub">彩纸的种子店、柜台、对话的那张纸、顶部信息都是原来的代码,一个字没有改。只换了柜台后面站着的人。</p>
+      <div class="trio quad" id="talk-ways"></div>
+      <ul class="notes">
+        <li><b>直接放上去就不算突兀。</b>立绘是平涂的色块加一圈褐色的线,没有渐变和纹理;衣服的颜色(米白、深绿、栗色)本来就是照色板挑的。</li>
+        <li><b>加一圈纸白的边之后最像这个世界里的东西:</b>拼贴里本来就可以有一张从别处剪下来的印刷品。硬边投影和货架、花盆的投影是同一种。</li>
+        <li><b>再盖一层纸纹,差别很小。</b>人身上多了细碎的纸屑纹,脸上也有。我觉得脸上不该有,倾向不盖。</li>
+        <li><b>和彩纸人物比:</b>彩纸的麦冬是这个世界原生的,但五官只有两个点和一条线;立绘的眼神、发丝、衣褶都有。负责人要的"足够吸引人"在右边三张里。</li>
+      </ul>
+    </div>
+  </section>
+
+  <section id="more" class="band">
+    <div class="wrap">
+      <h2>换人、换模型,和之前没贴进去的那一种</h2>
+      <p class="sub">都是加一圈纸白的边。前三张是线稿加平涂,最后一张是上一轮的半写实。</p>
+      <div class="trio quad" id="talk-more"></div>
+      <ul class="notes">
+        <li><b>深色的人物贴得最好,浅色的边会化掉。</b>青黛的深色毛衣和头发在浅色的店里轮廓很清楚;远志的白大褂和纸白的边连成一片,看不出边。穿浅色衣服的人可能要换一种边(比如浅褐色),没有试。</li>
+        <li><b>两家模型都行。</b>OpenAI 的线硬、色块实,更像纸片;豆包的线细、有一点柔和的过渡,略微"浮"一点,但也在能接受的范围里。这是我自己看的。</li>
+        <li><b>半写实的还是不行,</b>和上一轮的结论一样:脸上有体积和光,衬衫有布纹,旁边的货架是一张张平的纸。白边救不回来。</li>
+        <li><b>这一屏的背景是麦冬的种子店。</b>青黛、远志站在这里只是为了看贴不贴得进去;他们各自的地方(放映厅、兽医站)没有画。</li>
+      </ul>
+    </div>
+  </section>
+
+  <section id="cast" class="band">
+    <div class="wrap">
+      <h2>八个人贴在一条彩纸上</h2>
+      <p class="sub">四男四女,OpenAI 画的那一套。草地、天和名牌是彩纸的画法。</p>
+      <div class="strip sheet ai" id="lineup"></div>
+      <ul class="notes">
+        <li><b>八个人放在一起像一套贴纸。</b>没有哪一个特别跳出来。</li>
+        <li><b>豆包那一套里有两个不能用:</b>小满看起来像未成年人,忍冬也偏小(上一轮就记了)。这里用的是 OpenAI 的八张,都看得出是成年人。</li>
+        <li><b>画得不对的地方没有改:</b>OpenAI 的连翘偏壮,麦冬的铅笔在另一只耳朵上。这是上一轮留下的,和贴不贴得进去无关。</li>
+      </ul>
+    </div>
+  </section>
+
+  <section id="small" class="band">
+    <div class="wrap">
+      <h2>小尺寸:头像和地图上的人</h2>
+      <p class="sub">立绘是半身像,用得上的地方不只是对话。下面是头像圆片(64、44、32pt),和小镇地图上标出谁在哪。</p>
+      <div class="strip narrow sheet ai" id="chips"></div>
+      <ul class="notes">
+        <li><b>64 和 44pt 认得出是谁,</b>靠的是发型和头上的东西(护目镜、报童帽、头巾)。当初设计八个人的时候就是按"只看头顶也分得开"来的。</li>
+        <li><b>32pt 只剩颜色和大形,</b>五官糊了。要用这么小的,得单独画简化的头像。</li>
+      </ul>
+      <div class="trio" id="town"></div>
+      <ul class="notes">
+        <li><b>头像圆片别在地图上是可以的:</b>和地点的名牌、角标是同一种纸白的圆片。</li>
+        <li><b>把立绘直接缩小放到场景里不好:</b>44pt 宽的时候线挤在一起,细节看不清,半身像下面一刀切得很生硬。场景里要站着的小人,得另画。</li>
+        <li><b>彩纸的小人和地图是一种东西,</b>但它和立绘里的那个人像不像同一个人,没有答案:现在只有麦冬一个人两种画法都有,而且彩纸的那个是更早一轮设计的(那时写的是 34 岁,现在是 30 岁),两边没有对过。</li>
+        <li><b>所以能成立的搭配是两层:</b>世界里(地图、农场、矿洞、牧场)只有纸片,人出现的时候是一张贴纸:对话里是大的立绘,别处是头像圆片。场景里不放缩小的立绘。</li>
+      </ul>
+    </div>
+  </section>
+
+  <section id="why" class="band">
+    <div class="wrap">
+      <h2>为什么这一种贴得进去</h2>
+      <div class="scroll-x">
+        <table class="cmp wide">
+          <thead><tr><th></th><th>彩纸的世界</th><th>线稿加平涂的人</th><th>半写实的人</th></tr></thead>
+          <tbody>
+            <tr><td>颜色怎么铺</td><td>平涂,每块一个颜色</td><td>平涂,每种颜色加一层硬边的暗部</td><td>连续的明暗过渡</td></tr>
+            <tr><td>有没有渐变和纹理</td><td>没有渐变,只有纸纹</td><td>没有</td><td>有:皮肤、布纹、发丝</td></tr>
+            <tr><td>光</td><td>没有光源,只有硬边投影</td><td>没有明显的光源</td><td>有一盏主光</td></tr>
+            <tr><td>边</td><td>没有线,靠色块的边</td><td><b>有一圈褐色的线</b></td><td>几乎没有线</td></tr>
+            <tr><td>配色</td><td>色板</td><td>提示词里按色板的颜色名写的</td><td>同左,但被光和材质改了</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <ul class="notes">
+        <li><b>差别只剩一处:线。</b>彩纸没有线,立绘有。纸白的边正好把这一处接上:线在贴纸里面,贴纸本身还是一块有硬边的纸片。</li>
+        <li><b>这张表是我对着画面写的,</b>不是量出来的。</li>
+      </ul>
+    </div>
+  </section>
+
+  <section id="open" class="band">
+    <div class="wrap">
+      <h2>没做的,和走这条路的代价</h2>
+      <div class="two-col">
+        <div>
+          <h3>没做的、没验证的</h3>
+          <ul class="notes">
+            <li><b>换表情。</b>对话里人物要有高兴、疑惑、答错时的表情。上一轮用半写实的图试过"只改脸",线稿加平涂的没有试。</li>
+            <li><b>场景里的小人。</b>居民要不要在农场、小镇上走动,要的话怎么画,没有做。</li>
+            <li><b>每个人自己的地方。</b>只有种子店一处彩纸的室内。放映厅、兽医站、茶馆、面包店都没有画。</li>
+            <li><b>恋爱向的玩法需要的画面</b>(更近的镜头、特别的时刻)彩纸的世界接不接得住,没有试。</li>
+            <li><b>浅色衣服的人用什么边,</b>没有试。</li>
+            <li>没有上真机,没有问过任何目标用户。"贴得进去""吸引人"都是我自己看的。</li>
+            <li>没有逐张比对立绘是否像某个已有作品里的角色。</li>
+          </ul>
+        </div>
+        <div>
+          <h3>如果改成这样</h3>
+          <ul class="notes">
+            <li><b>要一条新的决策记录取代 0028。</b>美术规范(写的就是彩纸)大部分重新生效,不用重写,只要加人物这一章。</li>
+            <li><b>赛璐璐的那三屏素材搁下:</b>农场 67 个、牧场 35 个、矿洞 14 个,加三张背景。花掉的是出图的用量和这两天的时间;从里面学到的规矩留得下来。</li>
+            <li><b>这两天定的规矩要搬回彩纸的画面:</b>作物的四种样子(<code>0029</code>:不生长不单独画,枯萎只有两个阶段,死了是一堆干草);答完之后要安静、板子不歪(<code>0030</code>)。彩纸那几屏现在还是旧的画法。改的是代码,不用出图。</li>
+            <li><b>世界回到代码画的,</b>状态由数据决定,不会画错;不用为每个状态出图、切图、数穗子。</li>
+            <li><b>AI 生成的只剩人物。</b>"AI 生成的美术能不能上架、版权归谁"这个问题还在,但范围从整个画面缩到了立绘。</li>
+            <li><b>负责人当初说彩纸"不够用",</b>指的是人物不够吸引人。这个搭配保住了人物;彩纸的世界本身够不够吸引人,这次没有新的证据。</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    探索稿,不是成品。人物立绘是 AI 生成的(OpenAI 和豆包的生图模型),世界和界面是代码绘制的,代码由 Claude 编写,属于 AI 协助产出的内容。
+    对外发布这些画面时,按 <code>../../marketing/01-content-strategy.md</code> 的要求声明。
+  </div>
+</footer>
+
+<script src="../art-exploration/scene.js"></script>
+<script src="../art-exploration/style-paper.js"></script>
+<script src="../mine-screens/mine-scene.js"></script>
+<script src="../mine-screens/mine-paper.js"></script>
+<script src="../mine-screens/screens.js"></script>
+<script src="../character-style/cast.js"></script>
+<script src="../character-style/leads.js"></script>
+<script src="../character-style/char-anime.js"></script>
+<script src="../character-style/char-paper.js"></script>
+<script src="../character-style/dialogue.js"></script>
+<script src="mix.js"></script>
+<script src="index.js"></script>
+</body>
+</html>

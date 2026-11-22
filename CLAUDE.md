@@ -74,6 +74,7 @@ docs/design/mine-screens/     矿洞这一边的画面:矿洞、矿石、词袋�
 docs/design/pasture-screens/  牧场这一边的画面:牧场、小屋、鸡舍、割草、做饲料、买卖的示意稿和绘制代码
 docs/design/cel-screens/      新画风(偏插画的赛璐璐)的农场、牧场、矿洞第一稿:AI 生成的场景加代码画的界面
 docs/design/character-style/  人物画风的探索稿:同一个居民几种画法的比较页、绘制代码、生成提示词和一轮 AI 生成的立绘(没有定,居民还没有设计)
+docs/design/paper-cel/        探索稿:彩纸的世界里放线稿加平涂的人物立绘,贴不贴得进去(没有定,画风仍以 0028 为准)
 docs/dev/      开发文档:架构、开发指南、Cocos 接入
 docs/marketing/ 对外内容:内容策略、选题库
 docs/decisions/ 决策记录:每个重要决定的背景、理由和被否决的方案
