@@ -2,7 +2,7 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Noto+Sans+SC:wght@500;700&display=swap">
 <style>
-  /* 布局:一列,手机宽度。上面一条状态,中间一块"石板"是题目,下面是今天的账、矿石和词表。
+  /* 布局:一列,手机宽度。上面一条状态和四个页签,中间是当前这一页(答题时是一块"石板"),下面是今天的账和词表。
      颜色和字体取自 docs/design/07-art-direction.md 的色板(纸白、墨绿、岩石、深叶、玉米黄、番茄红)。 */
   :root {
     --paper: #fffaf0;
@@ -153,6 +153,37 @@
   .empty { text-align: center; margin: auto 0; display: flex; flex-direction: column; gap: 0.5rem; }
   .empty h2 { font-size: 1.25rem; }
 
+  /* 页签 */
+  .tabs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.375rem; }
+  .tabs button {
+    min-height: 2.75rem; border: 0; border-radius: 0.625rem; background: var(--paper-deep);
+    font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 0.375rem;
+  }
+  .tabs button[aria-current="page"] { background: var(--rock-deep); color: var(--paper); }
+  .tabs .count {
+    font-family: var(--font-word); font-size: 0.8125rem; line-height: 1; padding: 0.1875rem 0.4375rem;
+    border-radius: 1rem; background: var(--corn); color: var(--on-corn);
+  }
+  .notices { display: flex; flex-direction: column; gap: 0.5rem; }
+  .notices:empty { display: none; }
+  .notice {
+    display: flex; align-items: center; justify-content: space-between; gap: 0.75rem;
+    background: var(--corn); color: var(--on-corn); border-radius: 0.625rem; padding: 0.5rem 0.75rem; font-size: 0.9375rem;
+  }
+  .notice button { border: 0; background: transparent; color: var(--on-corn); text-decoration: underline; flex: none; min-height: 2.25rem; }
+  .stage { display: flex; flex-direction: column; gap: 1.25rem; }
+  .back { align-self: flex-start; }
+  .line { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem 0.75rem; flex-wrap: wrap; padding-block: 0.5rem; border-bottom: 1px solid var(--paper-deep); }
+  .line-text { display: flex; flex-direction: column; min-width: 0; flex: 1 1 12rem; }
+  .line-title { font-weight: 700; }
+  .line-detail { font-size: 0.8125rem; color: var(--ink-soft); }
+  .line-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; }
+  .btn-plain { background: var(--paper-deep); color: var(--ink); }
+  .btn.is-armed { background: var(--tomato); color: var(--paper); }
+  .line .btn, .line-actions .btn { min-height: 2.5rem; padding: 0 0.875rem; font-size: 0.9375rem; }
+  .panel > .btn { align-self: flex-start; }
+  .panel .answer-card { background: var(--paper-deep); }
+
   /* 下面的几块 */
   .panel { display: flex; flex-direction: column; gap: 0.625rem; }
   .panel h2 { font-size: 1rem; font-weight: 700; }
@@ -182,8 +213,8 @@
   <header class="top">
     <div class="top-row">
       <div>
-        <p class="eyebrow">灵谷小镇 · 没有美术的练习页</p>
-        <h1>矿洞</h1>
+        <p class="eyebrow">没有美术的练习页</p>
+        <h1>灵谷小镇</h1>
       </div>
       <div class="status">
         <span id="date"></span>
@@ -194,38 +225,24 @@
     <div class="xp" role="progressbar" aria-label="到下一级的经验" id="xp"><i id="xp-bar"></i></div>
   </header>
 
-  <main class="slab" id="stage" aria-live="polite">
-    <div class="empty"><h2>正在取你的进度…</h2></div>
+  <nav class="tabs" id="tabs" aria-label="去哪儿">
+    <button type="button" data-tab="mine" id="tab-mine">矿洞</button>
+    <button type="button" data-tab="farm" id="tab-farm">农场</button>
+    <button type="button" data-tab="pasture" id="tab-pasture">牧场</button>
+    <button type="button" data-tab="shop" id="tab-shop">商店</button>
+  </nav>
+
+  <div class="notices" id="notices" aria-live="polite"></div>
+
+  <main class="stage" id="stage" aria-live="polite">
+    <div class="slab"><div class="empty"><h2>正在取你的进度…</h2></div></div>
   </main>
+
+  <hr>
 
   <section class="panel" aria-labelledby="today-title">
     <h2 id="today-title">今天</h2>
     <div class="facts" id="today"></div>
-  </section>
-
-  <hr>
-
-  <section class="panel" aria-labelledby="ore-title">
-    <div class="row">
-      <h2 id="ore-title">矿石</h2>
-      <button class="btn" id="sell" type="button" disabled>全部卖掉</button>
-    </div>
-    <div class="ores" id="ores"></div>
-    <p class="note">记得越久的词,答对时越可能爆出高级的矿石。金币先攒着:农场、牧场和商店这个页面还没接。</p>
-  </section>
-
-  <hr>
-
-  <section class="panel">
-    <div class="row">
-      <h2>题型</h2>
-      <div class="seg" id="types" role="group" aria-label="题型">
-        <button type="button" data-type="choice" id="type-choice">看词选义</button>
-        <button type="button" data-type="reverse" id="type-reverse">看义选词</button>
-        <button type="button" data-type="spell" id="type-spell">拼写</button>
-      </div>
-    </div>
-    <p class="note">正式的游戏里题型由作物决定,矿里都是看词选义。这里可以换,是为了三种都能试。</p>
   </section>
 
   <hr>

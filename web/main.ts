@@ -1,32 +1,32 @@
-// 没有美术的练习页:把矿洞这条学习路线接到一个网页上,用来每天真的背,顺便检查词库和出题。
+// 没有美术的练习页:把矿洞、农场、牧场、商店接到一个网页上,用来每天真的背,顺便检查词库和出题。
 // 这里只调用核心层、读返回值、把结果摆出来。规则一条都不在这里(见 docs/dev/cocos-integration.md)。
 
 import {
-  DRILL_STREAK,
   Deck,
-  DigResult,
-  MAX_MASTERY,
-  MineSession,
-  MineTurn,
+  DRILL_STREAK,
+  PastureReport,
   QuestionType,
   SaveData,
   activeProgress,
   calendar,
+  claimReliefSeed,
   createSave,
+  cropOfCard,
+  cropType,
   deserialize,
-  gameDay,
+  dueVeins,
   getCard,
   getState,
   hasCard,
   levelInfo,
   masteredCount,
-  masteryAfterHit,
-  orePrice,
   restingVeins,
-  sellAllOre,
   serialize,
+  settlePasture,
+  thirstyCards,
   todayStats,
 } from '../core/index';
+import { Ask, MineRound, Outcome, Round } from './rounds';
 import {
   Cloud,
   Flag,
@@ -38,6 +38,8 @@ import {
   storeLocalSave,
   storePrefs,
 } from './storage';
+import { Child, button, byId, clockText, fill, h, whenText } from './ui';
+import { Ctx, FarmState, Tab, farmView, pastureView, shopView } from './views';
 
 /** 答对之后停这么久自动出下一题。答错不自动走:要玩家看一眼正确答案再点。 */
 const ADVANCE_MS = 900;
@@ -46,6 +48,7 @@ const SYNC_GAP_MS = 20000;
 /** 等云端的进度最多等这么久,等不到就先用这台设备上的。 */
 const CLOUD_WAIT_MS = 5000;
 
+const TABS: Tab[] = ['mine', 'farm', 'pasture', 'shop'];
 const SEASON_NAMES: Record<string, string> = { spring: '春', summer: '夏', autumn: '秋', winter: '冬' };
 const TYPE_NAMES: Record<QuestionType, string> = { choice: '看词选义', reverse: '看义选词', spell: '拼写' };
 const FLAG_KINDS: [string, string][] = [
@@ -54,79 +57,55 @@ const FLAG_KINDS: [string, string][] = [
   ['phonetic', '音标不对'],
 ];
 
-type Child = Node | string | null | false;
-
-function h(tag: string, attrs: Record<string, string> = {}, children: Child[] = []): HTMLElement {
-  const node = document.createElement(tag);
-  for (const key of Object.keys(attrs)) {
-    if (key === 'class') node.className = attrs[key];
-    else node.setAttribute(key, attrs[key]);
-  }
-  for (const child of children) {
-    if (child === null || child === false) continue;
-    node.appendChild(typeof child === 'string' ? document.createTextNode(child) : child);
-  }
-  return node;
-}
-
-function byId(id: string): HTMLElement {
-  const node = document.getElementById(id);
-  if (!node) throw new Error(`页面上没有 #${id}`);
-  return node;
-}
-
-function fill(node: HTMLElement, children: Child[]): void {
-  node.textContent = '';
-  for (const child of children) {
-    if (child === null || child === false) continue;
-    node.appendChild(typeof child === 'string' ? document.createTextNode(child) : child);
-  }
-}
-
 function tzOffsetMs(): number {
   return -new Date().getTimezoneOffset() * 60000;
 }
 
-/** 把一个时间说成"今天 16:00""明天 04:00""5 天后"。 */
-function whenText(at: number, now: number, save: SaveData): string {
-  const days = Math.floor(gameDay(at, save.tzOffsetMs) / 2) - Math.floor(gameDay(now, save.tzOffsetMs) / 2);
-  const date = new Date(at);
-  const clock = `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
-  if (days <= 0) return `今天 ${clock}`;
-  if (days === 1) return `明天 ${clock}`;
-  return `${days} 天后`;
+function tabFromHash(): Tab | null {
+  const name = window.location.hash.replace('#', '');
+  return TABS.indexOf(name as Tab) >= 0 ? (name as Tab) : null;
 }
 
-class App {
-  private save: SaveData;
-  private session: MineSession;
+class App implements Ctx {
+  save: SaveData;
+  private tab: Tab;
   private questionType: QuestionType;
   private cloud: Cloud | null = null;
   private flags: Flag[];
-  private turn: MineTurn | null = null;
-  private result: DigResult | null = null;
+  private farm: FarmState = { skip: 0, seed: null, planted: null };
+
+  // 正在答的这一轮。矿洞那一页一直有一轮;农场和牧场只在浇水、割草、做饲料时有
+  private round: Round | null = null;
+  private ask: Ask | null = null;
+  private outcome: Outcome | null = null;
   private picked: number | string | null = null;
   private shownAt = 0;
+  private advanceTimer = 0;
+
   private ready = false;
   private answeredThisVisit = 0;
-  private advanceTimer = 0;
+  /** 刚做完一件事的回话,做下一件事或换页就换掉。 */
+  private notice = '';
+  /** 牧场这段时间出了什么事。核心层只说一次,所以留到玩家点"知道了"为止。 */
+  private reports: string[] = [];
+
   private dirty = false;
   private syncing = false;
   private lastSyncAt = 0;
   private syncTimer = 0;
   private syncNote = '';
 
-  constructor(private deck: Deck) {
+  constructor(public deck: Deck) {
     const prefs = loadPrefs();
     this.questionType =
       prefs.questionType === 'reverse' || prefs.questionType === 'spell' ? prefs.questionType : 'choice';
+    this.tab = tabFromHash() || 'mine';
     this.flags = loadLocalFlags();
     this.save = this.readSave(loadLocalSave()) || createSave(deck.id, Date.now(), tzOffsetMs());
-    this.session = this.newSession();
   }
 
-  private newSession(): MineSession {
-    return new MineSession(this.save, this.deck, Math.random, this.questionType);
+  now(): number {
+    return Date.now();
   }
 
   /** 读一份存档。读不了(坏了、版本不对、不是这个卡组的)返回 null,不让页面打不开。 */
@@ -167,13 +146,14 @@ class App {
       this.syncNote = '进度只存在这台设备的浏览器里,清掉浏览器数据就没了。';
     }
     this.ready = true;
-    this.next();
+    this.enter(this.tab);
     if (this.dirty) this.scheduleSync();
   }
 
   private adopt(save: SaveData): void {
     this.save = save;
-    this.session = this.newSession();
+    this.round = null;
+    this.farm = { skip: 0, seed: null, planted: null };
     storeLocalSave(serialize(save));
   }
 
@@ -202,7 +182,7 @@ class App {
   private persist(): void {
     const stored = storeLocalSave(serialize(this.save));
     if (!stored && !this.cloud)
-      this.syncNote = '这台设备存不下进度(浏览器不让存)。这次答的题关掉页面就没了。';
+      this.syncNote = '这台设备存不下进度(浏览器不让存)。这次做的事关掉页面就没了。';
     this.dirty = true;
     this.scheduleSync();
   }
@@ -226,14 +206,11 @@ class App {
       const save = theirs ? this.readSave(theirs.json) : null;
       if (save) {
         // 别的设备上有更新的进度:换成那一份,不覆盖它
-        window.clearTimeout(this.advanceTimer);
         this.adopt(save);
         this.syncNote = '别的设备上有更新的进度,已经换成那一份。';
-        this.next();
+        this.enter(this.tab);
       } else {
-        const date = new Date();
-        const clock = `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
-        this.syncNote = `进度已同步到你的账号(${clock})。`;
+        this.syncNote = `进度已同步到你的账号(${clockText(Date.now())})。`;
         this.renderAround();
       }
     } catch {
@@ -245,26 +222,100 @@ class App {
     if (this.dirty) this.scheduleSync();
   }
 
+  // ---------- 页签和动作 ----------
+
+  go(tab: Tab): void {
+    try {
+      window.location.hash = tab;
+    } catch {
+      // 改不了地址也照样换页
+    }
+    this.notice = '';
+    this.enter(tab);
+  }
+
+  /** 进一页:把牧场这段时间的日子过完,矿洞那页直接开始出题。 */
+  private enter(tab: Tab): void {
+    window.clearTimeout(this.advanceTimer);
+    this.tab = tab;
+    this.round = null;
+    this.ask = null;
+    this.outcome = null;
+    this.farm.planted = null;
+    this.settle();
+    if (tab === 'shop' && claimReliefSeed(this.save)) {
+      this.notice = '你有词要种,却没有种子、没有钱,也没有东西可卖:商店送你一颗萝卜种子。';
+      this.persist();
+    }
+    if (tab === 'mine') this.startRound(new MineRound(this.save, this.deck, this.questionType));
+    else this.render();
+  }
+
+  /** 把牲畜从上次到现在的日子一天天过完。出了事要告诉玩家,核心层只说这一次。 */
+  private settle(): void {
+    const before = this.save.pastureDay;
+    const report: PastureReport = settlePasture(this.save, this.now());
+    const parts: string[] = [];
+    if (report.milk > 0) parts.push(`出了 ${report.milk} 份牛奶`);
+    if (report.wool > 0) parts.push(`${report.wool} 份羊毛`);
+    if (report.eggs > 0) parts.push(`${report.eggs} 个鸡蛋`);
+    if (report.born > 0) parts.push(`生了 ${report.born} 只小的`);
+    if (report.fellSick > 0) parts.push(`${report.fellSick} 只饿病了,要用药`);
+    if (report.died > 0) parts.push(`${report.died} 只病死了`);
+    if (parts.length > 0) this.reports.push(`牧场:你不在的时候,${parts.join(',')}。`);
+    if (this.save.pastureDay === before) return;
+    // 有牲畜的时候,过日子会改存档里的东西(吃掉的草、出的奶),这一份比云端的新
+    if (this.save.herd.length > 0 || parts.length > 0) this.save.updatedAt = this.now();
+    this.persist();
+  }
+
+  act(change: () => string | void): void {
+    const said = change();
+    this.notice = typeof said === 'string' ? said : '';
+    this.save.updatedAt = this.now();
+    this.persist();
+    this.render();
+  }
+
+  startRound(round: Round): void {
+    this.round = round;
+    this.notice = '';
+    this.farm.planted = null;
+    this.next();
+  }
+
+  private endRound(): void {
+    const said = this.round ? this.round.summary() : '';
+    this.round = null;
+    this.ask = null;
+    this.outcome = null;
+    this.notice = said;
+    this.render();
+  }
+
   // ---------- 答题 ----------
 
   private next(): void {
     window.clearTimeout(this.advanceTimer);
-    this.result = null;
+    if (!this.round) return;
+    this.outcome = null;
     this.picked = null;
-    this.turn = this.session.current(Date.now());
-    this.shownAt = Date.now();
-    this.render();
+    this.ask = this.round.current(this.now());
+    this.shownAt = this.now();
+    // 矿洞没有"一轮":没有矿脉可挖时留在这一页,告诉玩家什么时候再来。别的地方答完就回到那一页
+    if (!this.ask && this.tab !== 'mine') this.endRound();
+    else this.render();
   }
 
   private answer(response: number | string): void {
-    if (!this.turn || this.result) return;
-    const now = Date.now();
+    if (!this.round || !this.ask || this.outcome) return;
+    const now = this.now();
     this.picked = response;
-    this.result = this.session.submit(response, now, now - this.shownAt);
+    this.outcome = this.round.submit(response, now, now - this.shownAt);
     this.answeredThisVisit++;
     this.persist();
     this.render();
-    if (this.result.correct) this.advanceTimer = window.setTimeout(() => this.next(), ADVANCE_MS);
+    if (this.outcome.correct) this.advanceTimer = window.setTimeout(() => this.next(), ADVANCE_MS);
   }
 
   private setType(type: QuestionType): void {
@@ -272,20 +323,21 @@ class App {
     this.questionType = type;
     storePrefs({ questionType: type });
     // 已经出了题还没答:换一种题型重新出这道。答完的那道不动
-    this.session = this.newSession();
-    if (this.ready && !this.result) this.next();
-    else this.renderAround();
+    if (this.tab !== 'mine' || !this.ready) return;
+    const answered = this.outcome;
+    this.round = new MineRound(this.save, this.deck, type);
+    if (answered) this.render();
+    else this.next();
   }
 
   private toggleFlag(kind: string): void {
-    if (!this.turn) return;
-    const cardId = this.turn.question.cardId;
-    const index = this.flagIndex(cardId, kind);
+    if (!this.ask) return;
+    const question = this.ask.question;
+    const index = this.flagIndex(question.cardId, kind);
     if (index >= 0) this.flags.splice(index, 1);
     else {
-      const question = this.turn.question;
       this.flags.push({
-        cardId,
+        cardId: question.cardId,
         kind,
         questionType: question.type,
         options: question.type === 'spell' ? [] : question.options.slice(),
@@ -308,39 +360,44 @@ class App {
   }
 
   private bind(): void {
-    byId('sell').addEventListener('click', () => {
-      if (sellAllOre(this.save) > 0) {
-        this.save.updatedAt = Date.now();
-        this.persist();
-        this.renderAround();
-      }
+    byId('tabs').addEventListener('click', (event) => {
+      const target = (event.target as HTMLElement).closest('button');
+      const tab = target ? target.getAttribute('data-tab') : null;
+      if (this.ready && tab && TABS.indexOf(tab as Tab) >= 0) this.go(tab as Tab);
     });
-    byId('types').addEventListener('click', (event) => {
-      const button = (event.target as HTMLElement).closest('button');
-      const type = button ? button.getAttribute('data-type') : null;
-      if (type === 'choice' || type === 'reverse' || type === 'spell') this.setType(type);
+    window.addEventListener('hashchange', () => {
+      const tab = tabFromHash();
+      if (this.ready && tab && tab !== this.tab) this.enter(tab);
     });
     byId('words-box').addEventListener('toggle', () => this.renderWords());
     document.addEventListener('keydown', (event) => {
-      if (event.metaKey || event.ctrlKey || event.altKey) return;
+      if (event.metaKey || event.ctrlKey || event.altKey || !this.ask) return;
       const typing = (event.target as HTMLElement).tagName === 'INPUT';
-      if (this.result) {
+      if (this.outcome) {
         if (event.key === 'Enter' || (event.key === ' ' && !typing)) {
           event.preventDefault();
           this.next();
         }
         return;
       }
-      if (typing || !this.turn || this.turn.question.type === 'spell') return;
+      const question = this.ask.question;
+      if (typing || question.type === 'spell') return;
       const index = ['1', '2', '3', '4'].indexOf(event.key);
-      if (index >= 0 && index < this.turn.question.options.length) this.answer(index);
+      if (index >= 0 && index < question.options.length) this.answer(index);
     });
-    // 离开页面前赶紧同步一次:手机上切走之后页面随时会被收掉
     document.addEventListener('visibilitychange', () => {
-      if (document.visibilityState !== 'hidden' || !this.dirty) return;
-      window.clearTimeout(this.syncTimer);
-      this.syncTimer = 0;
-      this.sync();
+      if (document.visibilityState === 'hidden') {
+        // 离开页面前赶紧同步一次:手机上切走之后页面随时会被收掉
+        if (!this.dirty) return;
+        window.clearTimeout(this.syncTimer);
+        this.syncTimer = 0;
+        this.sync();
+      } else if (this.ready && !this.ask) {
+        // 回来的时候可能已经过了一个游戏日:作物能浇了,草长出来了,牲畜吃过了
+        this.settle();
+        if (this.round) this.next();
+        else this.render();
+      }
     });
   }
 
@@ -352,21 +409,36 @@ class App {
   }
 
   private renderStage(): void {
-    const stage = byId('stage');
     if (!this.ready) return;
-    if (!this.turn) {
-      fill(stage, [this.exhaustedView()]);
+    const stage = byId('stage');
+    if (this.round) {
+      fill(stage, this.quizView());
       return;
     }
-    const turn = this.turn;
-    const question = turn.question;
+    if (this.tab === 'farm') fill(stage, farmView(this, this.farm));
+    else if (this.tab === 'pasture') fill(stage, pastureView(this));
+    else if (this.tab === 'shop') fill(stage, shopView(this));
+  }
+
+  private quizView(): Child[] {
+    const parts: Child[] = [];
+    if (this.tab !== 'mine') {
+      parts.push(button('← 不答了,回去', { class: 'btn btn-plain back', id: 'back' }, () => this.endRound()));
+    }
+    const ask = this.ask;
+    if (!ask) {
+      parts.push(h('div', { class: 'slab' }, [this.exhaustedView()]));
+      parts.push(this.typePicker());
+      return parts;
+    }
+    const question = ask.question;
     const card = getCard(this.deck, question.cardId);
-    const result = this.result;
-    const parts: Child[] = [this.veinView(turn)];
+    const outcome = this.outcome;
+    const slab: Child[] = [h('div', { class: 'vein' }, [ask.tag, h('span', {}, [ask.note])])];
 
     // 看词选义:题面是单词,音标可以一起给。另外两种题面是释义,音标要等答完再给,不然等于告诉了答案
     const showsWord = question.type === 'choice';
-    parts.push(
+    slab.push(
       h('div', { class: 'prompt' }, [
         h('div', { class: showsWord ? 'word' : 'word is-meaning' }, [question.prompt]),
         h('div', { class: 'phonetic' }, [showsWord && card.phonetic ? card.phonetic : '']),
@@ -374,7 +446,7 @@ class App {
     );
 
     if (question.type === 'spell') {
-      if (!result) {
+      if (!outcome) {
         const input = h('input', {
           id: 'spell-input',
           type: 'text',
@@ -393,19 +465,19 @@ class App {
           event.preventDefault();
           if (input.value.trim()) this.answer(input.value);
         });
-        parts.push(form);
+        slab.push(form);
         window.setTimeout(() => input.focus(), 0);
       }
     } else {
       const options = h('div', { class: 'options' });
       question.options.forEach((text, index) => {
         let state = '';
-        if (result) {
+        if (outcome) {
           if (index === question.correctIndex) state = ' is-right';
           else if (index === this.picked) state = ' is-wrong';
           else state = ' is-dim';
         }
-        const button = h(
+        const option = h(
           'button',
           {
             class: `option${question.type === 'reverse' ? ' is-word' : ''}${state}`,
@@ -414,98 +486,71 @@ class App {
           },
           [h('span', { class: 'key' }, [String(index + 1)]), h('span', { class: 'text' }, [text])],
         ) as HTMLButtonElement;
-        if (result) button.disabled = true;
-        else button.addEventListener('click', () => this.answer(index));
-        options.appendChild(button);
+        if (outcome) option.disabled = true;
+        else option.addEventListener('click', () => this.answer(index));
+        options.appendChild(option);
       });
-      parts.push(options);
+      slab.push(options);
     }
 
-    if (result) parts.push(this.resultView(turn, result));
-    fill(stage, parts);
-  }
-
-  private veinView(turn: MineTurn): HTMLElement {
-    const vein = turn.vein;
-    let tag: HTMLElement;
-    let note: string;
-    if (vein.source === 'new') {
-      tag = h('span', { class: 'tag tag-new' }, ['新词']);
-      note = `词袋还装得下 ${turn.allowance} 个答错的词`;
-    } else if (vein.source === 'review') {
-      tag = h('span', { class: 'tag tag-review' }, [`旧词 · 掌握度 ${vein.mastery}`]);
-      note = `答对最高出 ${Math.min(masteryAfterHit(vein.mastery), MAX_MASTERY)} 级矿石`;
-    } else {
-      tag = h('span', { class: 'tag tag-drill' }, [`练习 · 连对 ${vein.drillStreak}/${DRILL_STREAK}`]);
-      note = '练词袋里的词,不出矿石';
-    }
-    return h('div', { class: 'vein' }, [tag, h('span', {}, [note])]);
-  }
-
-  private resultView(turn: MineTurn, result: DigResult): HTMLElement {
-    const card = getCard(this.deck, turn.question.cardId);
-    const state = getState(activeProgress(this.save), card.id);
-    const now = Date.now();
-    let line: string;
-    let note = '';
-    if (result.source === 'drill') {
-      if (result.graduated) {
-        line = `连对 ${DRILL_STREAK} 次,这个词离开词袋了`;
-        note = '下个游戏日矿里再考一次,那次答对才算学会。';
-      } else if (result.correct) {
-        line = `连对 ${result.drillStreak}/${DRILL_STREAK}`;
-      } else {
-        line = '答错了,连对清零';
-        note = '接着练,它过几题还会回来。';
-      }
-    } else if (result.correct) {
-      const grade = result.oreGrade || 1;
-      line = `爆出 ${grade} 级矿石${result.lucky ? ',运气好' : ''},值 ${orePrice(grade)} 金币`;
-      if (state)
-        note = `掌握度 ${result.masteryBefore} → ${result.masteryAfter},${whenText(state.dueAt, now, this.save)}再考。`;
-    } else {
-      line = '答错了,这个词进了词袋';
-      note =
-        result.masteryAfter < result.masteryBefore
-          ? `掌握度 ${result.masteryBefore} → ${result.masteryAfter}。词袋里的词会在矿里反复练,连对 ${DRILL_STREAK} 次才离开。`
-          : `词袋里的词会在矿里反复练,连对 ${DRILL_STREAK} 次才离开。`;
-    }
-    if (result.levelAfter > result.levelBefore) note += ` 升到 ${result.levelAfter} 级了。`;
-
-    const chips = FLAG_KINDS.map(([kind, label]) => {
-      const pressed = this.flagIndex(card.id, kind) >= 0;
-      const chip = h(
-        'button',
-        { class: 'chip', type: 'button', 'aria-pressed': String(pressed), id: `flag-${kind}` },
-        [label],
+    if (outcome) {
+      const chips = FLAG_KINDS.map(([kind, label]) =>
+        button(
+          label,
+          { class: 'chip', 'aria-pressed': String(this.flagIndex(card.id, kind) >= 0), id: `flag-${kind}` },
+          () => this.toggleFlag(kind),
+        ),
       );
-      chip.addEventListener('click', () => this.toggleFlag(kind));
-      return chip;
-    });
-    const nextButton = h('button', { class: 'btn', type: 'button', id: 'next' }, [
-      result.correct ? '下一题' : '看过了,下一题',
-    ]);
-    nextButton.addEventListener('click', () => this.next());
-
-    return h('div', { class: 'result' }, [
-      h('div', { class: result.correct ? 'result-line' : 'result-line is-bad' }, [line]),
-      h('div', { class: 'answer-card' }, [
-        h('div', {}, [
-          h('span', { class: 'w' }, [card.front]),
-          h('span', { class: 'p' }, [card.phonetic || '']),
+      slab.push(
+        h('div', { class: 'result' }, [
+          h('div', { class: outcome.correct ? 'result-line' : 'result-line is-bad' }, [outcome.line]),
+          h('div', { class: 'answer-card' }, [
+            h('div', {}, [
+              h('span', { class: 'w' }, [card.front]),
+              h('span', { class: 'p' }, [card.phonetic || '']),
+            ]),
+            h('div', { class: 'm' }, [card.back]),
+          ]),
+          typeof this.picked === 'string' && !outcome.correct
+            ? h('div', { class: 'result-note' }, [`你写的是 ${this.picked.trim()}`])
+            : null,
+          outcome.note ? h('div', { class: 'result-note' }, [outcome.note]) : null,
+          h('div', { class: 'row' }, [
+            h('div', { class: 'flag-kinds' }, chips),
+            button(outcome.correct ? '下一题' : '看过了,下一题', { class: 'btn', id: 'next' }, () =>
+              this.next(),
+            ),
+          ]),
         ]),
-        h('div', { class: 'm' }, [card.back]),
+      );
+    }
+    parts.push(h('div', { class: 'slab' }, slab));
+    if (this.tab === 'mine') parts.push(this.typePicker());
+    return parts;
+  }
+
+  /** 矿洞里出哪种题。农场的题型跟着作物走,不在这里选。 */
+  private typePicker(): HTMLElement {
+    const picker = h('div', { class: 'seg', id: 'types', role: 'group', 'aria-label': '题型' });
+    for (const type of ['choice', 'reverse', 'spell'] as QuestionType[]) {
+      picker.appendChild(
+        button(
+          TYPE_NAMES[type],
+          { 'aria-pressed': String(type === this.questionType), id: `type-${type}` },
+          () => this.setType(type),
+        ),
+      );
+    }
+    return h('section', { class: 'panel' }, [
+      h('div', { class: 'row' }, [h('h2', {}, ['矿里出什么题']), picker]),
+      h('p', { class: 'note' }, [
+        '正式的游戏里矿洞都是看词选义。这里可以换,是为了三种都能试。田里的题型跟着种子走。',
       ]),
-      typeof this.picked === 'string' && !result.correct
-        ? h('div', { class: 'result-note' }, [`你写的是 ${this.picked.trim()}`])
-        : null,
-      note ? h('div', { class: 'result-note' }, [note]) : null,
-      h('div', { class: 'row' }, [h('div', { class: 'flag-kinds' }, chips), nextButton]),
     ]);
   }
 
   private exhaustedView(): HTMLElement {
-    const now = Date.now();
+    const now = this.now();
     const resting = restingVeins(this.save, now);
     const seen = Object.keys(activeProgress(this.save).cards).length;
     const lines: Child[] = [h('h2', {}, ['矿脉都挖完了'])];
@@ -517,15 +562,13 @@ class App {
       );
     }
     if (seen >= this.deck.cards.length) lines.push(h('p', { class: 'note' }, ['这个词库的词都见过了。']));
-    const again = h('button', { class: 'btn', type: 'button', id: 'again' }, ['再看一眼']);
-    again.addEventListener('click', () => this.next());
-    lines.push(again);
+    lines.push(button('再看一眼', { class: 'btn', id: 'again' }, () => this.next()));
     return h('div', { class: 'empty' }, lines);
   }
 
-  /** 题目之外的几块:状态、今天的账、矿石、题型、词表、存在哪。 */
+  /** 这一页之外的几块:状态、页签、提示、今天的账、词表、存在哪。 */
   private renderAround(): void {
-    const now = Date.now();
+    const now = this.now();
     const save = this.save;
     const date = calendar(save.startDay, now, save.tzOffsetMs);
     byId('date').textContent =
@@ -536,6 +579,37 @@ class App {
     byId('xp-bar').style.width = `${Math.round((level.into / level.needed) * 100)}%`;
     byId('xp').setAttribute('aria-valuenow', String(level.into));
     byId('xp').setAttribute('aria-valuemax', String(level.needed));
+
+    // 页签上的数字:现在能浇几株、草地上有几株草。一眼看出该去哪
+    const due = dueVeins(save, now).length;
+    const counts: Record<Tab, number> = {
+      mine: 0,
+      farm: thirstyCards(save, now).length,
+      pasture: due,
+      shop: 0,
+    };
+    const labels: Record<Tab, string> = { mine: '矿洞', farm: '农场', pasture: '牧场', shop: '商店' };
+    for (const tab of TABS) {
+      const node = byId(`tab-${tab}`);
+      if (tab === this.tab) node.setAttribute('aria-current', 'page');
+      else node.removeAttribute('aria-current');
+      fill(node, [
+        labels[tab],
+        counts[tab] > 0 ? h('span', { class: 'count' }, [String(counts[tab])]) : null,
+      ]);
+    }
+
+    const notices: Child[] = this.reports.map((text, index) =>
+      h('div', { class: 'notice' }, [
+        h('span', {}, [text]),
+        button('知道了', { id: `report-${index}` }, () => {
+          this.reports.splice(index, 1);
+          this.renderAround();
+        }),
+      ]),
+    );
+    if (this.notice) notices.push(h('div', { class: 'notice' }, [h('span', {}, [this.notice])]));
+    fill(byId('notices'), notices);
 
     const progress = activeProgress(save);
     const stats = todayStats(save, now);
@@ -549,31 +623,10 @@ class App {
       fact(String(stats.reviews), '答题,不含练习'),
       fact(stats.accuracy === null ? '-' : `${Math.round(stats.accuracy * 100)}%`, '答对的比例'),
       fact(String(stats.fresh), '今天见的新词'),
+      fact(String(due), '该复习的旧词'),
       fact(String(progress.wordBag.length), '词袋里的词'),
       fact(`${masteredCount(save)}/${seen}`, '学会的 / 见过的'),
-      fact(`${seen}/${this.deck.cards.length}`, '词库进度'),
     ]);
-
-    let worth = 0;
-    const ores: Child[] = [];
-    for (let grade = 1; grade <= MAX_MASTERY; grade++) {
-      const count = save.ore[grade] || 0;
-      worth += count * orePrice(grade);
-      ores.push(
-        h('span', { class: count > 0 ? 'ore' : 'ore is-none' }, [
-          `${grade} 级 `,
-          h('b', { class: 'num' }, [`×${count}`]),
-        ]),
-      );
-    }
-    fill(byId('ores'), ores);
-    const sell = byId('sell') as HTMLButtonElement;
-    sell.disabled = worth === 0;
-    sell.textContent = worth > 0 ? `全部卖掉(+${worth} 金币)` : '全部卖掉';
-
-    for (const type of ['choice', 'reverse', 'spell'] as QuestionType[]) {
-      byId(`type-${type}`).setAttribute('aria-pressed', String(type === this.questionType));
-    }
 
     byId('words-count').textContent = String(seen);
     if ((byId('words-box') as HTMLDetailsElement).open) this.renderWords();
@@ -581,15 +634,15 @@ class App {
 
     byId('sync').textContent = this.syncNote || '正在取你的进度…';
     byId('deck-note').textContent =
-      `词库:${this.deck.name}。选词、词频和音标来自开源词典 ECDICT(MIT 许可);` +
+      `词库:${this.deck.name},见过 ${seen}/${this.deck.cards.length}。选词、词频和音标来自开源词典 ECDICT(MIT 许可);` +
       `卡片上的词性和短释义是 AI 写的,还没有人逐个校对过,看到不对的请在答完后点"释义不准"。` +
-      `现在出的是${TYPE_NAMES[this.questionType]},这次打开答了 ${this.answeredThisVisit} 道。`;
+      `这次打开答了 ${this.answeredThisVisit} 道。`;
   }
 
   /** 词表只在展开的时候画:一千个词每答一题都重画一遍没有必要。 */
   private renderWords(): void {
     if (!(byId('words-box') as HTMLDetailsElement).open) return;
-    const now = Date.now();
+    const now = this.now();
     const save = this.save;
     const progress = activeProgress(save);
     const rows: Child[] = [];
@@ -603,23 +656,33 @@ class App {
     };
     const bag = progress.wordBag.filter((id) => hasCard(this.deck, id));
     if (bag.length > 0) {
-      rows.push(h('div', { class: 'group' }, [`词袋里,正在练(${bag.length})`]));
+      rows.push(h('div', { class: 'group' }, [`词袋里,等着练或者种(${bag.length})`]));
       for (const id of bag) {
         const state = getState(progress, id);
         rows.push(item(id, `连对 ${state ? state.drillStreak : 0}/${DRILL_STREAK}`));
       }
     }
-    const inBag: Record<string, boolean> = {};
-    for (const id of bag) inBag[id] = true;
+    const elsewhere: Record<string, boolean> = {};
+    for (const id of bag) elsewhere[id] = true;
+    const planted = save.plots.filter((plot) => plot.crop).map((plot) => plot.crop!.cardId);
+    if (planted.length > 0) {
+      rows.push(h('div', { class: 'group' }, [`田里长着的(${planted.length})`]));
+      for (const id of planted) {
+        elsewhere[id] = true;
+        if (!hasCard(this.deck, id)) continue;
+        const crop = cropOfCard(save, id);
+        rows.push(item(id, crop ? cropType(crop.cropType).name : ''));
+      }
+    }
     const rest = Object.keys(progress.cards)
-      .filter((id) => !Object.prototype.hasOwnProperty.call(inBag, id) && hasCard(this.deck, id))
+      .filter((id) => !Object.prototype.hasOwnProperty.call(elsewhere, id) && hasCard(this.deck, id))
       .sort((a, b) => progress.cards[a].dueAt - progress.cards[b].dueAt);
     if (rest.length > 0) {
-      rows.push(h('div', { class: 'group' }, [`矿里的旧词,按回来的先后(${rest.length})`]));
+      rows.push(h('div', { class: 'group' }, [`学过的旧词,按回来的先后(${rest.length})`]));
       for (const id of rest) {
         const state = progress.cards[id];
-        const due = state.dueAt <= now ? '该复习了' : whenText(state.dueAt, now, save);
-        rows.push(item(id, `掌握度 ${state.mastery} · ${due}`));
+        const back = state.dueAt <= now ? '该复习了' : whenText(state.dueAt, now, save);
+        rows.push(item(id, `掌握度 ${state.mastery} · ${back}`));
       }
     }
     if (rows.length === 0) rows.push(h('p', { class: 'note' }, ['还没有见过的词。答几道题就有了。']));
@@ -660,10 +723,12 @@ async function boot(): Promise<void> {
     await new App(deck).start();
   } catch (error) {
     fill(stage, [
-      h('div', { class: 'empty' }, [
-        h('h2', {}, ['页面没打开']),
-        h('p', {}, [
-          `词库或进度没取到(${error instanceof Error ? error.message : String(error)})。刷新一下再试。`,
+      h('div', { class: 'slab' }, [
+        h('div', { class: 'empty' }, [
+          h('h2', {}, ['页面没打开']),
+          h('p', {}, [
+            `词库或进度没取到(${error instanceof Error ? error.message : String(error)})。刷新一下再试。`,
+          ]),
         ]),
       ]),
     ]);
