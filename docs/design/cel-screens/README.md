@@ -35,7 +35,8 @@
 | [`sprite-wilt.jpg`](shots/sprite-wilt.jpg)、[`sprite-dead.jpg`](shots/sprite-dead.jpg) | 枯萎调轻之前和之后;干草的三个候选 |
 | [`sprite-misses.jpg`](shots/sprite-misses.jpg)、[`sprite-chunky.jpg`](shots/sprite-chunky.jpg) | 画错的两张;第一套时"圆胖一点"的试验 |
 | [`pasture-built.jpg`](shots/pasture-built.jpg)、[`pasture-saves.jpg`](shots/pasture-saves.jpg) | 用素材拼出来的牧场:和彩纸、整屏重画并排;另外四个存档 |
-| [`pasture-sprites.jpg`](shots/pasture-sprites.jpg)、[`pasture-misses.jpg`](shots/pasture-misses.jpg) | 牧场的素材一览;画错重出的两张 |
+| [`pasture-sprites.jpg`](shots/pasture-sprites.jpg)、[`pasture-misses.jpg`](shots/pasture-misses.jpg) | 牧场的素材一览;第一轮画错重出的两张 |
+| [`pasture-redraw.jpg`](shots/pasture-redraw.jpg) | 负责人要求改的:草垛、饲料桶、牧草、母鸡,之前和现在 |
 | [`tone.jpg`](shots/tone.jpg) | 色调:第一版和现在的,三屏各一对 |
 | [`mine-cave.jpg`](shots/mine-cave.jpg) | 矿洞:左边是第一版,右边是现在的(同一张画,只调亮了地面) |
 | [`ground.jpg`](shots/ground.jpg) | 底色:农场和牧场各三张,彩纸、调之前、调之后(只有场景,没有界面) |
@@ -243,6 +244,17 @@
 
 用彩纸那一版已有的四个示意存档各拼了一屏,没有新出图:存粮吃空、9 天没来、草都割完了、养了很多。见 [`pasture-saves.jpg`](shots/pasture-saves.jpg)。
 
+**负责人看过第一轮之后改了三处**(原话):
+
+> 牧草原型去掉底部黄色的土。草垛和饲料桶重画。他们就是画得太立体了,应该画扁平一点。然后,鸡的睡觉休息的姿势重新画。鸡不是趴着睡觉的。
+
+- **牧草**根部没有土了。
+- **草垛和饲料桶**从带透视、俯视的立体画法,改成正侧面平着看:托盘只是一条横板,桶是一个梯形。和旁边的谷仓、鸡舍是同一种看法了。
+- **鸡休息的姿势:**病了的母鸡和小鸡原先是侧趴在地上的,现在是蹲坐着:身子直立、圆圆的一团,脖子缩进去,闭着眼。抱窝的那一个也改成蹲坐在窝里。
+  牛和羊病了的那一个还是卧着的,没有改。
+
+前后对比见 [`pasture-redraw.jpg`](shots/pasture-redraw.jpg)(左边是之前的)。
+
 **做到了什么:**
 
 - **草垛和饲料桶跟着存粮走了。** 整屏重画的那一版草垛多高是模型画的;现在按"够吃几顿"在四档里挑。
@@ -251,8 +263,8 @@
 
 **发现的问题:**
 
-- **草地比彩纸乱。** 两种草里有一种根部带一小撮土,几十株摆在一起满地是土点;穗在这个大小下也不如彩纸的黄圆点醒目。这是我自己看的。
-- **病了的不够"灰"。** 彩纸里病了的整只灰一档;这里大牛、母鸡病了的那一张颜色没怎么变。主要靠卧着和药瓶来认。
+- 草地原先比彩纸乱(有一种草根部带土,满地是土点),去掉土之后好了。穗在这个大小下还是不如彩纸的黄圆点醒目。这是我自己看的。
+- **病了的不都够"灰"。** 彩纸里病了的整只灰一档;这里大牛病了的那一张颜色没怎么变,小羊、母鸡、小鸡的灰了。主要靠姿态和药瓶来认。
 - **怀着的和病了的都是卧着,**靠草窝和睁着的眼睛来分,在院子里这么小的时候分得不算清楚。
 - **底色比彩纸略深一点。** 背景调过底色之后色相对了(83 到 85 度,彩纸 82 到 87),明度还低一点。
 - **11 张里重出了 3 张**([`pasture-misses.jpg`](shots/pasture-misses.jpg)):大羊那张小图之间被画上了分隔线,右下角还照着参考图画了一个"AI生成"的水印(参考图上那个水印后来盖掉了);
@@ -269,7 +281,7 @@
 - 割草答题、做饲料、买卖、小屋和鸡舍那几张纸、牲畜的卡片、几天没来的那张纸,都没有重做。
 - 牲畜只有朝右的一张,朝左是镜像。没有走动和吃草的动作。
 
-**用量:**14 次调用,约 18 万个输出 token。价格以账单为准。提示词在 [`sprites-pasture/manifest.json`](sprites-pasture/manifest.json)。
+**用量:**两轮 20 次调用,约 25 万个输出 token(第一轮 14 次,第二轮重出 6 张)。价格以账单为准。提示词在 [`sprites-pasture/manifest.json`](sprites-pasture/manifest.json)。
 
 ## 发现的问题
 
