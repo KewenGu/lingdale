@@ -308,7 +308,7 @@
       h = q.h * k2;
     return at(x, y, pic(base, name, -w * (ax == null ? 0.5 : ax), -h * (ay == null ? 0.5 : ay), w, h), rot);
   }
-  /** 镐:镐头的中心落在 (x, y),和彩纸那把镐是同一个握法,所以靠在洞边的位置和角度可以照搬。 */
+  /** 镐:镐头的中心落在 (x, y),和彩纸那把镐是同一个握法,所以位置和角度可以照搬。 */
   function minePick(base, x, y, rot, s) {
     return minePic(base, 'pick', x, y, s, rot, 0.5, 0.13);
   }
@@ -394,9 +394,13 @@
     o += holes + slabs + (opt.bare ? '' : texts);
     // 词牌:两根木条挂在梁上。牌子上只有词,不预告这次会出哪一级矿石(负责人 2026-11-22 定的)
     o += g(signTf, minePic(base, 'sign', cx - 135, 107, 1, 0, 0, 0));
-    // 镐固定靠在洞的右边,答对答错都不挪到石板上(同一天定的)。答完的反馈落在石板自己身上:断开,或者砸出一个坑
-    top += minePick(base, 354, 222, 22, 1.05);
-    if (right) top += minePic(base, 'ore-' + grade, 306, ys[sel] + 6, BURST, -6);
+    // 镐:没答时靠在洞的右边;答完落在点的那条石板上。
+    // 负责人 2026-11-22 先说过让它一直靠在洞边,看过之后又让放回石板上,所以和彩纸那一屏是一样的。
+    if (sel == null) top += minePick(base, 354, 222, 22, 1.05);
+    else if (right) {
+      top += minePick(base, 226, ys[sel] + 26, 58, 1.12);
+      top += minePic(base, 'ore-' + grade, 306, ys[sel] + 6, BURST, -6);
+    } else top += minePick(base, 318, ys[sel] + 16, -40, 1.12);
     o += top;
     if (opt.bare) return o + '</svg>';
 
