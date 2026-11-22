@@ -68,7 +68,7 @@ sim/             学习者模拟
 data/            卡组数据:四级常用 1000 词,来源和许可见 data/README.md
 scripts/         做词库和打包练习页的脚本
 web/             没有美术的练习页
-docs/design/     设计文档
+docs/design/     设计文档;其中 mine-screens/、pasture-screens/ 是矿洞和牧场两边画面的示意稿
 docs/dev/        开发文档
 docs/marketing/  对外内容:策略和选题库
 docs/decisions/  决策记录

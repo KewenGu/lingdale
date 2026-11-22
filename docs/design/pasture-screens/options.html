@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>牧场画面方案比较</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Noto+Sans+SC:wght@400;500;700;900&family=Noto+Serif+SC:wght@600;900&family=ZCOOL+KuaiLe&display=swap">
+<link rel="stylesheet" href="../mine-screens/page.css">
+<link rel="stylesheet" href="page.css">
+</head>
+<body>
+<svg id="ld-defs" width="0" height="0" aria-hidden="true" focusable="false"></svg>
+
+<header class="top">
+  <div class="wrap">
+    <p class="eyebrow">灵谷小镇 Lingdale · 牧场这一边的画面 · 方案比较</p>
+    <h1>牧场的画面:五个取舍</h1>
+    <p class="lede">
+      牧场的规则已经做完,但这一边没有任何画面。往下细化之前,有五个取舍要由项目负责人定:
+      牧场一屏怎么排、牲畜画成什么样、饿着和病了怎么标、口粮和存粮怎么说、底部的路牌通向哪。
+    </p>
+    <div class="notice" id="result"></div>
+    <div class="notice">
+      <strong>这些是示意稿,不是成品。</strong>
+      全部用代码绘制(SVG),没有使用图像生成工具。数字是手写的示意,但和规则对得上:
+      第 1 年秋季第 20 天,小屋里 2 头大牛、1 头小牛、1 只大羊、1 只小羊,一顿吃 21 捆;鸡舍里 3 只大鸡、2 只小鸡,一顿吃 8 份。
+      草垛 63 捆,饲料 8 份,草地上 41 株草。词和释义取自 30 词的示例卡组。
+    </div>
+    <nav class="jump" aria-label="页面目录">
+      <a href="#comp">一 构图</a>
+      <a href="#animal">二 牲畜的画法</a>
+      <a href="#mark">三 状态怎么标</a>
+      <a href="#unit">四 口粮和存粮怎么说</a>
+      <a href="#bar">五 底部的路牌</a>
+      <a href="#mine">绘制者自己定了的</a>
+      <a href="index.html">定稿的全部画面</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <section id="comp" class="band">
+    <div class="wrap">
+      <h2>一 牧场一屏怎么排</h2>
+      <p class="sub">
+        牧场有三样东西:草地、养牛羊的小屋、鸡舍。玩家打开这一屏要问三件事:存粮够不够吃、哪只有事、今天有多少草能割。
+        割草是这一屏的主要动作,一天几十次。每个方案两张图:平常的样子,和 9 天没来再打开的样子(6 只刚病,4 只饿着)。
+      </p>
+      <div class="opts" id="comp-opts"></div>
+    </div>
+  </section>
+
+  <section id="animal" class="band">
+    <div class="wrap">
+      <h2>二 牲畜画成什么样</h2>
+      <p class="sub">
+        牛、羊、鸡各有五个样子要认得出:小的、大的、饿着、病了、怀着(鸡是抱窝)。美术规范的第 2 条原则是"状态靠变换,不靠重画"。
+        每个方案左边是同一张样张,右边是它放进牧场里的样子。样张里的标记用的是第三节建议的那种。
+      </p>
+      <div class="opts" id="animal-opts"></div>
+    </div>
+  </section>
+
+  <section id="mark" class="band">
+    <div class="wrap">
+      <h2>三 饿着和病了怎么标</h2>
+      <p class="sub">
+        牲畜会饿、会病、会死(负责人的决定),所以这两种状态必须一眼找得到;同时规范要求不吓人:没有红色警告、感叹号、骷髅和倒计时。
+        每个方案两张图:9 天没来的牧场,和样张里饿着、病了的那两列。
+      </p>
+      <div class="opts" id="mark-opts"></div>
+    </div>
+  </section>
+
+  <section id="unit" class="band">
+    <div class="wrap">
+      <h2>四 口粮和存粮怎么说</h2>
+      <p class="sub">
+        规则里的"天"都是游戏日,现实 12 小时:牛"一天"吃 6 捆,饿"14 天"生病。牲畜在每个游戏日开始时吃一次,也就是每天早上 4 点和下午 4 点。
+        "够吃几天"是这一屏最要紧的一句话,它说的"天"是哪一种,要先定。每个方案两张图:点草垛看到的卡片,和小屋里的清单。
+      </p>
+      <div class="opts" id="unit-opts"></div>
+    </div>
+  </section>
+
+  <section id="bar" class="band">
+    <div class="wrap">
+      <h2>五 底部的路牌通向哪</h2>
+      <p class="sub">
+        现在的规定是"路牌只连农场和矿洞",别的地方都走小镇地图。多了牧场之后,割草答错的词要回田里种,做饲料的作物是田里收的,
+        牧场和农场之间来回会很多。每个方案两张图:牧场和农场。
+      </p>
+      <div class="opts" id="bar-opts"></div>
+    </div>
+  </section>
+
+  <section id="mine" class="band">
+    <div class="wrap">
+      <h2>绘制者自己定了的,请过目</h2>
+      <p class="sub">下面这几件没有画成几个方案,先按一种做法画了。有不同意的,和上面五件一起说。画面都在<a href="index.html">全部画面</a>那一页。</p>
+      <ul class="notes" id="mine-notes"></ul>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    示意稿,不是成品。绘制代码:<code>pasture-paper.js</code>(图形)、<code>screens.js</code>(画面)、<code>pasture-scene.js</code>(示意数据),
+    以及 <code>../mine-screens/</code> 和 <code>../art-exploration/style-paper.js</code> 里已有的图形。规定见 <code>../07-art-direction.md</code>。
+  </div>
+</footer>
+
+<script src="../art-exploration/scene.js"></script>
+<script src="../art-exploration/style-paper.js"></script>
+<script src="../mine-screens/mine-scene.js"></script>
+<script src="../mine-screens/mine-paper.js"></script>
+<script src="../mine-screens/screens.js"></script>
+<script src="pasture-scene.js"></script>
+<script src="pasture-paper.js"></script>
+<script src="screens.js"></script>
+<script src="options.js"></script>
+</body>
+</html>

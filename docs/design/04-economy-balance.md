@@ -420,7 +420,7 @@ npm run sim -- --days=90 --known=0.6 --forget=2 --glance=0.5 --model=fsrs6 --dig
 | 看义选词 | 40.4% | 25.0% |
 
 也就是说随机抽干扰项时,上面那些结论要按三成半到四成的蒙对率重算;现在的出题把它压回了四选一的底线。
-见[决策记录 0026](../decisions/0026-first-real-deck-and-same-pos-distractors.md)。
+见[决策记录 0028](../decisions/0028-first-real-deck-and-same-pos-distractors.md)。
 
 ## 调整数值的流程
 

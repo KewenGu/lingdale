@@ -61,7 +61,7 @@
 - **音标不可靠**(词典用的是老写法),上线前要换来源。没有例句,没有发音。
 
 来源、许可、生成步骤和查过什么没查过什么,见 [`data/README.md`](../../data/README.md)。
-为什么短释义不从词典里按规则截,见[决策记录 0026](../decisions/0026-first-real-deck-and-same-pos-distractors.md)。
+为什么短释义不从词典里按规则截,见[决策记录 0028](../decisions/0028-first-real-deck-and-same-pos-distractors.md)。
 
 `data/sample-deck.json`:30 个四级难度的英语单词,手工编写,只有 `front`、`back`、`phonetic`。
 它只用于测试和早期调试,不是正式词库。
