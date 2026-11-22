@@ -202,13 +202,15 @@
    * 小镇地图上的居民。base 是彩纸的地图(一整屏 svg),list 里每一项是三种放法之一:
    *   { model, id, x, y, w }        立绘缩成小贴纸(头到胸口),脚下的中点在 (x, y)
    *   { model, id, x, y, d, pin:1 } 头像圆片,圆心在 (x, y),直径 d
-   *   { paper: 'maidong', x, y, s } 彩纸的小人(char-paper.js 画的)
+   *   { paper: 'maidong', x, y, s } 更早那一轮的彩纸半身人物(char-paper.js 画的)
+   *   { mini: 'maidong', x, y, s }  彩纸的全身小人(minis.js 画的),脚底的中点在 (x, y)
    */
   function town(base, list) {
     var o = '',
       clips = '';
     list.forEach(function (p, i) {
-      if (p.paper)
+      if (p.mini) o += g('translate(' + p.x + ' ' + p.y + ')', LD.minis.mini(p.mini, p.s || 0.36));
+      else if (p.paper)
         o += g(
           'translate(' + p.x + ' ' + p.y + ') scale(' + (p.s || 0.2) + ')',
           LD.chars.paper.figure(p.paper, 'calm'),
@@ -244,6 +246,90 @@
     });
     return base.replace('</svg>', '<defs>' + clips + '</defs>' + o + '</svg>');
   }
+  /**
+   * 一个人,两种画法:每人一格,左边是彩纸的全身小人(地图上用的),右边是立绘(对话里用的)。
+   * list 是 [{model,id,name,job}],cols 是一行几个人。
+   */
+  function pairs(list, cols) {
+    cols = cols || 4;
+    var cw = 290,
+      ch = 250,
+      rows = Math.ceil(list.length / cols),
+      W = cols * cw + 10,
+      H = rows * ch + 10,
+      C = K.C,
+      o =
+        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' +
+        W +
+        ' ' +
+        H +
+        '"><rect width="' +
+        W +
+        '" height="' +
+        H +
+        '" fill="' +
+        C.grassD +
+        '"/>',
+      cards = '',
+      minis = '',
+      pics = '',
+      plates = '',
+      texts = '';
+    list.forEach(function (p, i) {
+      var x = 10 + (i % cols) * cw,
+        y = 10 + Math.floor(i / cols) * ch;
+      cards += K.rrect(x, y, cw - 10, ch - 10, 18, C.grass);
+      minis += g('translate(' + (x + 70) + ' ' + (y + 196) + ')', LD.minis.mini(p.id, 1.08));
+      pics +=
+        '<image href="' +
+        src(p.model, p.id) +
+        '" x="' +
+        (x + 136) +
+        '" y="' +
+        (y + 12) +
+        '" width="130" height="195"/>';
+      plates += K.rrect(x + 96, y + 198, 88, 34, 17, C.white);
+      texts +=
+        K.txt(x + 140, y + 214, p.name, 14, C.ink, { a: 'middle' }) +
+        K.txt(x + 140, y + 226.5, p.job, 9.5, C.ink, { a: 'middle', w: 500 });
+    });
+    return (
+      o +
+      cards +
+      K.grain(W, H, 'ld-paper-grain') +
+      minis +
+      g('', pics, ' filter="url(#mx-cut)"') +
+      g('', plates, K.SH) +
+      texts +
+      '</svg>'
+    );
+  }
+  /** 小人按地图上的真实大小排成一排。s 是缩放。 */
+  function row(ids, s) {
+    var W = ids.length * 62 + 20,
+      H = 150 * s + 26,
+      o =
+        '<svg xmlns="http://www.w3.org/2000/svg" width="' +
+        W +
+        '" height="' +
+        K.f(H) +
+        '" viewBox="0 0 ' +
+        W +
+        ' ' +
+        K.f(H) +
+        '"><rect width="' +
+        W +
+        '" height="' +
+        K.f(H) +
+        '" fill="' +
+        K.C.grass +
+        '"/>' +
+        K.grain(W, H, 'ld-paper-grain');
+    ids.forEach(function (id, i) {
+      o += g('translate(' + (41 + i * 62) + ' ' + K.f(H - 10) + ')', LD.minis.mini(id, s));
+    });
+    return o + '</svg>';
+  }
   /** 剪贴用的滤镜:一圈纸白的边加硬边投影。和 character-style 的 ca-cut 是同一个做法,边细一点,给小图用。 */
   function defs() {
     function cut(id, r, dx, dy) {
@@ -265,5 +351,14 @@
     }
     return cut('mx-cut', 2.6, 1.6, 3) + cut('mx-cut-s', 1.6, 1, 2);
   }
-  LD.mix = { src: src, talk: talk, lineup: lineup, chips: chips, town: town, defs: defs };
+  LD.mix = {
+    src: src,
+    talk: talk,
+    lineup: lineup,
+    chips: chips,
+    town: town,
+    pairs: pairs,
+    row: row,
+    defs: defs,
+  };
 })();

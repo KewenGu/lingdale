@@ -35,6 +35,35 @@
     return { src: M.src(model, id), name: by[id].name, job: by[id].place };
   }
 
+  // 一个人,两种画法:彩纸的全身小人和立绘
+  var cast = LD.LEADS.map(function (p) {
+    return { model: 'oa', id: p.id, name: p.name, job: p.place };
+  });
+  $('pairs').innerHTML = M.pairs(cast, 4);
+  phone(
+    $('two-flow'),
+    M.town(LD.screens.town(LD.mineScene), [
+      { mini: 'jingtian', x: 158, y: 306 },
+      { mini: 'sumu', x: 238, y: 322 },
+      { mini: 'yuanzhi', x: 52, y: 452 },
+      { mini: 'xiaoman', x: 300, y: 560 },
+      { mini: 'rendong', x: 204, y: 612 },
+      { mini: 'maidong', x: 162, y: 672 },
+      { mini: 'qingdai', x: 226, y: 690 },
+      { mini: 'lianqiao', x: 340, y: 640 },
+    ]),
+    '小镇地图,彩纸的全身小人',
+    '<b>地图上</b>彩纸的全身小人,代码画的。',
+  );
+  phone(
+    $('two-flow'),
+    M.talk(P('oa', 'maidong'), 'sticker'),
+    '对话,麦冬的立绘',
+    '<b>点进去</b>赛璐璐的半身立绘,加一圈纸白的边。',
+    true,
+  );
+  $('mini-rows').innerHTML = M.row(LD.minis.ids, 0.36) + M.row(LD.minis.ids, 0.28);
+
   // 同一个麦冬,四种放法
   phone(
     $('talk-ways'),
@@ -118,7 +147,7 @@
   phone(
     $('town'),
     M.town(map, [{ paper: 'maidong', x: 150, y: 612, s: 0.2 }]),
-    '小镇地图,彩纸的小人',
-    '<b>彩纸的小人</b>代码画的麦冬。和地图是一种东西,但和立绘里的麦冬像不像同一个人,要另外看。',
+    '小镇地图,更早的彩纸人物',
+    '<b>更早的彩纸半身人物</b>代码画的麦冬,不是照现在的立绘画的。',
   );
 })();
