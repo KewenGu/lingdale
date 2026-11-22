@@ -1,0 +1,21 @@
+<!doctype html><meta charset="utf-8"><body style="margin:0;background:#fff">
+<svg id="ld-defs" width="0" height="0" style="position:absolute"></svg>
+<div id="r"></div>
+<script src="../art-exploration/scene.js"></script><script src="../art-exploration/style-paper.js"></script>
+<script src="../mine-screens/mine-scene.js"></script><script src="../mine-screens/mine-paper.js"></script><script src="../mine-screens/screens.js"></script>
+<script src="../pasture-screens/pasture-scene.js"></script><script src="../pasture-screens/pasture-paper.js"></script><script src="../pasture-screens/screens.js"></script>
+<script>
+var K=LD.styles.paper.kit,k=LD.mine.kit,g=K.g;
+document.getElementById('ld-defs').innerHTML=LD.styles.paper.defs()+LD.mine.defs();
+var which=new URLSearchParams(location.search).get('s'), svg='';
+function strip(s){return s.replace(/<text[\s\S]*?<\/text>/g,'');}
+if(which==='farm'){ // 只有背景、地块、作物:没有星带、标记、顶部和底部
+  var tiles='',crops='';LD.scene.plots.forEach(function(p,i){var tf='translate('+(15+(i%5)*73)+' '+(164+Math.floor(i/5)*88)+')';tiles+=g(tf,K.tileBase(p,i+1));if(p)crops+=g(tf,K.cropG(p,i+1));});
+  svg=k.svgOpen()+K.farmBg()+g('',tiles,K.SHT)+g('',crops,K.SH)+'</svg>';
+} else if(which==='farm-full'){ svg=LD.screens.farm(LD.scene,LD.mineScene,2);
+} else if(which==='pasture'){ var hud=K.hud;K.hud=function(){return ''};svg=k.svgOpen()+strip(LD.pastureScreens.pasture(LD.pastureScene,{under:true}))+'</svg>';K.hud=hud;
+} else if(which==='pasture-full'){ svg=LD.pastureScreens.pasture(LD.pastureScene);
+} else if(which==='mine-full'){ svg=LD.screens.mine(LD.mineScene,LD.veins.old,'idle');
+} else if(which==='mine'){ var hud2=K.hud;K.hud=function(){return ''};svg=strip(LD.screens.mine(LD.mineScene,LD.veins.old,'idle'));K.hud=hud2; }
+document.getElementById('r').innerHTML=svg;var e=document.querySelector('#r svg');e.setAttribute('width',780);e.setAttribute('height',1688);
+</script>

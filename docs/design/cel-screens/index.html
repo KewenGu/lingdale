@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>灵谷小镇新画风画面</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Noto+Sans+SC:wght@400;500;700;900&family=Noto+Serif+SC:wght@600;900&family=ZCOOL+KuaiLe&display=swap">
+<link rel="stylesheet" href="../mine-screens/page.css">
+<link rel="stylesheet" href="cel-screens.css">
+</head>
+<body>
+<svg id="ld-defs" width="0" height="0" aria-hidden="true" focusable="false"></svg>
+
+<header class="top">
+  <div class="wrap">
+    <p class="eyebrow">灵谷小镇 Lingdale · 新画风 · 农场、牧场、矿洞</p>
+    <h1>用偏插画的赛璐璐重做农场、牧场和矿洞</h1>
+    <p class="lede">
+      项目负责人 2026-11-22 定了:产品的画风用偏插画的赛璐璐(线稿加平涂,带一点柔和的处理),并要求把农场、牧场、矿洞按这种画风重新设计。
+      这一页是第一稿:三屏的样子、和彩纸原稿的逐屏对比、缩小之后还认不认得出,以及一套作物素材的试验。
+    </p>
+    <div class="notice">
+      <strong>概念稿,不是成品,也不是能直接用的素材。</strong>
+      每一屏下面一层的场景是 <strong>AI 生成</strong>的(豆包 <code>doubao-seedream-5-5</code>,2026-11-22),右上角带"AI 生成"的标;
+      上面一层的顶部信息、按钮、单词、水滴和星带是代码画的。场景是一张拼好的图,游戏里不能这样用:地块的状态要一块一块换。
+      画面不读取游戏数据,规则以 <code>../02-gameplay.md</code> 为准。
+    </div>
+    <div class="notice">
+      <strong>美术规范还没有按新画风重写。</strong>
+      <code>../07-art-direction.md</code> 写的仍然是彩纸拼贴,它里面的布局、尺寸和"怎么表示状态"这次全部沿用了;颜色、形状、"一切都是纸片"那几章已经不适用。
+      决定和它的代价记在 <code>../../decisions/0028</code>。
+    </div>
+    <div class="verdict">
+      <p><strong>结论先说。</strong>走得通,而且比预想的便宜:把彩纸的画面当参考图,模型重画之后构图几乎原样保住,界面和字可以原封不动叠上去。
+      农场 30 块地的干湿和空地全部对得上,蔫了和不生长的 5 株都认得出。</p>
+      <p><strong>还没有解决的:</strong>这是三张拼好的图,不是素材;界面还是彩纸那一套,只描了一圈线;牧场的草数不出几捆了;没有上真机,没有问过目标用户。详见<a href="#open">没做的和发现的问题</a>。</p>
+    </div>
+    <nav class="jump" aria-label="页面目录">
+      <a href="#new">三屏</a>
+      <a href="#farm">农场</a>
+      <a href="#pasture">牧场</a>
+      <a href="#mine">矿洞</a>
+      <a href="#small">缩小之后</a>
+      <a href="#sprites">素材的试验</a>
+      <a href="#how">怎么做的</a>
+      <a href="#open">没做的和发现的问题</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <section id="new" class="band">
+    <div class="wrap">
+      <h2>三屏</h2>
+      <p class="sub">和彩纸的参考图是同一个存档、同一种排法:农场是第 1 年夏季第 3 天的 30 块地,牧场是第 1 年秋季第 20 天,矿洞是一条等着被挖的旧词矿脉。</p>
+      <div class="trio" id="new-shots"></div>
+    </div>
+  </section>
+
+  <section id="farm" class="band">
+    <div class="wrap">
+      <h2>农场</h2>
+      <p class="sub">左边是彩纸的原稿,中间是模型拿到去掉文字和界面的原稿之后画出来的原样,右边是叠上界面之后。</p>
+      <div class="trio" id="cmp-farm"></div>
+      <h3>30 块地逐块对过</h3>
+      <div class="scroll-x">
+        <table class="cmp wide">
+          <thead><tr><th>查的是</th><th>结果</th><th>说明</th></tr></thead>
+          <tbody>
+            <tr><td>干土、湿土、空地</td><td>30 块全对</td><td>干土和湿土的明暗差得比彩纸还开。空地的土色变深了,和湿土接近,只靠三道垄来分</td></tr>
+            <tr><td>蔫了的(2 株)</td><td>都认得出</td><td>叶子发黄、下垂</td></tr>
+            <tr><td>不生长的(3 株)</td><td>都认得出</td><td>一片叶子发黄。"整株歪向一边"画得很轻</td></tr>
+            <tr><td>作物是哪一种</td><td>29 块对,1 块丢了</td><td>第 4 行的玉米幼苗被画成了一根普通的嫩芽</td></tr>
+            <tr><td>作物的点睛色</td><td>3 块变了</td><td>萝卜的根肩从淡粉变成了白色。规范里靠这一点认萝卜</td></tr>
+            <tr><td>位置</td><td>没有挪</td><td>水滴、收获标记、星带按彩纸的坐标叠上去,都落在该落的地方</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <ul class="notes">
+        <li><b>状态怎么表示,一条没改。</b>能浇水是干土加水滴,浇过了是湿土,品质是星带,快收获是四角星。换的只是画法。</li>
+        <li><b>水滴和四角星是代码画的,</b>所以"蓝色只表示水""黄色表示得到的东西"这两条在这一屏上还守得住。场景里的天是蓝的,这一条规矩在新画风下要重新写。</li>
+      </ul>
+    </div>
+  </section>
+
+  <section id="pasture" class="band">
+    <div class="wrap">
+      <h2>牧场</h2>
+      <p class="sub">彩纸的牧场是 2026-11-21 定稿、11-22 合并进主干的。这里用的是它的参考图那一屏。</p>
+      <div class="trio" id="cmp-pasture"></div>
+      <ul class="notes">
+        <li><b>排法保住了:</b>房子在上,院子在中间,草地在下;牛、羊、鸡的数量和位置都对,卧在干草上的那头牛和抱窝的那只鸡也在。</li>
+        <li><b>草数不出几捆了。</b>彩纸的规矩是"几根穗就是几捆":矮、中、高各顶着 1、2、3 根玉米黄的穗。模型把草画成了自然的草丛,穗变成了红褐色的小点,高矮还看得出,根数数不清。这一条要么靠素材单独画,要么换一种说法。</li>
+        <li><b>见底的感叹号是叠上去的。</b>参考图里饲料桶旁边那个感叹号模型没有画,按规则补在原来的位置。</li>
+        <li><b>草的颜色偏黄了,</b>和院子、远山的绿分得不如彩纸清楚。</li>
+      </ul>
+    </div>
+  </section>
+
+  <section id="mine" class="band">
+    <div class="wrap">
+      <h2>矿洞</h2>
+      <p class="sub">词牌和四条石板要求模型留白,单词、音标、释义和标签都是代码叠上去的。</p>
+      <div class="trio" id="cmp-mine"></div>
+      <ul class="notes">
+        <li><b>岩层的构图原样保住了:</b>木梁、提灯、挂着的词牌、探出来的矿石、镐、四条石板、石板右端的矿。</li>
+        <li><b>字读得清。</b>单词 40pt、释义 17pt 压在模型画的牌子和石板上,底色干净,没有纹理抢字。</li>
+        <li><b>"点石板的那一下就是那一镐"没有变,</b>但答对、运气好、答错三个关键帧这次没有画。石板裂开、矿石弹出要的是能动的素材,一张拼好的图做不了。</li>
+        <li><b>石板比彩纸更像一块块石头了,</b>"静止时像一张选择题列表"这个老问题轻了一点。这是我自己看的。</li>
+      </ul>
+    </div>
+  </section>
+
+  <section id="small" class="band">
+    <div class="wrap">
+      <h2>缩小之后</h2>
+      <p class="sub">
+        规则允许地块扩到 120 块,那时每块地在屏幕上只有约 28pt。当初选彩纸的第一条理由就是它缩小之后状态最好认。下面按真实大小显示,请在手机上看。
+      </p>
+      <div class="small-row" id="small-shots"></div>
+      <ul class="notes">
+        <li><b>干湿、水滴、收获标记都清楚,</b>干土和湿土的明暗在新画风里差得更开。水滴和收获标记本来就是代码画的,两边一样。</li>
+        <li><b>作物两边差不多:</b>都只剩轮廓和主色,蔫了的那两株靠发黄还认得出。新画风没有比彩纸明显更差。</li>
+        <li><b>这个判断是放大三倍看截图得出的,</b>真实大小下线稿会不会糊,要在手机上看。</li>
+        <li>这是在一张缩小的整图上看的。真正的小图标应该单独画一套简化的,不是把大图缩小。</li>
+      </ul>
+    </div>
+  </section>
+
+  <section id="sprites" class="band">
+    <div class="wrap">
+      <h2>一套作物素材的试验</h2>
+      <p class="sub">
+        游戏里用的不是整屏的图,是一样一样的素材。试了一次:让模型把萝卜的七个状态画成一排(种子、发芽、幼苗、成株、成熟、不生长、枯萎),
+        把上面那张农场当参考图来对齐画法。只出了一张,没有挑。
+      </p>
+      <div class="sheet ai"><img src="generated/sprites-turnip.webp" alt="萝卜的七个状态,AI 生成" loading="lazy"></div>
+      <ul class="notes">
+        <li><b>七个都画对了,而且是同一种画法、同一块土、同一个大小。</b>成熟的那个根肩是淡粉的;不生长的有一片黄叶、整株歪着;枯萎的全黄、下垂。</li>
+        <li><b>这改了成本的算法。</b>彩纸的做法是"状态靠变换,不靠重画",因为重画贵。现在重画一种作物的全部状态是一次调用、不到一分钟。12 种作物是 12 张。</li>
+        <li><b>还没有验证的:</b>12 张之间画风和大小统不统一;怎么切成一个个素材;湿土和干土要分开出;生长的动画原来靠纸片的位移和缩放,换成位图之后只能换图。只试了萝卜这一种。</li>
+      </ul>
+    </div>
+  </section>
+
+  <section id="how" class="band">
+    <div class="wrap">
+      <h2>怎么做的</h2>
+      <ol class="notes">
+        <li><b>把彩纸的画面去掉文字和界面,</b>只留场景(<code>source.html</code>)。农场连水滴、四角星和星带也去掉。</li>
+        <li><b>当参考图交给图像模型,</b>要求按新画法重画,构图和每样东西的位置、数量、状态不变,画面里不要有字和界面。三屏各出了一张,没有挑,也没有重出。</li>
+        <li><b>把顶部信息、底部按钮、单词和释义、标记叠回去。</b>这些是代码画的,用的是彩纸那一屏的坐标,一个没有挪。界面的图形还是彩纸那一套,只把硬边投影换成了一圈深褐色的线稿加投影。</li>
+      </ol>
+      <ul class="notes">
+        <li><b>彩纸的那几屏没有白做。</b>它们现在是布局稿:排法、尺寸、状态的表示法都定在那里,模型照着画。以后要改一屏的排法,先改彩纸的代码,再重画。</li>
+        <li><b>用量:</b>4 次调用(三屏加一张素材),每张 40 到 60 秒。价格以账单为准。提示词和每张的用量在 <code>generated/manifest.json</code>,里面没有任何作品和画师的名字。</li>
+      </ul>
+    </div>
+  </section>
+
+  <section id="open" class="band">
+    <div class="wrap">
+      <h2>没做的,和发现的问题</h2>
+      <div class="two-col">
+        <div>
+          <h3>发现的问题</h3>
+          <ul class="notes">
+            <li><b>界面没有重新设计。</b>顶部的药丸、底部的按钮、水滴、星带都是彩纸的图形描了一圈线。它们和场景放在一起能看,但不是为这种画风设计的。</li>
+            <li><b>人物还没有放进这三屏。</b>玩家自己的角色、居民在场景里是什么样、多大,没有画。</li>
+            <li><b>规范里的几条规矩要重写:</b>"蓝色只表示水"(天是蓝的);"红色不当警告色";"没有描边、渐变";"不用纯黑纯白"。哪些留、哪些改,要逐条过。</li>
+            <li><b>牧场的草数不出几捆,农场的萝卜丢了淡粉的根肩,有一株玉米幼苗认不出。</b>都是"模型大体照做、细处自己发挥"的结果。靠单独的素材能管住,靠整屏重画管不住。</li>
+            <li><b>同一屏每次出图都会不一样。</b>这次每屏只出了一张。画面要改一处,就得整张重出,别的地方也会跟着变。</li>
+          </ul>
+        </div>
+        <div>
+          <h3>没做的</h3>
+          <ul class="notes">
+            <li>矿洞答题之后、矿洞关门、割草答题、做饲料、买卖、词袋、商店、小镇地图、对话:都没有重做。</li>
+            <li>没有动效。</li>
+            <li>没有按新画风写色板、字体和形状的规定。字体沿用原来的三种。</li>
+            <li>没有上真机,只在浏览器里按手机宽度看过。</li>
+            <li>没有问过任何目标用户。"认得出""读得清"是我自己看的。</li>
+            <li>没有做色觉模拟,没有重新算明暗对比。</li>
+            <li>没有在引擎里试过:位图素材的包体、内存、图集怎么切。</li>
+            <li>没有逐张比对画面是否像某个已有游戏的画面。</li>
+            <li>AI 生成的美术能不能上架、版权归属,仍然没有答案,见 <code>../06-roadmap.md</code> 的未决问题。现在整个画面都落在这个问题里了。</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    概念稿,不是成品。场景是 AI 生成的(豆包的生图模型),界面和文字是代码绘制的,代码由 Claude 编写,属于 AI 协助产出的内容。
+    对外发布这些画面时,按 <code>../../marketing/01-content-strategy.md</code> 的要求声明。
+  </div>
+</footer>
+
+<script src="../art-exploration/scene.js"></script>
+<script src="../art-exploration/style-paper.js"></script>
+<script src="../mine-screens/mine-scene.js"></script>
+<script src="../mine-screens/mine-paper.js"></script>
+<script src="../mine-screens/screens.js"></script>
+<script src="../pasture-screens/pasture-scene.js"></script>
+<script src="../pasture-screens/pasture-paper.js"></script>
+<script src="../pasture-screens/screens.js"></script>
+<script src="cel-screens.js"></script>
+<script src="index.js"></script>
+</body>
+</html>

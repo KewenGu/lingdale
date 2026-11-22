@@ -1,0 +1,94 @@
+/* 新画风画面页自己的样式。看稿台的底、字体和手机框沿用 ../mine-screens/page.css。 */
+.phone-frame {
+  position: relative;
+}
+.ai::after {
+  content: 'AI 生成';
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: rgba(20, 23, 27, 0.78);
+  color: #fff;
+  font: 700 11px/1.7 var(--font-body);
+}
+.verdict {
+  max-width: 48em;
+  margin: 20px 0 0;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--pick);
+  border-radius: 6px;
+  background: var(--surface);
+  font-size: 15px;
+}
+.verdict p {
+  margin: 0 0 8px;
+}
+.verdict p:last-child {
+  margin: 0;
+}
+.trio {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 22px 18px;
+  max-width: 980px;
+}
+.trio figcaption b {
+  display: block;
+  color: var(--ink);
+  font-size: 14px;
+}
+.small-row {
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+  align-items: flex-start;
+}
+.small-row figcaption b {
+  display: block;
+  color: var(--ink);
+}
+.sheet {
+  position: relative;
+  max-width: 980px;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+}
+.sheet img {
+  display: block;
+  width: 100%;
+}
+table.cmp {
+  width: 100%;
+  max-width: 980px;
+  border-collapse: collapse;
+  font-size: 13.5px;
+  line-height: 1.6;
+}
+table.cmp th,
+table.cmp td {
+  padding: 8px 10px;
+  border-top: 1px solid var(--line);
+  text-align: left;
+  vertical-align: top;
+}
+table.cmp thead th {
+  border-top: 0;
+  white-space: nowrap;
+}
+table.cmp td:first-child {
+  font-weight: 700;
+  padding-left: 0;
+}
+table.cmp.wide {
+  min-width: 620px;
+}
+@media (max-width: 720px) {
+  .trio {
+    grid-template-columns: minmax(0, 1fr);
+    max-width: 390px;
+  }
+}

@@ -72,6 +72,7 @@ docs/design/   设计文档:愿景、玩法规则、学习设计、数值、内�
 docs/design/art-exploration/  定美术方向时的探索稿:四种画风的比较页和绘制代码
 docs/design/mine-screens/     矿洞这一边的画面:矿洞、矿石、词袋、商店、小镇地图的示意稿和绘制代码
 docs/design/pasture-screens/  牧场这一边的画面:牧场、小屋、鸡舍、割草、做饲料、买卖的示意稿和绘制代码
+docs/design/cel-screens/      新画风(偏插画的赛璐璐)的农场、牧场、矿洞第一稿:AI 生成的场景加代码画的界面
 docs/design/character-style/  人物画风的探索稿:同一个居民几种画法的比较页、绘制代码、生成提示词和一轮 AI 生成的立绘(没有定,居民还没有设计)
 docs/dev/      开发文档:架构、开发指南、Cocos 接入
 docs/marketing/ 对外内容:内容策略、选题库
@@ -79,7 +80,7 @@ docs/decisions/ 决策记录:每个重要决定的背景、理由和被否决的
 ```
 
 动手之前先读相关文档。玩法规则以 [`docs/design/02-gameplay.md`](docs/design/02-gameplay.md) 为准,
-画面以 [`docs/design/07-art-direction.md`](docs/design/07-art-direction.md) 为准,术语以 [`docs/glossary.md`](docs/glossary.md) 为准。
+画面以 [`docs/design/07-art-direction.md`](docs/design/07-art-direction.md) 为准(画风已改、规范待重写,先读它开头的说明),术语以 [`docs/glossary.md`](docs/glossary.md) 为准。
 
 ## 常用命令
 
@@ -140,6 +141,8 @@ npm run sim -- --buy --days=90   # 模拟参数见 docs/dev/development.md
 
 ## 当前状态
 
-核心逻辑层(矿洞、农场、牧场、养牛羊和鸡、商店)已完成并有测试和模拟。美术方向已定为彩纸拼贴,农场、矿洞、词袋、商店、小镇地图和牧场都有代码画的示意稿,
+核心逻辑层(矿洞、农场、牧场、养牛羊和鸡、商店)已完成并有测试和模拟。
+美术方向 2026-11-22 从彩纸拼贴改为偏插画的赛璐璐(`docs/decisions/0028`):农场、牧场、矿洞有新画风的第一稿(场景是 AI 生成的概念稿,界面是代码画的),
+美术规范还没有按新画风重写,它里面的布局和状态表示法仍然有效;彩纸的那几屏留作布局稿。
 没有动效,没有成品美术。还没有界面、Cocos 工程和正式词库。
 进度和下一步见 [`docs/design/06-roadmap.md`](docs/design/06-roadmap.md)。

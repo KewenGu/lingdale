@@ -2,6 +2,14 @@
 
 本文是灵谷小镇视觉风格的唯一依据:农场和矿洞的界面、每一张对外发布的图、以后的小镇,都按它来做。
 
+> **2026-11-22:画风改了,本文还没有重写。** 项目负责人把产品的画风定为偏插画的赛璐璐(线稿加平涂),见[决策记录 0028](../decisions/0028-art-direction-illustrated-cel.md)。
+> 农场、牧场、矿洞的第一稿在[新画风的画面](cel-screens/README.md)。
+>
+> - **仍然有效的:** 排法、尺寸、每种状态怎么表示(干土加水滴、湿土、星带、收获标记、岩层的构图、房子在上草地在下)、字体、"不做什么"。新画风的画面就是照着这些重画的。
+> - **不再适用的:** "一句话"、原则 2 和 3、色板和用色规则、"形状"一章、"素材怎么做"。它们写的是彩纸。
+> - 彩纸的那几屏现在是布局稿:改排法先改它们,再按新画风重画。
+> - 按新画风重写本文之前,两边冲突的地方以决策记录 0028 和新画风的画面为准。
+
 - **方向:彩纸拼贴。** 2026-11-19 由项目负责人选定,背景和没选的方向见[决策记录 0015](../decisions/0015-art-direction-paper-collage.md)。
 - **参考实现:** 农场是 [`art-exploration/style-paper.js`](art-exploration/style-paper.js),
   矿洞这一边是 [`mine-screens/mine-paper.js`](mine-screens/mine-paper.js) 和 [`mine-screens/screens.js`](mine-screens/screens.js),
