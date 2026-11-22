@@ -145,3 +145,20 @@ table.cmp.wide {
   display: inline-block;
   vertical-align: bottom;
 }
+
+.pasture-sprites {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 16px;
+  align-items: flex-end;
+  max-width: 760px;
+  padding: 16px;
+  border-radius: 12px;
+  background: #a9cf7c;
+}
+@media (max-width: 720px) {
+  #pasture-saves {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    max-width: 390px !important;
+  }
+}

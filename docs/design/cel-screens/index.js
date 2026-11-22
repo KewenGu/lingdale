@@ -258,6 +258,66 @@
     $('sprite-count').textContent = Object.keys(A).length;
   })();
 
+  // ---------- 用素材拼出来的牧场 ----------
+  (function () {
+    var SP = 'sprites-pasture/',
+      BG = SP + 'pasture-bg.webp',
+      A = LD.celPastureSprites || {};
+    phone(
+      $('pasture-built'),
+      LD.pastureScreens.pasture(LD.pastureScene),
+      '牧场,彩纸',
+      '<b>彩纸的原稿</b>代码绘制。',
+    );
+    phone(
+      $('pasture-built'),
+      LD.cel.pasture(G + 'pasture.webp'),
+      '牧场,整屏重画',
+      '<b>整屏重画</b>模型一次画出整张图。',
+      true,
+    );
+    phone(
+      $('pasture-built'),
+      LD.cel.pastureSprites(SP, BG, LD.pastureScene),
+      '牧场,素材拼的',
+      '<b>素材拼的</b>牲畜、草垛、饲料桶、草都按存档摆上去。',
+      true,
+    );
+    [
+      ['pastureHungry', '存粮吃空了', '草垛只剩托盘,牲畜都低着头,头上是空碗。'],
+      ['pastureAway', '9 天没来', '病了的卧着,头上是药瓶;草长了很多。'],
+      ['pastureMown', '草都割完了', '只剩草茬;草垛堆得高,饲料桶冒尖。'],
+      ['pastureBig', '养了很多', '院子里画 12 只,其余的写在纸条上。'],
+    ].forEach(function (s) {
+      phone(
+        $('pasture-saves'),
+        LD.cel.pastureSprites(SP, BG, LD[s[0]]),
+        '牧场,' + s[1],
+        '<b>' + esc(s[1]) + '</b>' + esc(s[2]),
+        true,
+      );
+    });
+    var names = Object.keys(A),
+      html = '';
+    names.forEach(function (n) {
+      html +=
+        '<img src="' +
+        SP +
+        n +
+        '.webp" alt="' +
+        esc(n) +
+        '" title="' +
+        esc(n) +
+        '" style="width:' +
+        A[n].w +
+        'px;height:' +
+        A[n].h +
+        'px" loading="lazy">';
+    });
+    $('pasture-sprites').innerHTML = html;
+    $('pasture-count').textContent = names.length;
+  })();
+
   // 缩小到一屏 120 块地的大小:每块地约 28pt
   [
     ['彩纸', LD.screens.farm(LD.scene, LD.mineScene, 2), false],

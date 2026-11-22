@@ -14,6 +14,10 @@ if(which==='farm'){ // 只有背景、地块、作物:没有星带、标记、�
   svg=k.svgOpen()+K.farmBg()+g('',tiles,K.SHT)+g('',crops,K.SH)+'</svg>';
 } else if(which==='farm-bg'){ // 只有背景:天、远处的房子、栅栏、草地。给素材拼的那一屏当底
   svg=k.svgOpen()+K.farmBg()+'</svg>';
+} else if(which==='pasture-bg'){ // 牧场不变的那些:天、草地、谷仓、鸡舍、两块院子、木栅栏。没有牲畜、草垛、饲料桶和草
+  var PK=LD.pasture.kit, C=K.C;
+  function paddock(x,y,w,h,seed){return k.at(x,y,K.cutRect(w,h,26,LD.rng(seed),5,C.grassD));}
+  svg=k.svgOpen()+LD.pastureScreens.kit.meadowBg()+paddock(8,268,236,124,3)+paddock(250,274,132,118,5)+g('',PK.barn(80,250,1)+PK.coop(324,250,1)+PK.rail(8,382,410,176,214),K.SH)+'</svg>';
 } else if(which==='farm-full'){ svg=LD.screens.farm(LD.scene,LD.mineScene,2);
 } else if(which==='pasture'){ var hud=K.hud;K.hud=function(){return ''};svg=k.svgOpen()+strip(LD.pastureScreens.pasture(LD.pastureScene,{under:true}))+'</svg>';K.hud=hud;
 } else if(which==='pasture-full'){ svg=LD.pastureScreens.pasture(LD.pastureScene);

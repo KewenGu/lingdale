@@ -154,6 +154,145 @@
     return o + cel(K.hud(LD.scene) + S.bar('farm', sc, 2)) + '</svg>';
   }
 
+  // ---------- 用一个个素材拼出来的牧场 ----------
+  // 背景一张(天、草地、谷仓、鸡舍、院子、栅栏,这些不变);草垛四档、饲料桶三档;牲畜一种一个样子一张;牧草三种高矮。
+  // 草垛多高、哪只饿着病着、草有几株,都按存档摆。空碗、药瓶、感叹号这些标记仍然是代码画的。
+  // 素材在 sprites-pasture/,清单在 sprites-pasture/atlas.js。
+
+  /** 一只牲畜该用哪个素材。病了和饿着是姿态;怀着或抱窝的卧在草窝上。同时怀着又饿着的,画成饿着。 */
+  function animalSprite(a) {
+    var grown = P.isGrown(a),
+      who =
+        a.kind === 'cow'
+          ? grown
+            ? 'cow'
+            : 'calf'
+          : a.kind === 'sheep'
+            ? grown
+              ? 'sheep'
+              : 'lamb'
+            : grown
+              ? 'hen'
+              : 'chick',
+      c = P.cond(a);
+    return (
+      who +
+      '-' +
+      (c === 'sick' ? 'sick' : c === 'hungry' ? 'hungry' : a.preg != null && grown ? 'expect' : 'well')
+    );
+  }
+  /** 一个素材,脚底的中点落在 (x, y)。flip 是朝左(素材画的是朝右)。 */
+  function standing(base, name, x, y, k2, flip) {
+    var q = (LD.celPastureSprites || {})[name];
+    if (!q) return '';
+    var w = q.w * k2,
+      h = q.h * k2,
+      img =
+        '<image href="' +
+        base +
+        name +
+        '.webp" x="' +
+        K.f(-w / 2) +
+        '" y="' +
+        K.f(-h) +
+        '" width="' +
+        K.f(w) +
+        '" height="' +
+        K.f(h) +
+        '"/>';
+    return g('translate(' + K.f(x) + ' ' + K.f(y) + ')' + (flip ? ' scale(-1 1)' : ''), img);
+  }
+  /**
+   * 一个院子里的牲畜。排法照搬彩纸那一屏(../pasture-screens/screens.js 的 yard):有事的排在前面,
+   * 5 只以内原大,8 只以内 0.82 倍两排,再多 0.66 倍三排。
+   */
+  function yardSprites(base, list, x0, x1, yTop, yBottom, max) {
+    var order = { sick: 0, hungry: 1, well: 2 },
+      shown = list
+        .slice()
+        .sort(function (a, b) {
+          return order[P.cond(a)] - order[P.cond(b)];
+        })
+        .slice(0, max),
+      m = shown.length,
+      rows = m <= 3 ? 1 : m <= 8 ? 2 : 3,
+      s = m <= 5 ? 1 : m <= 8 ? 0.82 : 0.66,
+      per = Math.ceil(m / rows),
+      out = { body: '', mark: '', more: list.length - m },
+      i = 0;
+    for (var r = 0; r < rows; r++) {
+      var count = r === rows - 1 ? m - i : Math.min(per, m - i),
+        y = rows === 1 ? yBottom - (yBottom - yTop) * 0.2 : yTop + ((yBottom - yTop) * (r + 1)) / rows,
+        cw = (x1 - x0) / count;
+      for (var c = 0; c < count; c++, i++) {
+        var a = shown[i],
+          x = x0 + (c + 0.5) * cw + (r % 2 ? 8 : -6) * (count > 1 ? 1 : 0),
+          ay = y - (c % 2) * 5,
+          flip = (c + r) % 2 === 1,
+          st = P.cond(a),
+          sz = P.sizeOf(a);
+        out.body += standing(base, animalSprite(a), x, ay, s, flip);
+        // 标记探出来的位置和彩纸那一屏相同:卧倒的矮一截,标记跟着降下来
+        if (st !== 'well')
+          out.mark += at(
+            x + (flip ? -1 : 1) * sz.w * s * 0.34,
+            ay - sz.h * s * (st === 'sick' ? 0.62 : 1) - 3,
+            st === 'sick' ? P.medMark() : P.bowlMark(),
+            -8,
+            s < 0.8 ? 0.84 : 1,
+          );
+      }
+    }
+    return out;
+  }
+  /** sc 是牧场的示意存档(和彩纸那一屏同一份)。opt.bare 只要场景,不叠界面和标记。 */
+  function pastureSprites(base, bg, sc, opt) {
+    opt = opt || {};
+    var o = open(bg),
+      hayNeed = P.perMeal(sc, 'barn'),
+      feedNeed = P.perMeal(sc, 'coop'),
+      hayLevel = PS.kit.stockLevel(sc.hay, hayNeed, true),
+      feedLevel = PS.kit.stockLevel(sc.feed, feedNeed, false),
+      barn = yardSprites(base, P.houseAnimals(sc, 'barn'), 14, 240, 280, 384, 12),
+      coop = yardSprites(base, P.houseAnimals(sc, 'coop'), 250, 380, 294, 382, 8),
+      total = sc.grass[1] + sc.grass[2] + sc.grass[3],
+      marks = barn.mark + coop.mark,
+      grass = '';
+    // 草垛和饲料桶:位置和彩纸那一屏相同,大小跟着存粮走
+    o += standing(base, 'hay-' + hayLevel, 180, 252, 1) + standing(base, 'bin-' + feedLevel, 250, 252, 1);
+    o += barn.body + coop.body;
+    if (total) {
+      // 草的位置、高矮照彩纸那一屏的摆法;靠下的压住靠上的。同一种高矮有两个样子,再左右翻一翻,免得像盖章
+      P.field(sc.grass, 14, 426, 362, 264, 11, 58).pts.forEach(function (p, i) {
+        grass += standing(base, 'grass-' + p.size + (p.seed % 2 ? 'a' : 'b'), p.x, p.y, 1, i % 3 === 0);
+      });
+    } else {
+      [
+        [60, 520],
+        [140, 600],
+        [300, 520],
+        [250, 640],
+        [90, 660],
+      ].forEach(function (p, i) {
+        grass += standing(base, 'stubble', p[0], p[1], 1, i % 2 === 1);
+      });
+    }
+    o += grass;
+    if (opt.bare) return o + '</svg>';
+    // 见底的感叹号:探出草垛和饲料桶的右上角
+    var hs = (LD.celPastureSprites || {})['hay-' + hayLevel],
+      bs = (LD.celPastureSprites || {})['bin-' + feedLevel];
+    if (P.lowStock(sc.hay, hayNeed) && hs) marks += at(180 + hs.w / 2 - 4, 252 - hs.h + 4, P.alertMark(), -8);
+    if (P.lowStock(sc.feed, feedNeed) && bs)
+      marks += at(250 + bs.w / 2 - 2, 252 - bs.h + 2, P.alertMark(), -8);
+    o += cel(g('', marks, K.SH));
+    var U = new k.Layer();
+    if (!total)
+      U.add(S.kit.plate(195, 520, '草都割完了', sc.nextGrass.when + '会再长出 ' + sc.nextGrass.n + ' 株'));
+    if (barn.more) U.add(S.kit.pill(56, 386, '还有 ' + barn.more + ' 只', 11, K.C.white, K.C.ink, 9, 20));
+    return o + cel(U.out()) + cel(K.hud(sc) + PS.bar(sc, 'mow')) + '</svg>';
+  }
+
   /** 线稿加投影的滤镜。cel-ui 给界面的纸片用,cel-line 只加一圈线(星带用,它原本就不带投影)。 */
   function defs() {
     function line(id, shadow) {
@@ -180,6 +319,8 @@
     pasture: pasture,
     farmSprites: farmSprites,
     spriteOf: spriteOf,
+    pastureSprites: pastureSprites,
+    animalSprite: animalSprite,
     defs: defs,
   };
 })();
