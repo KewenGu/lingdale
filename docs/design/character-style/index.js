@@ -206,6 +206,114 @@
     });
   })();
 
+  // ---------- 图像生成模型出的立绘(AI 生成,文件在 generated/) ----------
+  (function () {
+    var G = 'generated/',
+      MODELS = [
+        { key: 'oa', name: 'OpenAI', model: 'gpt-image-2.6-sunburst', pos: { x: 36, y: 112, w: 330 } },
+        { key: 'ark', name: '豆包', model: 'doubao-seedream-5-0-pro', pos: { x: 22, y: 96, w: 346 } },
+      ],
+      WHO = ['maidong', 'xiaoman', 'qingdai', 'jiangli'];
+    function card(holder, cls, src, alt, cap) {
+      var fig = el('figure'),
+        frame = el('div', cls + ' ai');
+      frame.innerHTML = '<img src="' + G + src + '" alt="' + esc(alt) + '" loading="lazy">';
+      fig.appendChild(frame);
+      if (cap) fig.appendChild(el('figcaption', null, cap));
+      holder.appendChild(fig);
+    }
+    function person(id) {
+      return LD.CAST.filter(function (p) {
+        return p.id === id;
+      })[0];
+    }
+    MODELS.forEach(function (m) {
+      WHO.forEach(function (id) {
+        var p = person(id);
+        card(
+          $('gen-cast'),
+          'gcard',
+          m.key + '-' + id + '.webp',
+          p.name + ',' + m.name + ' 生成',
+          '<b>' +
+            esc(p.name) +
+            ' · ' +
+            esc(m.name) +
+            '</b>' +
+            esc(p.role + ',' + p.age + ' 岁。AI 生成,' + m.model + '。'),
+        );
+      });
+      card(
+        $('gen-cel'),
+        'gcard',
+        m.key + '-maidong-cel.webp',
+        '麦冬,线稿加平涂,' + m.name + ' 生成',
+        '<b>线稿加平涂 · ' + esc(m.name) + '</b>同一段人物设定,只换画法那几句。AI 生成。',
+      );
+      // 表情:第一张是基础立绘,后四张是带着它当参考图改出来的
+      var row = $('gen-faces');
+      row.appendChild(el('div', 'row-name', esc(m.name)));
+      ['', '-happy', '-puzzled', '-cheer', '-oops'].forEach(function (suffix, i) {
+        var cell = el('div', 'gface ai');
+        cell.innerHTML =
+          '<img src="' +
+          G +
+          m.key +
+          '-maidong' +
+          suffix +
+          '.webp" alt="麦冬的表情,' +
+          esc(m.name) +
+          ' 生成" loading="lazy">';
+        row.appendChild(cell);
+      });
+      var pic = { src: G + m.key + '-maidong.webp', x: m.pos.x, y: m.pos.y, w: m.pos.w },
+        bg = G + m.key + '-shop.webp';
+      phones('gen-talk', [
+        {
+          tag: m.name,
+          name: '彩纸的种子店,立绘贴上去',
+          note: '写实的人和纸片的货架不在一个世界里。白边救不回来。',
+          svg: LD.talk.photo('sticker', pic),
+        },
+        {
+          tag: m.name,
+          name: '整屏换成插画,界面还是纸片',
+          note: '背景也用同一个模型出。人和场景是一体的;对话框、选项、顶部信息保持彩纸。',
+          svg: LD.talk.photo('scene', pic, bg),
+        },
+        {
+          tag: m.name,
+          name: '整屏换成插画,界面也换',
+          note: '最像一个恋爱向的游戏。和农场、矿洞已经完全是两套东西。',
+          svg: LD.talk.photo('full', pic, bg),
+        },
+      ]);
+    });
+    // 同一个人,从彩纸到生成的立绘
+    figure($('gen-ladder'), 'card', PP.bust('maidong', 'calm'), '麦冬,彩纸', '<b>彩纸</b>代码绘制。');
+    figure(
+      $('gen-ladder'),
+      'card',
+      A.bust('maidong', 'calm', 'cel'),
+      '麦冬,代码画的赛璐璐',
+      '<b>代码画的赛璐璐</b>代码绘制。',
+    );
+    card(
+      $('gen-ladder'),
+      'gcard',
+      'ark-maidong.webp',
+      '麦冬,豆包生成',
+      '<b>豆包 · 半写实</b>AI 生成。偏日系插画。',
+    );
+    card(
+      $('gen-ladder'),
+      'gcard',
+      'oa-maidong.webp',
+      '麦冬,OpenAI 生成',
+      '<b>OpenAI · 半写实</b>AI 生成。偏真人写实。',
+    );
+  })();
+
   // ---------- 彩纸的七个居民 ----------
   LD.CAST.forEach(function (p) {
     var cap =

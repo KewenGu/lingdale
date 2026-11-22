@@ -44,6 +44,7 @@
   opacity: 0.82;
 }
 .busts figcaption b,
+.ladder figcaption b,
 .faces figcaption b {
   display: block;
   color: var(--ink);
@@ -210,5 +211,59 @@ table.cmp th:first-child {
   table.cmp th:first-child {
     white-space: normal;
     min-width: 4.2em;
+  }
+}
+
+/* 图像生成模型出的图:每一张右上角都贴一个"AI 生成"的标 */
+.gcard,
+.gface {
+  position: relative;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  background: #f3deb0;
+  box-shadow: 0 8px 22px rgba(15, 23, 32, 0.14);
+}
+.gcard {
+  aspect-ratio: 2 / 3;
+}
+.gface {
+  aspect-ratio: 10 / 9;
+  box-shadow: none;
+}
+.gcard img,
+.gface img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top center;
+}
+.ai::after {
+  content: 'AI 生成';
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: rgba(20, 23, 27, 0.78);
+  color: #fff;
+  font: 700 11px/1.7 var(--font-body);
+}
+.gface.ai::after {
+  top: 4px;
+  right: 4px;
+  font-size: 9.5px;
+  padding: 0 5px;
+}
+.ladder {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 18px 14px;
+  align-items: start;
+}
+@media (max-width: 720px) {
+  .ladder {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }

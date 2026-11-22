@@ -303,7 +303,13 @@
     o +=
       '<rect x="-10" y="448" width="410" height="80" fill="url(#db-counter)"/><rect x="-10" y="448" width="410" height="3" fill="#f0c890" opacity=".8"/>';
     o += '<rect width="390" height="844" fill="url(#db-vig)"/>';
-    // 界面:半透明的深色面板,细线,浅色的字
+    o += darkUI();
+    return o + '</svg>';
+  }
+
+  /** B 路的界面:半透明的深色面板、细线、浅色的字,和同样三项的顶部信息。 */
+  function darkUI() {
+    var o = '';
     o += '<rect x="0" y="456" width="390" height="388" fill="url(#db-panel)"/>';
     o += txt(24, 520, T.who, 21, '#fff6e0', { w: 800 }) + txt(74, 519, T.role, 12, '#e9d3a0', { w: 500 });
     o += '<rect x="24" y="530" width="230" height="1.6" fill="url(#db-rule)"/>';
@@ -335,8 +341,51 @@
         '" height="32" rx="16" fill="#241a22" fill-opacity=".6" stroke="#f6dfa8" stroke-opacity=".4"/>';
       o += txt(p[0] + p[1] / 2, 74, p[2], 13.5, '#fff6e0', { a: 'middle', w: 700 });
     });
-    return o + '</svg>';
+    return o;
+  }
+  var DARK_DEFS =
+    '<linearGradient id="db-panel" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#241a22" stop-opacity="0"/><stop offset=".13" stop-color="#241a22" stop-opacity=".84"/><stop offset="1" stop-color="#1a1218" stop-opacity=".95"/></linearGradient>' +
+    '<linearGradient id="db-rule" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#f6dfa8"/><stop offset="1" stop-color="#f6dfa8" stop-opacity="0"/></linearGradient>' +
+    '<filter id="db-drop" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur in="SourceAlpha" stdDeviation="7"/><feOffset dx="5" dy="8"/><feComponentTransfer><feFuncA type="linear" slope=".4"/></feComponentTransfer><feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge></filter>';
+
+  // ---------- 图像生成模型出的立绘,放进对话界面 ----------
+  // 这里的人物和背景是位图(generated/ 目录,AI 生成)。界面还是上面那两套:彩纸的,或者深色面板的。
+
+  function img(src, x, y, w, h, extra) {
+    return (
+      '<image href="' +
+      src +
+      '" x="' +
+      x +
+      '" y="' +
+      y +
+      '" width="' +
+      w +
+      '" height="' +
+      h +
+      '" preserveAspectRatio="xMidYMid slice"' +
+      (extra || '') +
+      '/>'
+    );
+  }
+  /**
+   * mode   sticker 彩纸的种子店,立绘剪下来贴上去 / scene 生成的背景加立绘,界面还是纸片 / full 生成的背景加立绘,界面换成深色面板
+   * pic    立绘 { src, x, y, w }:宽高比 2:3,x、y、w 用来把头摆到差不多的位置
+   * bg     背景图的地址(sticker 不用)
+   */
+  function talkPhoto(mode, pic, bg) {
+    var o,
+      portrait = img(pic.src, pic.x, pic.y, pic.w, pic.w * 1.5);
+    if (mode === 'sticker') {
+      // 纸纹只盖在彩纸的背景上,不盖在立绘上
+      o = shopRoom() + K.grain(390, 844, 'ld-paper-grain') + g('', portrait, ' filter="url(#ca-cut)"');
+      return o + counter() + paperSheet('ask') + K.hud(LD.scene) + '</svg>';
+    }
+    o = k.svgOpen() + '<defs>' + DARK_DEFS + '</defs>' + img(bg, 0, 0, 390, 844);
+    o += '<g filter="url(#db-drop)">' + portrait + '</g>';
+    if (mode === 'scene') return o + paperSheet('ask') + K.hud(LD.scene) + '</svg>';
+    return o + darkUI() + '</svg>';
   }
 
-  LD.talk = { paper: talkPaper, full: talkFull, shopRoom: shopRoom, counter: counter };
+  LD.talk = { paper: talkPaper, full: talkFull, photo: talkPhoto, shopRoom: shopRoom, counter: counter };
 })();
