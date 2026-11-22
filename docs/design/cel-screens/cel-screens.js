@@ -82,9 +82,13 @@
   // 背景一张,地块三种(干土、湿土、空地),每种作物的每个状态各一张带透明底的小图,按存档一块一块摆上去。
   // 哪块地是什么状态由数据决定,所以不会画错;素材在 sprites/,清单在 sprites/atlas.js。
 
-  /** 一块地上该用哪个素材。种子和发芽所有作物共用;种子没有不生长和枯萎的样子。 */
+  /**
+   * 一块地上该用哪个素材。种子和发芽所有作物共用。
+   * 负责人定的:"不生长"不单独画,用健康的那张;枯萎是"蔫了但还能救"的样子;死了的是一小堆干草,所有作物共用。
+   */
   function spriteOf(p) {
-    var health = p.health === 'wilted' ? 'wilted' : p.health === 'stunted' ? 'stunted' : 'healthy';
+    if (p.health === 'dead') return 'dead';
+    var health = p.health === 'wilted' ? 'wilted' : 'healthy';
     if (p.stage <= 0) return 'seed';
     if (p.stage === 1) return 'sprout-' + health;
     return p.crop + '-' + p.stage + '-' + health;
@@ -130,6 +134,8 @@
       // 作物:脚踩在地块中间偏下的位置,高的可以探出地块上沿
       if (s) crops += pic(base, name, x + 34 - s.w / 2, y + 57 - s.h, s.w, s.h);
       else if (opt.missing) opt.missing.push(name);
+      // 死了的作物没有星带和标记:这一轮已经结束了
+      if (p.health === 'dead') return;
       var tf = 'translate(' + x + ' ' + y + ')',
         m = K.markers(p);
       tags += g(tf, K.starTag(p));

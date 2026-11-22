@@ -155,26 +155,27 @@
     );
     if (missing.length) console.warn('缺素材', missing);
 
-    // 另一个存档:把每块地的状态打乱重排,不用重新出图
+    // 另一个存档:把每块地的状态打乱重排,不用重新出图。四种样子都有:健康、不生长(和健康画得一样,只是少一颗星)、枯萎、死了
     var rnd = LD.rng(20261122),
       ids = LD.CROPS.map(function (c) {
         return c.id;
       }),
       plots = [];
     for (var i = 0; i < 30; i++) {
-      if (rnd() < 0.1) {
+      if (rnd() < 0.08) {
         plots.push(null);
         continue;
       }
       var stage = Math.floor(rnd() * 5),
         r = rnd(),
-        health = stage === 0 ? 'healthy' : r < 0.12 ? 'wilted' : r < 0.28 ? 'stunted' : 'healthy';
+        health =
+          stage === 0 ? 'healthy' : r < 0.08 ? 'dead' : r < 0.24 ? 'wilted' : r < 0.4 ? 'stunted' : 'healthy';
       plots.push(
         LD.plot(ids[Math.floor(rnd() * 12)], stage, {
           health: health,
           stars: health === 'wilted' ? 3 : health === 'stunted' ? 4 : 5,
-          thirsty: rnd() < 0.45,
-          harvestNext: stage === 4 && rnd() < 0.6,
+          thirsty: health !== 'dead' && rnd() < 0.45,
+          harvestNext: stage === 4 && health !== 'dead' && rnd() < 0.6,
         }),
       );
     }
@@ -193,11 +194,10 @@
       true,
     );
 
-    // 素材一览:一种作物一行,三个阶段乘三种状态
+    // 素材一览:一种作物一行,三个阶段乘两种样子
     var kinds = [
-        ['healthy', '健康'],
-        ['stunted', '不生长'],
-        ['wilted', '枯萎'],
+        ['healthy', '健康(不生长也用这一张)'],
+        ['wilted', '枯萎:蔫了,还能救'],
       ],
       table = $('sprite-table'),
       head = '<tr><th></th>';
@@ -230,18 +230,14 @@
       });
       table.innerHTML += row + '</tr>';
     });
-    var shared =
+    table.innerHTML +=
       '<tr><td class="name">共用</td>' +
       cell('seed') +
       cell('sprout-healthy') +
-      '<td></td>' +
-      '<td></td>' +
-      cell('sprout-stunted') +
-      '<td></td>' +
-      '<td></td>' +
+      '<td></td><td></td>' +
       cell('sprout-wilted') +
-      '<td></td></tr>';
-    table.innerHTML += shared;
+      cell('dead') +
+      '</tr>';
     var tiles = '';
     ['dry', 'wet', 'empty'].forEach(function (t) {
       var s = A['tile-' + t];
