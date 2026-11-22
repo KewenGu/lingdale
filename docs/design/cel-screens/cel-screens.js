@@ -377,6 +377,40 @@
     };
   }
   /**
+   * 矿洞底部的那一排:小镇、去农场的路牌、词袋、还能答错几次。排法和彩纸那一屏(../mine-screens/screens.js 的 bar)相同。
+   * 自己排一遍只为了一处:pop 为真时(词刚掉进词袋)词袋的按钮弹一下,彩纸是整张连图标带字一起歪;
+   * 这里只让纸片歪,图标、"词袋"两个字和角标都是正的(负责人 2026-11-22:卡片可以歪,上面的文字和图标不歪)。
+   */
+  function mineBar(sc, pop) {
+    var L = new k.Layer(),
+      bag = sc.bag.length,
+      x = 12;
+    L.add(k.tool(x, 714, '小镇', S.kit.townIcon));
+    x += 55;
+    L.add(k.signpost(x, 710, '农场', k.farmIcon, sc.thirsty || null, 1));
+    x += 64;
+    if (!pop) L.add(k.tool(x, 714, '词袋', k.wordBagIcon, bag || null));
+    else {
+      // 弹一下:绕按钮下半截的一点放大到 1.1 倍;纸片另外再转 -5 度
+      var px = x + 24,
+        py = 744,
+        up = 'translate(' + K.f(-px * 0.1) + ' ' + K.f(-py * 0.1) + ') scale(1.1)',
+        a = (-5 * Math.PI) / 180,
+        // 角标跟着纸片的右上角走,但它自己不转
+        bx = (x + 45 - px) * 1.1,
+        by = (717 - py) * 1.1,
+        b = k.badge(px + bx * Math.cos(a) - by * Math.sin(a), py + bx * Math.sin(a) + by * Math.cos(a), bag);
+      L.s +=
+        g('rotate(-5 ' + px + ' ' + py + ') ' + up, K.rrect(x, 714, 49, 60, 14, K.C.white)) +
+        g(up, k.wordBagIcon(x + 24.5, 714 + 60 * 0.39)) +
+        b.shape;
+      L.t += g(up, K.txt(x + 24.5, 714 + 60 - 5.4, '词袋', 11, K.C.ink, { a: 'middle', w: 700 })) + b.text;
+    }
+    x += 59;
+    L.add(k.roomPlate(x, 712, 378 - x, 62, sc.allowance));
+    return L.out();
+  }
+  /**
    * v 是一条矿脉,st 是这一题的状态:idle 等着挖 / hit 答对 / lucky 答对而且运气好 / miss 答错。
    * 等着挖的排法照搬彩纸那一屏(../mine-screens/screens.js 的 mine);答完之后的样子比彩纸安静,见下面。opt.bare 只要场景,不叠字和界面。
    */
@@ -456,10 +490,11 @@
       var wt = S.kit.pill(0, 0, v.word, 15, K.C.white, K.C.ink, 13, 30);
       U.add(S.kit.pill(128, 652, '进了词袋,种到田里学会它', 13, K.C.white, K.C.ink, 15, 32));
       U.add(S.kit.button(268, 648, 104, 40, '继续挖', true));
-      over = g('translate(172 694) rotate(-13)', g('', wt.shape, K.SH) + wt.text);
+      // 落向词袋的小纸签:纸片歪着,上面的词是正的(歪 8 度,再歪长一点的词会探出纸片)
+      over = g('translate(172 694)', g('rotate(-8 0 15)', wt.shape, K.SH) + wt.text);
     }
     o += g('', fx + top + cel(F.out()), ' class="ld-fx"');
-    return o + cel(U.out() + K.hud(sc) + S.bar('mine', now, 2, { bagPop: st === 'miss' }) + over) + '</svg>';
+    return o + cel(U.out() + K.hud(sc) + mineBar(now, st === 'miss') + over) + '</svg>';
   }
 
   /** 线稿加投影的滤镜。cel-ui 给界面的纸片用,cel-line 只加一圈线(星带用,它原本就不带投影)。 */
