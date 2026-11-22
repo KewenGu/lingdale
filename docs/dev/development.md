@@ -16,9 +16,11 @@ npm install
 | `npm run check` | 类型检查、格式检查、全部测试。提交前必须通过,持续集成跑的也是它 |
 | `npm test` | 只跑测试 |
 | `npm run typecheck` | 只做类型检查 |
-| `npm run format` | 用 Prettier 格式化 `core/`、`tests/`、`sim/` |
+| `npm run format` | 用 Prettier 格式化 `core/`、`tests/`、`sim/`、`scripts/`、`web/` |
 | `npm run format:check` | 只检查格式,不修改 |
 | `npm run sim` | 跑学习者模拟 |
+| `npm run guess` | 量选择题的蒙对率:一个不认识任何词的答题者把四级词库答一遍,对比随机干扰项和同词性干扰项 |
+| `npm run play` | 打包练习页到 `web/dist/`(不进仓库),并在本机 `http://127.0.0.1:5173/` 打开。加 `-- --build` 只打包 |
 
 跑单个测试文件:
 
@@ -26,13 +28,14 @@ npm install
 npx tsx --test tests/farm.test.ts
 ```
 
-## 类型检查为什么有两份配置
+## 类型检查为什么有三份配置
 
 - `tsconfig.core.json` 只检查 `core/`,把可用的标准库限制为 ES2015,并且不引入任何环境类型。
   它的作用是保证核心层没有偷偷依赖 Node 或浏览器,见[架构](architecture.md#1-core-保持纯净)。
-- `tsconfig.json` 检查全部代码,包括测试和模拟,允许使用 Node 的类型。
+- `tsconfig.json` 检查核心层、测试、模拟和脚本,允许使用 Node 的类型。
+- `tsconfig.web.json` 检查练习页(`web/`),允许使用浏览器的接口,不允许 Node 的。
 
-`npm run typecheck` 两份都跑。在 `core/` 里用了较新的标准库接口时,报错的会是第一份。
+`npm run typecheck` 三份都跑。在 `core/` 里用了较新的标准库接口时,报错的会是第一份。
 
 ## 测试
 
@@ -46,6 +49,7 @@ npx tsx --test tests/farm.test.ts
 | `tests/pasture.test.ts` | 牧场:草地和到期旧词的对应、草的高矮和割下的捆数、割的时候才取词、割草答对答错、和矿里复习的一致性;小牛长大、出奶、挨饿、轮流吃、生病、用药、复发、死亡、怀小牛、缺席时的结算;买小牛、卖牛、卖牧草和牛奶 |
 | `tests/coop.test.ts` | 做鸡饲料(要作物和到期的旧词、答对答错、和别处复习的一致性);鸡吃饲料、下蛋、饿病死、抱窝;羊和牛只差产出;牛羊和鸡各吃各的;小屋和鸡舍各算各的买价;卖产出 |
 | `tests/quiz-session.test.ts` | 三种题型的出题和判分、浇水会话、挖矿会话、存档读写 |
+| `tests/deck.test.ts` | 正式词库(`data/cet4-1000.json`):格式、不重复、释义长度;干扰项同词性、不近义;同词性不够时放宽;没有词性的卡组照旧;蒙对率 |
 | `tests/level.test.ts` | 经验、等级、解锁、升级节奏 |
 | `tests/simulation.test.ts` | 长期运行后存档是否自洽、整体节奏的回归 |
 
@@ -75,6 +79,27 @@ npx tsx --test tests/farm.test.ts
 
 模拟的输出每行是一个现实天。改了规则后,至少对比默认场景和 `--forget=2` 场景;
 涉及练习或休息间隔的改动,再用 `--model=fsrs6` 和 `--nocram` 各跑一遍。单个随机种子波动不小,下结论要看多个种子的平均。
+
+## 词库
+
+词库怎么来的、怎么重新生成、查过什么没查过什么,见 [`data/README.md`](../../data/README.md)。要点:
+
+- `data/cet4-1000.json` 是 `scripts/build-deck.ts` 生成的,不要手改。改释义改的是 `data/cet4-glosses.txt`,然后重新生成。
+- 生成要用到开源词典 ECDICT 的 `ecdict.csv`(66MB,不在仓库里),自己下载后把路径传给脚本。
+- 改了出题的规则或词库之后跑 `npm run guess`,蒙对率应该在 25% 上下。`tests/deck.test.ts` 里也有同样的检查。
+
+## 练习页
+
+`web/` 是一个没有美术的网页,把矿洞这条路接到核心层上,用四级 1000 词。它有两个用处:负责人每天真的用它背;
+在没有游戏界面的时候检查词库和出题。它**不是**游戏的界面,做法不会原样搬进 Cocos。
+
+- `web/page.html` 是页面的结构和样式,`web/main.ts` 是交互,`web/storage.ts` 是存取。`scripts/build-web.ts` 把它们打成
+  `web/dist/` 下的三个文件:`index.html`(本机打开)、`page.html`(同一个页面,不带外壳)、`deck.json`。
+- 和 Cocos 的界面层守同一条规矩:**只调用核心层、读返回值、把结果摆出来,不实现任何规则**。
+- 进度存在浏览器的 `localStorage` 里,每答一题存一次。页面放在给了按人分开的文档库的地方打开时,
+  还会隔一会儿同步一份到云端(存档切成几段存,见 `web/storage.ts` 开头的说明)。
+- 答完每题可以标记"释义不准""有两个选项都对""音标不对"。标记和进度存在一起,用来回头改 `data/cet4-glosses.txt`。
+- 负责人自己用的那一份发布在 https://claude.ai/artifact/X71GoWa36nD5eQbMKFSsyx (私有,只有负责人能打开)。改了 `web/` 之后要重新发布,它不会自己更新。
 
 ## 代码约定
 

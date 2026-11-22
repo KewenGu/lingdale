@@ -67,7 +67,9 @@
 core/          核心逻辑。纯 TypeScript,不依赖引擎、Node 或 DOM
 tests/         单元测试(node:test)
 sim/           学习者模拟,用来在做界面之前验证数值
-data/          卡组数据(目前只有 30 词的示例)
+data/          卡组数据:四级常用 1000 词(来源、许可、怎么生成见 data/README.md)和 30 词的示例
+scripts/       开发机上跑的脚本:做词库、打包练习页。可以用 Node 的接口
+web/           没有美术的练习页:只接了矿洞,用来每天真的背和检查词库。可以用 DOM 的接口,不实现任何规则
 docs/design/   设计文档:愿景、玩法规则、学习设计、数值、内容、路线图、美术规范
 docs/design/art-exploration/  定美术方向时的探索稿:四种画风的比较页和绘制代码
 docs/design/mine-screens/     矿洞这一边的画面:矿洞、矿石、词袋、商店、小镇地图的示意稿和绘制代码
@@ -90,6 +92,8 @@ npm run typecheck    # 只做类型检查
 npm run format       # 按 Prettier 格式化代码
 npm run sim          # 跑 60 天学习者模拟
 npm run sim -- --buy --days=90   # 模拟参数见 docs/dev/development.md
+npm run guess        # 量选择题的蒙对率
+npm run play         # 打包练习页并在本机打开
 ```
 
 ## 架构铁律
@@ -140,5 +144,6 @@ npm run sim -- --buy --days=90   # 模拟参数见 docs/dev/development.md
 ## 当前状态
 
 核心逻辑层(矿洞、农场、牧场、养牛羊和鸡、商店)已完成并有测试和模拟。美术方向已定为彩纸拼贴,农场、矿洞、词袋、商店、小镇地图和牧场都有代码画的示意稿,
-没有动效,没有成品美术。还没有界面、Cocos 工程和正式词库。
+没有动效,没有成品美术。有第一个正式词库(四级常用 1000 词,短释义是 AI 写的,还没有人校对)和一个只接了矿洞的练习页。
+还没有游戏的界面和 Cocos 工程。
 进度和下一步见 [`docs/design/06-roadmap.md`](docs/design/06-roadmap.md)。

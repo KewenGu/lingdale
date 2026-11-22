@@ -1,0 +1,251 @@
+<title>灵谷小镇矿洞练习</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Noto+Sans+SC:wght@500;700&display=swap">
+<style>
+  /* 布局:一列,手机宽度。上面一条状态,中间一块"石板"是题目,下面是今天的账、矿石和词表。
+     颜色和字体取自 docs/design/07-art-direction.md 的色板(纸白、墨绿、岩石、深叶、玉米黄、番茄红)。 */
+  :root {
+    --paper: #fffaf0;
+    --paper-deep: #e9dfc8;
+    --ink: #27402f;
+    --ink-soft: #5c7163;
+    --rock: #dccdb8;
+    --rock-deep: #705f51;
+    --leaf: #2b7a4d;
+    --on-leaf: #fffaf0;
+    --corn: #ffd24a;
+    --on-corn: #27402f;
+    --tomato: #c9433a;
+    --shadow: rgba(31, 61, 43, 0.3);
+    --font-ui: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+    --font-word: "Baloo 2", "Noto Sans SC", "PingFang SC", system-ui, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #19241d;
+      --paper-deep: #223127;
+      --ink: #f1ecdd;
+      --ink-soft: #a5b5a6;
+      --rock: #34423a;
+      --rock-deep: #cbbfa9;
+      --leaf: #2f8a57;
+      --on-leaf: #fffaf0;
+      --corn: #f2c33c;
+      --on-corn: #27402f;
+      --tomato: #f0705f;
+      --shadow: rgba(0, 0, 0, 0.45);
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper: #19241d;
+    --paper-deep: #223127;
+    --ink: #f1ecdd;
+    --ink-soft: #a5b5a6;
+    --rock: #34423a;
+    --rock-deep: #cbbfa9;
+    --leaf: #2f8a57;
+    --on-leaf: #fffaf0;
+    --corn: #f2c33c;
+    --on-corn: #27402f;
+    --tomato: #f0705f;
+    --shadow: rgba(0, 0, 0, 0.45);
+    color-scheme: dark;
+  }
+
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--font-ui);
+    font-weight: 500;
+    font-size: 1rem;
+    line-height: 1.5;
+  }
+  .page {
+    max-width: 30rem;
+    margin: 0 auto;
+    padding-block: 1rem 3rem;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+  h1, h2, p { margin: 0; }
+  button, input { font: inherit; color: inherit; }
+  button { cursor: pointer; }
+  :focus-visible { outline: 3px solid var(--leaf); outline-offset: 2px; }
+  .num { font-family: var(--font-word); font-variant-numeric: tabular-nums; font-weight: 700; }
+
+  /* 顶部状态 */
+  .top { display: flex; flex-direction: column; gap: 0.5rem; }
+  .top-row { display: flex; align-items: baseline; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap; }
+  .eyebrow { font-size: 0.8125rem; color: var(--ink-soft); letter-spacing: 0.04em; }
+  h1 { font-size: 1.5rem; font-weight: 700; line-height: 1.2; }
+  .status { display: flex; gap: 1rem; font-size: 0.875rem; color: var(--ink-soft); flex-wrap: wrap; }
+  .status b { color: var(--ink); }
+  .xp { height: 0.375rem; background: var(--paper-deep); border-radius: 0.25rem; overflow: hidden; }
+  .xp > i { display: block; height: 100%; background: var(--leaf); width: 0; transition: width 0.3s; }
+
+  /* 石板:题目 */
+  .slab {
+    background: var(--rock);
+    border-radius: 0.75rem;
+    box-shadow: 0 0.25rem 0 var(--shadow);
+    padding: 1.25rem 1rem 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    min-height: 23rem;
+  }
+  .vein { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; font-size: 0.8125rem; color: var(--ink-soft); flex-wrap: wrap; }
+  .tag { display: inline-block; padding: 0.125rem 0.625rem; border-radius: 1rem; font-weight: 700; font-size: 0.8125rem; }
+  .tag-new { background: var(--leaf); color: var(--on-leaf); }
+  .tag-review { background: var(--corn); color: var(--on-corn); }
+  .tag-drill { background: var(--rock-deep); color: var(--paper); }
+  .prompt { text-align: center; display: flex; flex-direction: column; gap: 0.125rem; padding-block: 0.5rem; }
+  .word { font-family: var(--font-word); font-weight: 700; font-size: 2.5rem; line-height: 1.15; overflow-wrap: anywhere; }
+  .word.is-meaning { font-family: var(--font-ui); font-size: 1.5rem; line-height: 1.4; }
+  .phonetic { font-family: var(--font-word); font-weight: 500; font-size: 0.9375rem; color: var(--ink-soft); min-height: 1.4em; }
+  .options { display: grid; gap: 0.625rem; }
+  .option {
+    display: flex; align-items: center; gap: 0.75rem;
+    min-height: 3.25rem; padding: 0.5rem 0.875rem;
+    background: var(--paper); border: 0; border-radius: 0.625rem;
+    box-shadow: 0 0.1875rem 0 var(--shadow);
+    text-align: left; font-size: 1.0625rem; font-weight: 500;
+  }
+  .option .key { font-family: var(--font-word); font-weight: 700; color: var(--ink-soft); width: 1rem; flex: none; }
+  .option .text { min-width: 0; overflow-wrap: anywhere; }
+  .option.is-word .text { font-family: var(--font-word); font-weight: 700; font-size: 1.25rem; }
+  .option:active:not(:disabled) { transform: translateY(0.125rem); box-shadow: 0 0.0625rem 0 var(--shadow); }
+  .option:disabled { cursor: default; }
+  .option.is-right { background: var(--leaf); color: var(--on-leaf); }
+  .option.is-right .key { color: var(--on-leaf); }
+  .option.is-wrong { background: var(--tomato); color: var(--paper); }
+  .option.is-wrong .key { color: var(--paper); }
+  .option.is-dim { opacity: 0.55; }
+  .spell { display: flex; gap: 0.5rem; }
+  .spell input {
+    flex: 1; min-width: 0; min-height: 3.25rem; padding: 0 0.875rem;
+    background: var(--paper); border: 2px solid var(--rock-deep); border-radius: 0.625rem;
+    font-family: var(--font-word); font-weight: 700; font-size: 1.25rem;
+  }
+  .btn {
+    min-height: 3rem; padding: 0 1.25rem; border: 0; border-radius: 0.625rem;
+    background: var(--leaf); color: var(--on-leaf); font-weight: 700;
+    box-shadow: 0 0.1875rem 0 var(--shadow);
+  }
+  .btn:disabled { opacity: 0.5; cursor: default; }
+  .btn-quiet { background: transparent; color: var(--ink-soft); box-shadow: none; min-height: 2.25rem; padding: 0 0.5rem; font-weight: 500; text-decoration: underline; }
+  .result { display: flex; flex-direction: column; gap: 0.5rem; }
+  .result-line { font-weight: 700; }
+  .result-line.is-bad { color: var(--tomato); }
+  .result-note { font-size: 0.875rem; color: var(--ink-soft); }
+  .answer-card { background: var(--paper); border-radius: 0.625rem; padding: 0.625rem 0.875rem; }
+  .answer-card .w { font-family: var(--font-word); font-weight: 700; font-size: 1.5rem; }
+  .answer-card .p { font-family: var(--font-word); color: var(--ink-soft); font-size: 0.9375rem; margin-left: 0.5rem; }
+  .answer-card .m { font-size: 1.0625rem; }
+  .row { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap; }
+  .flag-kinds { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+  .chip { min-height: 2.25rem; padding: 0 0.75rem; border-radius: 1rem; border: 1.5px solid var(--rock-deep); background: transparent; font-size: 0.875rem; }
+  .chip[aria-pressed="true"] { background: var(--rock-deep); color: var(--paper); }
+  .empty { text-align: center; margin: auto 0; display: flex; flex-direction: column; gap: 0.5rem; }
+  .empty h2 { font-size: 1.25rem; }
+
+  /* 下面的几块 */
+  .panel { display: flex; flex-direction: column; gap: 0.625rem; }
+  .panel h2 { font-size: 1rem; font-weight: 700; }
+  .facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(6.5rem, 1fr)); gap: 0.5rem 1rem; }
+  .fact { display: flex; flex-direction: column; }
+  .fact .v { font-size: 1.375rem; line-height: 1.2; }
+  .fact .k { font-size: 0.8125rem; color: var(--ink-soft); }
+  .ores { display: flex; gap: 0.375rem; flex-wrap: wrap; }
+  .ore { background: var(--paper-deep); border-radius: 0.5rem; padding: 0.25rem 0.625rem; font-size: 0.875rem; }
+  .ore.is-none { opacity: 0.45; }
+  .note { font-size: 0.8125rem; color: var(--ink-soft); }
+  hr { border: 0; border-top: 1.5px dashed var(--paper-deep); margin: 0; width: 100%; }
+  details > summary { cursor: pointer; font-weight: 700; padding-block: 0.25rem; }
+  .words { display: flex; flex-direction: column; margin-top: 0.5rem; }
+  .words .group { font-size: 0.8125rem; color: var(--ink-soft); padding-top: 0.75rem; }
+  .words .item { display: grid; grid-template-columns: minmax(0, 8rem) minmax(0, 1fr) auto; gap: 0.5rem; align-items: baseline; padding-block: 0.3125rem; border-bottom: 1px solid var(--paper-deep); }
+  .words .item .w { font-family: var(--font-word); font-weight: 700; font-size: 1.0625rem; overflow-wrap: anywhere; }
+  .words .item .m { font-size: 0.875rem; min-width: 0; overflow-wrap: anywhere; }
+  .words .item .d { font-size: 0.8125rem; color: var(--ink-soft); white-space: nowrap; }
+  .seg { display: inline-flex; border: 1.5px solid var(--rock-deep); border-radius: 0.5rem; overflow: hidden; flex-wrap: wrap; }
+  .seg button { min-height: 2.25rem; padding: 0 0.75rem; border: 0; background: transparent; font-size: 0.875rem; }
+  .seg button[aria-pressed="true"] { background: var(--rock-deep); color: var(--paper); font-weight: 700; }
+  @media (prefers-reduced-motion: reduce) { .xp > i { transition: none; } }
+</style>
+
+<div class="page">
+  <header class="top">
+    <div class="top-row">
+      <div>
+        <p class="eyebrow">灵谷小镇 · 没有美术的练习页</p>
+        <h1>矿洞</h1>
+      </div>
+      <div class="status">
+        <span id="date"></span>
+        <span><b class="num" id="level">1</b> 级</span>
+        <span><b class="num" id="coins">0</b> 金币</span>
+      </div>
+    </div>
+    <div class="xp" role="progressbar" aria-label="到下一级的经验" id="xp"><i id="xp-bar"></i></div>
+  </header>
+
+  <main class="slab" id="stage" aria-live="polite">
+    <div class="empty"><h2>正在取你的进度…</h2></div>
+  </main>
+
+  <section class="panel" aria-labelledby="today-title">
+    <h2 id="today-title">今天</h2>
+    <div class="facts" id="today"></div>
+  </section>
+
+  <hr>
+
+  <section class="panel" aria-labelledby="ore-title">
+    <div class="row">
+      <h2 id="ore-title">矿石</h2>
+      <button class="btn" id="sell" type="button" disabled>全部卖掉</button>
+    </div>
+    <div class="ores" id="ores"></div>
+    <p class="note">记得越久的词,答对时越可能爆出高级的矿石。金币先攒着:农场、牧场和商店这个页面还没接。</p>
+  </section>
+
+  <hr>
+
+  <section class="panel">
+    <div class="row">
+      <h2>题型</h2>
+      <div class="seg" id="types" role="group" aria-label="题型">
+        <button type="button" data-type="choice" id="type-choice">看词选义</button>
+        <button type="button" data-type="reverse" id="type-reverse">看义选词</button>
+        <button type="button" data-type="spell" id="type-spell">拼写</button>
+      </div>
+    </div>
+    <p class="note">正式的游戏里题型由作物决定,矿里都是看词选义。这里可以换,是为了三种都能试。</p>
+  </section>
+
+  <hr>
+
+  <details id="words-box">
+    <summary>我的词(<span class="num" id="words-count">0</span>)</summary>
+    <div class="words" id="words"></div>
+  </details>
+
+  <details id="flags-box">
+    <summary>标记过有问题的词(<span class="num" id="flags-count">0</span>)</summary>
+    <div class="words" id="flags"></div>
+  </details>
+
+  <hr>
+
+  <footer class="panel">
+    <p class="note" id="sync">进度存在这台设备上。</p>
+    <p class="note" id="deck-note"></p>
+  </footer>
+</div>
+
+<script>/*__APP__*/</script>

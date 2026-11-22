@@ -7,6 +7,8 @@ export interface Card {
   front: string; // 题面,例如 abandon
   back: string; // 答案,例如 v. 放弃;抛弃
   phonetic?: string;
+  pos?: string; // 词性(n、v、adj……)。出选择题时干扰项只取同词性的,不然看词性就能排除
+  alt?: string[]; // 这个词的其他释义。不显示,只用来排除意思相近的干扰项
   example?: string;
   exampleTranslation?: string;
   audioKey?: string; // 资源 key,不存 URL
