@@ -370,7 +370,7 @@
       <div class="trio" id="mine-states" style="grid-template-columns:repeat(4,minmax(0,1fr));max-width:1100px"></div>
       <ul class="notes">
         <li><b>答对:</b>那条石板换成断开的一张,右边露出洞,矿石在洞里。其余三条换成"沉回矿壁"的一张。</li>
-        <li><b>答错:</b>选的那条换成砸出一个小坑的一张,歪 2 度多;正确的那条换成米白的一张,加一个对勾。</li>
+        <li><b>答错:</b>选的那条换成砸出一个坑、裂纹散开的一张,歪 2 度多;正确的那条换成米白的一张,加一个对勾。</li>
         <li><b>挖开之后露出的洞是代码画的一个深色椭圆,</b>不是素材,颜色是从背景里洞最深的地方量的。它边缘太齐,和手绘的石板放在一起看得出来。要好看得单独画一张。</li>
         <li><b>对勾、四叶草、最下面的提示条、按钮</b>仍然是代码画的。</li>
       </ul>
@@ -407,6 +407,16 @@
         <li><b>割草那一屏是同一种做法,</b>没有重做,到时候按同一条规矩来。</li>
       </ul>
 
+      <h3>答错的那条:再明显一点</h3>
+      <p class="sub">镐不落在石板上之后,选错的那条只剩一个小坑,负责人看过之后要求再明显一点。左边是之前的,右边是现在的。</p>
+      <div class="sheet ai"><img src="shots/mine-miss.jpg" alt="答错的那条石板:之前是一个小坑和两道短裂纹;现在是一个明显的坑,裂纹向四周散开" loading="lazy"></div>
+      <ul class="notes">
+        <li><b>靠形状,不靠颜色:</b>坑大了,裂纹向四周散开,占石板右边的三分之一。规范里答错不用红色和叉,这一条没有动。</li>
+        <li><b>裂纹不进字的地方。</b>示例卡组里最长的释义(14 个字)放上去看过,字的末尾离裂纹还有一段。</li>
+        <li><b>重出了一张图,</b>一次出了三个轻重不同的候选,用的是最上面的一个。另外两个一个像拼起来的石块,不像被砸的;一个裂到了石板中间,会压到字。</li>
+      </ul>
+      <div class="sheet ai"><img src="shots/mine-miss-options.jpg" alt="三个候选:一个坑加散开的裂纹;右端碎成几块;右边四成龟裂" loading="lazy" style="max-width:420px"></div>
+
       <h3>素材一览</h3>
       <p class="sub">一共 <span id="mine-count"></span> 个,按在屏幕上的真实大小摆。全部是 AI 生成之后切出来的。</p>
       <div id="mine-sprites" class="pasture-sprites mine-sprites"></div>
@@ -430,7 +440,7 @@
       </ul>
       <div class="sheet ai"><img src="shots/mine-misses.jpg" alt="第一轮画错的四处:梁下面留着小牌子;石板上有矿石;词牌上有小纸签;宝石的晶体根数不对" loading="lazy"></div>
       <ul class="notes">
-        <li><b>用量:</b>两轮 8 次调用,约 11 万个输出 token。价格以账单为准。切出来 14 个素材加一张背景,约 0.3MB(还有一块垫矿石的石片,出了没有用上)。提示词在 <code>sprites-mine/manifest.json</code>。</li>
+        <li><b>用量:</b>三轮 9 次调用,约 12 万个输出 token(第三轮 1 次,重出答错的那条石板)。价格以账单为准。切出来 14 个素材加一张背景,约 0.3MB(还有一块垫矿石的石片,出了没有用上)。提示词在 <code>sprites-mine/manifest.json</code>。</li>
       </ul>
 
       <h3>还没有做的</h3>

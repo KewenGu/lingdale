@@ -42,6 +42,15 @@ if sp:
     # 把它整体往矿壁的颜色拉:三个通道各乘一个数,让中间的颜色落在 #bfa381。只动颜色,不动形状。
     d=np.asarray(sp[4]).astype(np.float64); body=d[d[...,3]>200][:,:3]; gain=np.array([0xbf,0xa3,0x81])/np.median(body,0)
     d[...,:3]=np.clip(d[...,:3]*gain,0,255); sp[4]=Image.fromarray(d.round().astype(np.uint8),'RGBA')
+    # "没挖开"的那条后来重出过(miss3.png,一列三个轻重不同的候选,用的是第一个):负责人要求答错的石板再明显一点。
+    # 新的一张按原来那条的大小放,颜色按原来那条的中间色对齐,免得和别的石板不是一个颜色。
+    m3=cut('miss3.png',3,rows=True,green=True)
+    if m3:
+        new=np.asarray(m3[0]).astype(np.float64); old=np.asarray(sp[2]).astype(np.float64)
+        med=lambda a: np.median(a[a[...,3]>200][:,:3],0)
+        new[...,:3]=np.clip(new[...,:3]*(med(old)/med(new)),0,255)
+        sp[2]=Image.fromarray(new.round().astype(np.uint8),'RGBA').resize(sp[2].size,Image.LANCZOS)
+    else: problems.append('miss3')
     for n,s in zip(['idle','hit','miss','answer','dim'],sp): save(s,'slab-'+n,k,ky)
 else: problems.append('slabs')
 # 矿石:七个用同一个比例,所以一级比一级大是画出来的;钻石约 42pt 高
