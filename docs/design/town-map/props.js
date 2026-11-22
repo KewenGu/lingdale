@@ -1,4 +1,4 @@
-// props.js —— 镇上的小东西:石板路、石桥、台阶、挡土墙、路灯、花坛、行道树、路牌、布告栏、水井、长椅。
+// props.js —— 镇上和镇子周围的小东西:石板路、石桥、台阶、挡土墙、路灯、花坛、行道树、路牌、告示牌、水井、长椅、居民的田。
 //
 // 负责人看过第三轮说镇上还是太简单,缺装饰。这些东西不是"地点",只是景:它们有颜色,不管旁边的房子开没开放。
 // 石头用岩石那一组(岩石浅、岩石、岩石深)加纸白暗,木头用木色,灯是一张玉米黄的纸(不发光),都没有新增颜色。
@@ -261,6 +261,86 @@
       rrect(0.6, -9, 4.6, 2.6, 0.6, C.yellow)
     );
   }
+  /** 大告示牌:立在镇公所门口。两根粗木桩,一块宽木板,顶上一道小屋檐,板上贴满了纸。 */
+  function noticeBig() {
+    return (
+      rrect(-15, -4, 5, 4, 1.4, R.rockD) +
+      rrect(10, -4, 5, 4, 1.4, R.rockD) +
+      rrect(-14, -24, 3.2, 22, 1.4, C.woodD) +
+      rrect(10.8, -24, 3.2, 22, 1.4, C.woodD) +
+      rrect(-17, -25.4, 34, 19, 2, C.woodD) +
+      rrect(-17, -26.6, 34, 19, 2, C.wood) +
+      poly(
+        [
+          [-20.6, -25.6],
+          [-16, -33.4],
+          [16, -33.4],
+          [20.6, -25.6],
+        ],
+        C.roof,
+      ) +
+      rrect(-20.6, -26.8, 41.2, 2.4, 1.2, C.redD) +
+      rrect(-14.4, -24, 8, 9.6, 0.9, C.white) +
+      rrect(-13, -22.2, 5.2, 1.1, 0.5, C.ink) +
+      rrect(-13, -20, 4, 1.1, 0.5, C.ink) +
+      rrect(-13, -17.8, 5.2, 1.1, 0.5, C.ink) +
+      rrect(-4.6, -23.4, 9.6, 6.4, 0.9, C.yellow) +
+      rrect(-3.2, -21.6, 6.8, 1.1, 0.5, C.ink) +
+      rrect(-3.2, -19.4, 4.6, 1.1, 0.5, C.ink) +
+      rrect(6.6, -24, 7.6, 8.4, 0.9, C.white) +
+      rrect(7.8, -22.2, 5, 1.1, 0.5, C.ink) +
+      rrect(7.8, -20, 3.6, 1.1, 0.5, C.ink) +
+      rrect(-3.8, -15.6, 7.4, 6, 0.9, C.white) +
+      rrect(-12.6, -13, 6, 4.2, 0.9, C.pink) +
+      rrect(6, -14.2, 6.6, 5, 0.9, C.whiteD)
+    );
+  }
+  /**
+   * 镇子周围的一块田:居民种的,只是景,不能点,也不表示任何状态。
+   * 故意画得和玩家农场里的地块不一样:是一整片斜着的田,一垄一垄的,没有一格一格的地块,没有干土和湿土,也没有水滴和星。
+   *   kind 0 刚翻过的地  1 一垄垄的菜  2 密密的青苗  3 一颗颗的包菜  4 高秆的庄稼
+   * 原点在田的正中;w、h 是宽和进深,sk 是往右上斜多少。
+   */
+  function plot(w, h, kind, sk) {
+    sk = sk == null ? h * 0.5 : sk;
+    var base = [C.woodD, C.wood, C.leafL, C.woodD, C.leaf][kind],
+      o = rpoly(
+        [
+          [-w / 2 - sk / 2, h / 2],
+          [-w / 2 + sk / 2, -h / 2],
+          [w / 2 + sk / 2, -h / 2],
+          [w / 2 - sk / 2, h / 2],
+        ],
+        2.4,
+        base,
+      ),
+      rows = Math.max(3, Math.round(w / 4.6)),
+      i,
+      j;
+    for (i = 0; i < rows; i++) {
+      var t = (i + 0.5) / rows,
+        x0 = -w / 2 + t * w;
+      // 一垄:从近处的一头斜着伸到远处的一头
+      if (kind === 0 || kind === 2 || kind === 4)
+        o += poly(
+          [
+            [x0 - sk / 2 - 0.8, h / 2 - 1.2],
+            [x0 + sk / 2 - 0.6, -h / 2 + 1.2],
+            [x0 + sk / 2 + 0.6, -h / 2 + 1.2],
+            [x0 - sk / 2 + 0.8, h / 2 - 1.2],
+          ],
+          [C.wood, '', C.leaf, '', C.leafD][kind],
+        );
+      else {
+        var n = Math.max(2, Math.round(h / 3.6));
+        for (j = 0; j < n; j++) {
+          var u = (j + 0.5) / n;
+          o += circ(x0 - sk / 2 + sk * (1 - u), h / 2 - u * h, kind === 1 ? 1.5 : 1.7, kind === 1 ? ((i + j) % 3 ? C.leaf : C.leafL) : (i + j) % 2 ? C.teal : C.tealD);
+        }
+      }
+    }
+    return o;
+  }
   /** 水井:一圈石头,两根木柱撑着一个小屋顶,横梁上吊着一只木桶。 */
   function well() {
     return (
@@ -344,6 +424,8 @@
     streetTree: streetTree,
     signpost: signpost,
     notice: notice,
+    plot: plot,
+    noticeBig: noticeBig,
     well: well,
     bench: bench,
     woodpile: woodpile,
