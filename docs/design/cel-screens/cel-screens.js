@@ -20,8 +20,12 @@
     at = k.at,
     // 挖开的石板后面露出的颜色:背景里洞最深处量出来的
     CAVE = '#2c221c',
-    // 挖出来的矿石比平时放大多少
-    BURST = 2.4;
+    // 挖出来的矿石放大多少。放在洞里,不出自己那一条石板:最大的钻石 42pt 高,乘 1.5 是 63pt,石板 76pt 高
+    BURST = 1.5,
+    // 石板上的字:字号,右边留给"挖"的宽度(字在所有状态下都按同一个宽度折行,答完不会重排),沉回矿壁之后的字色
+    SLAB_TEXT = 17,
+    SLAB_DIG = 150,
+    SLAB_DIM_INK = '#705f51';
 
   /** 把彩纸界面的硬边投影换成线稿加投影。只改滤镜的名字,图形一个不动。 */
   function cel(markup) {
@@ -313,7 +317,7 @@
     return minePic(base, 'pick', x, y, s, rot, 0.5, 0.13);
   }
   /**
-   * 一条石板。位置、歪多少、字怎么排都和彩纸那一屏相同(字就是彩纸那套代码排的),只把石板换成素材。
+   * 一条石板。位置、歪多少和彩纸那一屏相同,只把石板换成素材。字的排法也相同,只有一处不同:所有状态按同一个宽度折行。
    * 返回三层:洞(挖开的那条后面露出的深色)、石板、字和标记。
    */
   function mineSlab(base, y, label, seed, st, v) {
@@ -331,13 +335,26 @@
         (LD.celMineSprites['slab-' + st] || {}).w,
         (LD.celMineSprites['slab-' + st] || {}).h,
       ),
-      mark = '';
+      mark = '',
+      fx = '',
+      text = '',
+      lines = k.wrap(label, SLAB_TEXT, w - SLAB_DIG);
     // 旧词的石板上露着一点矿:哪一级由这个词的掌握度决定,四条都有
     if (v.source === 'review' && st === 'idle')
-      body +=
+      fx +=
         minePic(base, 'ore-' + (v.mastery + 1), w - 50, h / 2 + 1, 0.86, -10) +
         minePic(base, 'ore-' + (v.mastery + 1), w - 23, h / 2 + 9, 0.56, 14);
     if (st === 'answer') mark = cel(g('', k.check(w - 34, h / 2, 13), K.SH));
+    lines.forEach(function (ln, i) {
+      text += K.txt(
+        22,
+        h / 2 + SLAB_TEXT * 0.36 + (i - (lines.length - 1) / 2) * (SLAB_TEXT + 5),
+        ln,
+        SLAB_TEXT,
+        st === 'dim' ? SLAB_DIM_INK : K.C.ink,
+        { w: 700 },
+      );
+    });
     return {
       hole:
         st === 'hit'
@@ -356,12 +373,13 @@
             ')"/>'
           : '',
       body: g(tf, body),
-      text: k.slab(x, y, w, h, label, seed, st, v).text + g(tf, mark),
+      fx: g(tf, fx + mark),
+      text: g(tf, text),
     };
   }
   /**
    * v 是一条矿脉,st 是这一题的状态:idle 等着挖 / hit 答对 / lucky 答对而且运气好 / miss 答错。
-   * 排法照搬彩纸那一屏(../mine-screens/screens.js 的 mine)。opt.bare 只要场景,不叠字和界面。
+   * 等着挖的排法照搬彩纸那一屏(../mine-screens/screens.js 的 mine);答完之后的样子比彩纸安静,见下面。opt.bare 只要场景,不叠字和界面。
    */
   function mineSprites(base, bg, sc, v, st, opt) {
     opt = opt || {};
@@ -379,6 +397,7 @@
       holes = '',
       slabs = '',
       texts = '',
+      fx = '',
       cx = 195,
       cy = 183,
       signTf = 'rotate(-1.2 ' + cx + ' ' + cy + ')',
@@ -389,20 +408,18 @@
       var s = mineSlab(base, ys[i], label, i + 1, k.optionState(v, i, sel), v);
       holes += s.hole;
       slabs += s.body;
+      fx += s.fx;
       texts += s.text;
     });
-    o += holes + slabs + (opt.bare ? '' : texts);
+    // 三层分开打上名字:石板、选项的字、盖在石板上的效果。tools/text_cover.mjs 靠这三个名字量"字被效果盖住了多少"
+    o += holes + g('', slabs, ' class="ld-slab"') + (opt.bare ? '' : g('', texts, ' class="ld-opt"'));
     // 词牌:两根木条挂在梁上。牌子上只有词,不预告这次会出哪一级矿石(负责人 2026-11-22 定的)
     o += g(signTf, minePic(base, 'sign', cx - 135, 107, 1, 0, 0, 0));
-    // 镐:没答时靠在洞的右边;答完落在点的那条石板上。
-    // 负责人 2026-11-22 先说过让它一直靠在洞边,看过之后又让放回石板上,所以和彩纸那一屏是一样的。
-    if (sel == null) top += minePick(base, 354, 222, 22, 1.05);
-    else if (right) {
-      top += minePick(base, 226, ys[sel] + 26, 58, 1.12);
-      top += minePic(base, 'ore-' + grade, 306, ys[sel] + 6, BURST, -6);
-    } else top += minePick(base, 318, ys[sel] + 16, -40, 1.12);
-    o += top;
-    if (opt.bare) return o + '</svg>';
+    // 答完之后是看答案的时候,石板那一块要安静(负责人 2026-11-22:游戏效果太强会让学习分心):
+    // 镐一直靠在洞的右边,不落到石板上;矿石放在挖开的洞里,不出自己那一条;矿石的名字和"运气好"写到最下面那一行去。
+    top += minePick(base, 354, 222, 22, 1.05);
+    if (right) top += minePic(base, 'ore-' + grade, 314, ys[sel] + 37, BURST, -6);
+    if (opt.bare) return o + g('', fx + top, ' class="ld-fx"') + '</svg>';
 
     // 从这里往下都是代码画的:词牌上的字和标签、矿石的名字、提示、按钮、顶部和底部的界面
     var tag = k.veinTag(v, cx - 83, 114),
@@ -412,24 +429,25 @@
         K.txt(cx, cy + (back ? 24 : 34), v.ph, 15, K.C.ink, { a: 'middle', w: 500 }) +
         (back ? K.txt(cx, cy + 47, v.options[v.answer], 16, K.C.ink, { a: 'middle', w: 700 }) : '');
     o += g(signTf, cel(g('', tag.shape, K.SH)) + tag.text + sign);
+    var F = new k.Layer();
     if (right) {
-      var oh = (LD.celMineSprites['ore-' + grade] || { h: 30 }).h * BURST,
-        ly = ys[sel] + 6 + oh / 2 + 4;
-      U.add(S.kit.pill(306, ly, LD.ORES[grade].name, 15, K.C.white, K.C.ink, 15, 27));
-      if (st === 'lucky') {
-        U.s += k.clover(306 + 34, ys[sel] + 6 - oh / 2 + 4, 1.5, 16);
-        var rb = S.kit.pill(250, ys[sel] - 30, '运气好,矿石多升一级', 13, K.C.yellow, K.C.ink, 14, 28),
-          rtf = 'rotate(-3 250 ' + (ys[sel] - 16) + ')';
-        U.s += g(rtf, rb.shape);
-        U.t += g(rtf, rb.text);
-      }
+      var ore = LD.celMineSprites['ore-' + grade] || { w: 30, h: 30 },
+        lucky = st === 'lucky';
+      if (lucky)
+        F.s += k.clover(314 + (ore.w * BURST) / 2 + 3, ys[sel] + 37 - (ore.h * BURST) / 2 + 8, 1.2, 16);
       U.add(
         S.kit.pill(
           195,
           656,
-          v.word + ' 去休息,' + LD.REST_DAYS[v.mastery + 1] + ' 天后回到矿里',
+          (lucky ? '运气好,多升一级:' : '') +
+            LD.ORES[grade].name +
+            ' · ' +
+            v.word +
+            ' ' +
+            LD.REST_DAYS[v.mastery + 1] +
+            ' 天后回到矿里',
           13,
-          K.C.white,
+          lucky ? K.C.yellow : K.C.white,
           K.C.ink,
           16,
           30,
@@ -441,6 +459,7 @@
       U.add(S.kit.button(268, 648, 104, 40, '继续挖', true));
       over = g('translate(172 694) rotate(-13)', g('', wt.shape, K.SH) + wt.text);
     }
+    o += g('', fx + top + cel(F.out()), ' class="ld-fx"');
     return o + cel(U.out() + K.hud(sc) + S.bar('mine', now, 2, { bagPop: st === 'miss' }) + over) + '</svg>';
   }
 
