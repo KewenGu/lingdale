@@ -317,16 +317,15 @@
     return minePic(base, 'pick', x, y, s, rot, 0.5, 0.13);
   }
   /**
-   * 一条石板。位置、歪多少和彩纸那一屏相同,只把石板换成素材。字的排法也相同,只有一处不同:所有状态按同一个宽度折行。
+   * 一条石板。位置和彩纸那一屏相同,只把石板换成素材。字的排法也相同,只有两处不同:所有状态按同一个宽度折行;石板不歪。
    * 返回三层:洞(挖开的那条后面露出的深色)、石板、字和标记。
    */
-  function mineSlab(base, y, label, seed, st, v) {
+  function mineSlab(base, y, label, st, v) {
     var x = 18,
       w = 354,
       h = 76,
-      // 和 mine-paper.js 的 slab 用同一个随机数,歪的角度才对得上字
-      rot = (LD.rng(seed * 53 + 11)() - 0.5) * 1.4 + (st === 'miss' ? 2.2 : 0),
-      tf = 'translate(' + x + ' ' + y + ') rotate(' + K.f(rot) + ' ' + w / 2 + ' ' + h / 2 + ')',
+      // 石板摆正,不歪:彩纸那一屏每条歪一点点、答错的那条再多歪 2.2 度,负责人 2026-11-22 定了有字的板子不歪,歪了影响读
+      tf = 'translate(' + x + ' ' + y + ')',
       body = pic(
         base,
         'slab-' + st,
@@ -400,12 +399,11 @@
       fx = '',
       cx = 195,
       cy = 183,
-      signTf = 'rotate(-1.2 ' + cx + ' ' + cy + ')',
       top = '',
       U = new k.Layer(),
       over = '';
     v.options.forEach(function (label, i) {
-      var s = mineSlab(base, ys[i], label, i + 1, k.optionState(v, i, sel), v);
+      var s = mineSlab(base, ys[i], label, k.optionState(v, i, sel), v);
       holes += s.hole;
       slabs += s.body;
       fx += s.fx;
@@ -414,7 +412,8 @@
     // 三层分开打上名字:石板、选项的字、盖在石板上的效果。tools/text_cover.mjs 靠这三个名字量"字被效果盖住了多少"
     o += holes + g('', slabs, ' class="ld-slab"') + (opt.bare ? '' : g('', texts, ' class="ld-opt"'));
     // 词牌:两根木条挂在梁上。牌子上只有词,不预告这次会出哪一级矿石(负责人 2026-11-22 定的)
-    o += g(signTf, minePic(base, 'sign', cx - 135, 107, 1, 0, 0, 0));
+    // 词牌也摆正(彩纸那一屏歪 1.2 度),理由和石板一样
+    o += minePic(base, 'sign', cx - 135, 107, 1, 0, 0, 0);
     // 答完之后是看答案的时候,石板那一块要安静(负责人 2026-11-22:游戏效果太强会让学习分心):
     // 镐一直靠在洞的右边,不落到石板上;矿石放在挖开的洞里,不出自己那一条;矿石的名字和"运气好"写到最下面那一行去。
     top += minePick(base, 354, 222, 22, 1.05);
@@ -428,7 +427,7 @@
         K.txt(cx, cy + (back ? 2 : 10), v.word, 40, K.C.ink, { a: 'middle' }) +
         K.txt(cx, cy + (back ? 24 : 34), v.ph, 15, K.C.ink, { a: 'middle', w: 500 }) +
         (back ? K.txt(cx, cy + 47, v.options[v.answer], 16, K.C.ink, { a: 'middle', w: 700 }) : '');
-    o += g(signTf, cel(g('', tag.shape, K.SH)) + tag.text + sign);
+    o += cel(g('', tag.shape, K.SH)) + tag.text + sign;
     var F = new k.Layer();
     if (right) {
       var ore = LD.celMineSprites['ore-' + grade] || { w: 30, h: 30 },
