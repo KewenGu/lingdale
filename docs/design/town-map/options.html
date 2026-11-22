@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>小镇地图方案比较</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Noto+Sans+SC:wght@400;500;700;900&family=Noto+Serif+SC:wght@600;900&family=ZCOOL+KuaiLe&display=swap">
+<link rel="stylesheet" href="../mine-screens/page.css">
+<link rel="stylesheet" href="town.css">
+</head>
+<body>
+<svg id="ld-defs" width="0" height="0" aria-hidden="true" focusable="false"></svg>
+
+<header class="top">
+  <div class="wrap">
+    <p class="eyebrow">灵谷小镇 Lingdale · 彩纸拼贴 · 小镇地图 · 方案比较</p>
+    <h1>先定四件事,再画定稿</h1>
+    <p class="lede">
+      小镇地图是游戏的总入口。负责人的想法是:平坦山谷里的一个小镇,下面是木栅栏围起来的农场,中间是镇子,农场旁边是矿洞,
+      还有一个湖和几块空地,最上面是状态栏和轮转的太阳月亮。往下画之前,有四个取舍要由负责人定。
+    </p>
+    <div class="notice" id="result"></div>
+    <div class="notice">
+      <strong>这些是示意稿,不是成品。</strong>
+      全部用代码绘制(SVG),没有使用图像生成工具。画面不读取游戏数据,数字是手写的示意。画的是和农场、矿洞参考图同一个存档:
+      第 1 年夏季第 3 天,30 块地里 4 块空着,12 株能浇水;在它上面加了牧场(一头小牛、一只小羊、两只小鸡)和 9 个到期的旧词。
+    </div>
+    <div class="notice">
+      <strong>现在真的能进的只有四处:</strong>矿洞、农场、牧场、商店。家、旅店、饭店、电影院、镇公所、中心广场、居民的家、湖边钓鱼都还没有设计,
+      图上画出来只是为了看地图装不装得下、分不分得清。
+    </div>
+    <nav class="jump" aria-label="页面目录">
+      <a href="#comp">一 整体构图</a>
+      <a href="#farm">二 农场画到多细</a>
+      <a href="#closed">三 没开放的地方</a>
+      <a href="#time">四 状态栏和时间</a>
+      <a href="#found">画的时候发现的问题</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <section id="comp" class="band">
+    <div class="wrap">
+      <h2>一 整体构图:一屏放完,还是可以滑动</h2>
+      <p class="sub">
+        绕不开的事实:手机竖屏只有 390×844pt,顶部状态栏占掉 90pt。地图上要放 4 处能进的地方和 9 处以上还没开放的地方。
+        玩家每天打开地图是为了回答一个问题:<strong>哪里需要我</strong>。所以能进的四处必须不滑动就看得见、点得中,名牌上的状况读得出;
+        还没开放的地方只要认得出、不挡路。三个方案从下到上的顺序都是负责人说的那样:农场、镇子、湖和空地、天。
+      </p>
+      <div class="opts" id="comp-opts"></div>
+    </div>
+  </section>
+
+  <section id="farm" class="band">
+    <div class="wrap">
+      <h2>二 农场那一圈栅栏里的东西画到多细</h2>
+      <p class="sub">
+        设计支柱 2 是"农场就是记忆的样子":地图上的东西应该反映真实的状态。但地图不是农场那一屏的缩小版:
+        田最多能扩到 120 块,牲畜的数量也没有上限,不可能一块一块、一只一只照着画。下面三档,从只有图标到一块块照实画。
+      </p>
+      <div class="opts" id="farm-opts"></div>
+
+      <h3>"中"这一档:三份存档在地图上各是什么样</h3>
+      <p class="sub">
+        状态靠同一组纸片变换,不加警告图标:田里浅色的格子多就是能浇的多;草地上的草就是到期的旧词;草垛高矮是口粮还够吃多久;
+        牲畜饿了会趴下。洞口的石头上露出矿,表示有旧词到期。名牌上只写一行,先写最需要玩家的那件事。
+      </p>
+      <div class="states" id="farm-states"></div>
+    </div>
+  </section>
+
+  <section id="closed" class="band">
+    <div class="wrap">
+      <h2>三 没开放的地方怎么画</h2>
+      <p class="sub">
+        要守的线:<strong>不能把没做的画成已有的</strong>(对外发布内容的红线),而且要一眼分得出哪些能进。
+        镇上除了商店全都没开放,所以这里选什么,基本决定了镇子这一段长什么样。三个方案画的是同一段地图。
+      </p>
+      <div class="opts" id="closed-opts"></div>
+
+      <h3>连带的问题:湖用什么颜色</h3>
+      <p class="sub">
+        美术规范规定"蓝色只表示水":蓝色在哪,哪里就能浇水。决策记录 0018 已经记了一笔:湖是水,画湖之前要先解决这个冲突。
+        湖本身是地形,不是一个"地点"(能去的是湖边的栈桥),所以它总得有个颜色。
+      </p>
+      <div class="lakes" id="lake-opts"></div>
+    </div>
+  </section>
+
+  <section id="time" class="band">
+    <div class="wrap">
+      <h2>四 状态栏和太阳月亮</h2>
+      <p class="sub">
+        <strong>状态栏放什么:</strong>沿用现在的三颗药丸,等级和经验、日期(第几年、哪一季、第几天)、金币,位置和农场、矿洞那两屏相同。
+        规则里和玩家随身相关的数只有这三样,没有加别的。季节已经写在日期里;"这一季过了多少"就是"第几天"(一季 28 天),没有另画进度。
+      </p>
+      <p class="sub">
+        <strong>太阳和月亮怎么对上游戏日:</strong>一个游戏日是现实 12 小时,每天 4:00 和 16:00 换日。换日对玩家是实打实的事:
+        作物又能浇一次水,牲畜吃一顿。下面三种对法,每种画了同样的四个钟点。
+      </p>
+      <div class="opts" id="time-opts"></div>
+    </div>
+  </section>
+
+  <section id="found" class="band">
+    <div class="wrap">
+      <h2>画的时候发现的问题</h2>
+      <p class="sub">都没有自己改规则。需要负责人定的,定稿时会记进路线图的未决问题。</p>
+      <ul class="notes" id="found-notes"></ul>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    示意稿,不是成品。绘制代码:<code>town-paper.js</code>(图形)、<code>maps.js</code>(构图)、<code>town-scene.js</code>(示意数据),
+    以及 <code>../mine-screens/</code> 和 <code>../art-exploration/style-paper.js</code> 里已有的图形和色板。规定见 <code>../07-art-direction.md</code>。
+  </div>
+</footer>
+
+<script src="../art-exploration/scene.js"></script>
+<script src="../art-exploration/style-paper.js"></script>
+<script src="../mine-screens/mine-scene.js"></script>
+<script src="../mine-screens/mine-paper.js"></script>
+<script src="../mine-screens/screens.js"></script>
+<script src="town-scene.js"></script>
+<script src="town-paper.js"></script>
+<script src="maps.js"></script>
+<script src="options.js"></script>
+</body>
+</html>

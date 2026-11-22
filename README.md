@@ -18,7 +18,8 @@
 | 界面与 Cocos Creator 工程 | 未开始 |
 | 正式词库 | 未开始,目前只有 30 词示例 |
 
-目标平台是手机:独立应用,以及微信、抖音小游戏。详细进度见[路线图](docs/design/06-roadmap.md)。
+目标平台是手机:独立应用,以及微信、抖音小游戏。画面目前只有代码画的示意稿(农场、矿洞、商店、小镇地图),见[美术规范](docs/design/07-art-direction.md);
+小镇地图正在重画,精修稿在 [`docs/design/town-map/`](docs/design/town-map/README.md)。详细进度见[路线图](docs/design/06-roadmap.md)。
 
 ## 玩法一览
 

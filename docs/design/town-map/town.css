@@ -1,0 +1,68 @@
+/* 小镇地图的页面在 ../mine-screens/page.css 之上加的几样版式。 */
+
+/* 能上下滑的手机框:里面是一张两屏高的地图,顶部的状态栏浮在上面不动。 */
+.phone-frame.scrolly {
+  position: relative;
+}
+.scrolly .scroller {
+  height: 100%;
+  overflow-y: auto;
+  scrollbar-width: none;
+  overscroll-behavior: contain;
+}
+.scrolly .scroller::-webkit-scrollbar {
+  display: none;
+}
+.phone-frame.scrolly .scroller svg,
+.phone-frame.scrolly .hud-float svg {
+  height: auto;
+}
+.scrolly .hud-float {
+  position: absolute;
+  inset: 0 0 auto 0;
+  pointer-events: none;
+}
+
+/* 长卷的全貌:比手机高得多,所以排窄一点。 */
+.long-frame {
+  width: 62%;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  box-shadow: 0 10px 28px rgba(15, 23, 32, 0.18);
+}
+.long-frame svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* 从整屏里裁出来的一块。 */
+.crop svg {
+  height: auto;
+}
+.states,
+.lakes {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 22px 18px;
+}
+.opt-shots figcaption b,
+.states figcaption b,
+.lakes figcaption b,
+.sky-strip figcaption b {
+  display: block;
+  color: var(--ink);
+  font-size: 14px;
+}
+.lakes .rec {
+  margin-left: 8px;
+  vertical-align: 2px;
+}
+
+/* 同一种时间表示法在四个钟点的样子。 */
+.sky-strip {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}

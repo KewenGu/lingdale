@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>灵谷小镇地图</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Noto+Sans+SC:wght@400;500;700;900&family=Noto+Serif+SC:wght@600;900&family=ZCOOL+KuaiLe&display=swap">
+<link rel="stylesheet" href="../mine-screens/page.css">
+<link rel="stylesheet" href="town.css">
+</head>
+<body>
+<svg id="ld-defs" width="0" height="0" aria-hidden="true" focusable="false"></svg>
+
+<header class="top">
+  <div class="wrap">
+    <p class="eyebrow">灵谷小镇 Lingdale · 彩纸拼贴 · 小镇地图 · 精修稿</p>
+    <h1>山谷里的小镇</h1>
+    <p class="lede">
+      小镇地图是游戏的总入口。这一稿画的是站在镇子前面的山头上往下看到的样子:脚下是山头和路牌,近处是木栅栏围起来的农场和山脚的矿洞,
+      过一座小桥是围着广场的镇子,再远是湖,最远是一层层的山。近的大,远的小;近的压着远的。
+    </p>
+    <div class="notice">
+      <strong>示意稿,不是成品,也还没有定稿。</strong>
+      全部用代码绘制(SVG),没有使用图像生成工具。画面不读取游戏数据,数字是手写的示意。等负责人看过再改。
+    </div>
+    <div class="notice">
+      <strong>现在真的能进的只有四处:</strong>矿洞、农场、牧场、商店,它们有颜色、有带状况的名牌。
+      家、旅店、饭店、电影院、镇公所、中心广场、居民的家、湖边钓鱼<strong>都还没有设计</strong>,画成没上色的纸模型。
+    </div>
+    <div class="notice">
+      这是第四轮。第一轮的三种构图被负责人全部否掉(太简单、太机械,横平竖直),留在<a href="options.html">方案比较页</a>作记录;
+      第二轮先画地形再摆东西,负责人说方向对了但不够精致:房子没有特色,景致、前后、错落、阴影都太粗;
+      第三轮改成从山头上远看,负责人说镇上还是太简单、缺装饰,于是第四轮给镇上加了石板路、石桥、台阶、路灯、花坛、行道树这些细节。
+    </div>
+    <nav class="jump" aria-label="页面目录">
+      <a href="#map">地图</a>
+      <a href="#how">这一稿是怎么排的</a>
+      <a href="#assumed">先按建议画的几件事</a>
+      <a href="#open">没画的和没验证的</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <section id="map" class="band">
+    <div class="wrap">
+      <h2>地图</h2>
+      <p class="sub">同一张地图,四份存档。地图上的东西跟着存档变:田里格子的干湿、草地上的草、草垛的高矮、牲畜站着还是趴着、洞口露不露矿、天上是太阳还是月亮。</p>
+      <div class="shots wide" id="map-shots"></div>
+    </div>
+  </section>
+
+  <section id="how" class="band">
+    <div class="wrap">
+      <h2>这一稿是怎么排的</h2>
+      <p class="sub">
+        前四条是第二轮定下的排法(负责人让参考两个种田游戏的小镇地图,这里只学排法,不学画面);后面几条是第三、第四轮为了"更精致"加的。
+      </p>
+      <ul class="notes" id="how-notes"></ul>
+    </div>
+  </section>
+
+  <section id="assumed" class="band">
+    <div class="wrap">
+      <h2>先按建议画的几件事</h2>
+      <p class="sub">方案页上另外几组取舍,负责人没有单独表态。这一稿先按绘制者的建议画了,都可以改。</p>
+      <ul class="notes" id="assumed-notes"></ul>
+    </div>
+  </section>
+
+  <section id="open" class="band">
+    <div class="wrap">
+      <h2>没画的,和没验证的</h2>
+      <ul class="notes" id="open-notes"></ul>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    示意稿,不是成品。绘制代码:<code>valley.js</code>(这张地图)、<code>buildings.js</code>(房子)、<code>props.js</code>(镇上的小东西)、<code>town-paper.js</code>(其余的图形)、<code>town-scene.js</code>(示意数据),
+    以及 <code>../mine-screens/</code> 和 <code>../art-exploration/style-paper.js</code> 里已有的图形和色板。规定见 <code>../07-art-direction.md</code>。
+  </div>
+</footer>
+
+<script src="../art-exploration/scene.js"></script>
+<script src="../art-exploration/style-paper.js"></script>
+<script src="../mine-screens/mine-scene.js"></script>
+<script src="../mine-screens/mine-paper.js"></script>
+<script src="../mine-screens/screens.js"></script>
+<script src="town-scene.js"></script>
+<script src="town-paper.js"></script>
+<script src="maps.js"></script>
+<script src="buildings.js"></script>
+<script src="props.js"></script>
+<script src="valley.js"></script>
+<script src="index.js"></script>
+</body>
+</html>

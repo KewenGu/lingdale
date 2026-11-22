@@ -71,6 +71,7 @@ data/          卡组数据(目前只有 30 词的示例)
 docs/design/   设计文档:愿景、玩法规则、学习设计、数值、内容、路线图、美术规范
 docs/design/art-exploration/  定美术方向时的探索稿:四种画风的比较页和绘制代码
 docs/design/mine-screens/     矿洞这一边的画面:矿洞、矿石、词袋、商店、小镇地图的示意稿和绘制代码
+docs/design/town-map/         小镇地图的精修稿和绘制代码(等负责人看,还没定稿);第一轮被否的方案也留在这里
 docs/dev/      开发文档:架构、开发指南、Cocos 接入
 docs/marketing/ 对外内容:内容策略、选题库
 docs/decisions/ 决策记录:每个重要决定的背景、理由和被否决的方案
@@ -139,5 +140,5 @@ npm run sim -- --buy --days=90   # 模拟参数见 docs/dev/development.md
 ## 当前状态
 
 核心逻辑层(矿洞、农场、牧场、养牛羊和鸡、商店)已完成并有测试和模拟。美术方向已定为彩纸拼贴,农场、矿洞、词袋、商店和小镇地图都有代码画的示意稿,
-没有动效,没有成品美术。还没有界面、Cocos 工程和正式词库。
+没有动效,没有成品美术。小镇地图在重画,精修稿改到第四轮,等负责人看(`docs/design/town-map/`)。还没有界面、Cocos 工程和正式词库。
 进度和下一步见 [`docs/design/06-roadmap.md`](docs/design/06-roadmap.md)。
