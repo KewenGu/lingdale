@@ -16,8 +16,8 @@ def cutout(im, lo=26, hi=58):
     rgb=np.clip((a-(1-al)*bg)/al,0,255)
     out=np.dstack([rgb,alpha*255]).round().astype(np.uint8)
     return Image.fromarray(out,'RGBA'), alpha>0.5, bg
-def split3(mask):
-    # 按列投影找两条最宽的空隙,切成三段。零星的土屑不算内容。
+def split3(mask, n=3):
+    # 按列投影找最宽的 n-1 条空隙,切成 n 段。零星的土屑不算内容。
     col=mask.sum(0); W=len(col); has=col>mask.shape[0]*0.004
     gaps=[]; x=0
     while x<W:
@@ -26,12 +26,12 @@ def split3(mask):
             while x<W and not has[x]: x+=1
             if x0>0 and x<W: gaps.append((x-x0,x0,x))
         else: x+=1
-    gaps=sorted(gaps,reverse=True)[:2]
-    if len(gaps)<2: return None
-    cuts=sorted((g[1]+g[2])//2 for g in gaps)
-    return [(0,cuts[0]),(cuts[0],cuts[1]),(cuts[1],W)]
-def sprites(path):
-    im=Image.open(path); rgba,mask,bg=cutout(im); parts=split3(mask)
+    gaps=sorted(gaps,reverse=True)[:n-1]
+    if len(gaps)<n-1: return None
+    cuts=[0]+sorted((g[1]+g[2])//2 for g in gaps)+[W]
+    return [(cuts[i],cuts[i+1]) for i in range(n)]
+def sprites(path, n=3):
+    im=Image.open(path); rgba,mask,bg=cutout(im); parts=split3(mask,n)
     if not parts: return None
     out=[]
     for x0,x1 in parts:

@@ -170,6 +170,8 @@
         r = rnd(),
         health =
           stage === 0 ? 'healthy' : r < 0.08 ? 'dead' : r < 0.24 ? 'wilted' : r < 0.4 ? 'stunted' : 'healthy';
+      // 成熟的不画枯萎,这个示意存档里也不排出这种情况
+      if (stage === 4 && health === 'wilted') health = 'stunted';
       plots.push(
         LD.plot(ids[Math.floor(rnd() * 12)], stage, {
           health: health,
@@ -194,16 +196,14 @@
       true,
     );
 
-    // 素材一览:一种作物一行,三个阶段乘两种样子
+    // 素材一览:一种作物一行。健康的三个阶段,枯萎的只有幼苗和成株两个
     var kinds = [
         ['healthy', '健康(不生长也用这一张)'],
         ['wilted', '枯萎:蔫了,还能救'],
       ],
       table = $('sprite-table'),
       head = '<tr><th></th>';
-    kinds.forEach(function (k) {
-      head += '<th colspan="3">' + k[1] + '</th>';
-    });
+    head += '<th colspan="3">' + kinds[0][1] + '</th><th colspan="2">' + kinds[1][1] + '</th>';
     table.innerHTML = head + '</tr>';
     function cell(name) {
       var s = A[name];
@@ -223,10 +223,11 @@
     }
     LD.CROPS.forEach(function (c) {
       var row = '<tr><td class="name">' + esc(c.name) + '</td>';
-      kinds.forEach(function (k) {
-        [2, 3, 4].forEach(function (st) {
-          row += cell(c.id + '-' + st + '-' + k[0]);
-        });
+      [2, 3, 4].forEach(function (st) {
+        row += cell(c.id + '-' + st + '-healthy');
+      });
+      [2, 3].forEach(function (st) {
+        row += cell(c.id + '-' + st + '-wilted');
       });
       table.innerHTML += row + '</tr>';
     });
@@ -234,7 +235,7 @@
       '<tr><td class="name">共用</td>' +
       cell('seed') +
       cell('sprout-healthy') +
-      '<td></td><td></td>' +
+      '<td></td>' +
       cell('sprout-wilted') +
       cell('dead') +
       '</tr>';

@@ -88,7 +88,8 @@
    */
   function spriteOf(p) {
     if (p.health === 'dead') return 'dead';
-    var health = p.health === 'wilted' ? 'wilted' : 'healthy';
+    // 成熟的(第 4 个形态)不画枯萎,负责人定的。规则里它是可以枯萎的,这时候用健康的那一张,只有星带能看出来
+    var health = p.health === 'wilted' && p.stage < 4 ? 'wilted' : 'healthy';
     if (p.stage <= 0) return 'seed';
     if (p.stage === 1) return 'sprout-' + health;
     return p.crop + '-' + p.stage + '-' + health;
