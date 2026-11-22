@@ -50,12 +50,13 @@ if sp:
     k=42/sp[6].size[1]
     for i,s in enumerate(sp): save(s,f'ore-{i+1}',k)
 else: problems.append('ores')
-# 词牌 268pt 宽(连两根木条),镐约 62pt 高,垫矿石的石片 48pt 宽
+# 词牌 268pt 宽(连两根木条),镐约 62pt 高
 sp=cut('props.png',3,green=True)
 if sp:
     # 词牌也比彩纸那一屏的高(牌面 124pt,原来是 112pt),下沿会压到矿壁上,压扁 6%
     ks=270/sp[0].size[0]
-    save(sp[0],'sign',ks,ks*0.94); save(sp[1],'pick',62/sp[1].size[1]); save(sp[2],'pad',48/sp[2].size[0])
+    save(sp[0],'sign',ks,ks*0.94); save(sp[1],'pick',62/sp[1].size[1])
+    # 第三样是垫矿石的石片。词牌右上角不再放矿石(负责人 2026-11-22 定的),石片没有用上,不存
 else: problems.append('props')
 Image.open('bg2.png').convert('RGB').resize((780,1688),Image.LANCZOS).save(f'{OUT}/mine-bg.webp','WEBP',quality=86,method=6)
 json.dump(atlas,open(f'{OUT}/atlas.json','w'),ensure_ascii=False,indent=0)
