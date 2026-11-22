@@ -29,6 +29,7 @@
 | [`vs-paper.jpg`](shots/vs-paper.jpg)、[`vs-paper-zoom.jpg`](shots/vs-paper-zoom.jpg) | 和彩纸并排:三屏各一对(左彩纸,右现在),以及各放大一块 |
 | [`built.jpg`](shots/built.jpg)、[`built-other.jpg`](shots/built-other.jpg) | 用素材拼出来的农场:和彩纸、整屏重画并排;换一个存档 |
 | [`sprites.jpg`](shots/sprites.jpg) | 素材一览:12 种作物各九个,加共用的种子和发芽 |
+| [`sprites-v1.jpg`](shots/sprites-v1.jpg) | 第一套素材的一览,留作对照。负责人要求按"圆胖一点、枯萎调轻"整套重出,重出还没有做完;在那之前它和 `sprites.jpg` 是同一张 |
 | [`sprite-misses.jpg`](shots/sprite-misses.jpg)、[`sprite-chunky.jpg`](shots/sprite-chunky.jpg) | 画错的两张;"圆胖一点"的试验 |
 | [`tone.jpg`](shots/tone.jpg) | 色调:第一版和现在的,三屏各一对 |
 | [`mine-cave.jpg`](shots/mine-cave.jpg) | 矿洞:左边是第一版,右边是现在的(同一张画,只调亮了地面) |
