@@ -1,6 +1,11 @@
 // 用开源词典 ECDICT 和人工定的短释义,生成游戏用的卡组。
 //
-//   npx tsx scripts/build-deck.ts <ecdict.csv 的路径> [--count=1000] [--glosses=data/cet4-glosses.txt] [--out=data/cet4-1000.json]
+//   npx tsx scripts/build-deck.ts <ecdict.csv 的路径> --deck=cet4 [--count=1000] [--todo=路径]
+//   npx tsx scripts/build-deck.ts <ecdict.csv 的路径> --deck=gre
+//
+// 每个词库从哪张词表里取、去掉哪些更基础的词表,写在下面的 DECKS 里。短释义读 data/<词库>-glosses.txt,
+// 卡组写到 data/<词库>-<词数>.json。还有词没写短释义时会报错;加上 --todo=路径,就把缺的词连同词典的释义写到那个文件里,
+// 照着它补 glosses 文件。
 //
 // 词典给的是:选哪些词(四级词表)、先后顺序(词频)、音标,以及每个词的全部释义(用来排除近义的干扰项)。
 // 卡片上显示的主词性和短释义来自 glosses 文件,一行一个词:"单词 词性 释义1;释义2"。
@@ -9,7 +14,7 @@
 // 这个脚本只在做词库的时候在开发机上跑,所以可以用 Node 的接口。它不属于 core/。
 // 词典本身不放进仓库(66MB);来源、许可和转换规则见 data/README.md。
 
-import { readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 
 interface Row {
   word: string;
@@ -46,6 +51,23 @@ const POS_LABELS: Record<string, [string, string]> = {
   interj: ['int', 'int.'],
   art: ['art', 'art.'],
   aux: ['aux', 'aux.'],
+};
+
+interface DeckSpec {
+  name: string; // 卡组的名字,后面接"常用 N 词"
+  tag: string; // 词典里这张词表的标签
+  without: string[]; // 同时在这些词表里的词不要:它们对学这个词库的人太基础
+}
+
+/**
+ * 每个词库怎么选词。
+ * - 四级:去掉中考词表里的词。
+ * - GRE:去掉中考、高考、四六级、考研、托福、雅思词表里的词,只留 GRE 自己的。
+ *   不去掉的话,按词频排在前面的会是 defense、designer 这样的词,对背 GRE 的人没有难度。
+ */
+const DECKS: Record<string, DeckSpec> = {
+  cet4: { name: '大学英语四级', tag: 'cet4', without: ['zk'] },
+  gre: { name: 'GRE', tag: 'gre', without: ['zk', 'gk', 'cet4', 'cet6', 'ky', 'toefl', 'ielts'] },
 };
 
 /** 一条释义最多这么多个字。太长的在选择题里一眼就能和别的选项分开。 */
@@ -133,6 +155,8 @@ function labelOf(pos: string): string | null {
 /** 读人工定的短释义。格式不对、词性不认识、释义太长,都直接报错:这是要显示给玩家的东西。 */
 function readGlosses(path: string): Record<string, Gloss> {
   const glosses: Record<string, Gloss> = {};
+  // 新词库一开始还没有这个文件:当成一个词都没写,好让 --todo 把整张词单导出来
+  if (!existsSync(path)) return glosses;
   for (const raw of readFileSync(path, 'utf8').split('\n')) {
     const text = raw.trim();
     if (!text) continue;
@@ -172,16 +196,20 @@ function main(): void {
   const source = args.filter((a) => !a.startsWith('--'))[0];
   if (!source) {
     throw new Error(
-      '用法: npx tsx scripts/build-deck.ts <ecdict.csv> [--count=1000] [--glosses=路径] [--out=路径]',
+      '用法: npx tsx scripts/build-deck.ts <ecdict.csv> --deck=cet4|gre [--count=1000] [--todo=路径]',
     );
   }
   const option = (name: string, fallback: string) => {
     const hit = args.filter((a) => a.startsWith(`--${name}=`))[0];
     return hit ? hit.slice(name.length + 3) : fallback;
   };
+  const deckKey = option('deck', 'cet4');
+  if (!Object.prototype.hasOwnProperty.call(DECKS, deckKey)) throw new Error(`没有这个词库: ${deckKey}`);
+  const spec = DECKS[deckKey];
   const count = Number(option('count', '1000'));
-  const out = option('out', `data/cet4-${count}.json`);
-  const glosses = readGlosses(option('glosses', 'data/cet4-glosses.txt'));
+  const out = option('out', `data/${deckKey}-${count}.json`);
+  const glosses = readGlosses(option('glosses', `data/${deckKey}-glosses.txt`));
+  const todo = option('todo', '');
 
   const rows: Row[] = [];
   let header: string[] | null = null;
@@ -192,8 +220,7 @@ function main(): void {
     }
     const get = (name: string) => cells[header!.indexOf(name)] || '';
     const tags = get('tag').split(' ');
-    // 四级词表里、又不在中考词表里的词。中考的词对准备四级的人太基础了
-    if (tags.indexOf('cet4') < 0 || tags.indexOf('zk') >= 0) return;
+    if (tags.indexOf(spec.tag) < 0 || spec.without.some((tag) => tags.indexOf(tag) >= 0)) return;
     const word = get('word');
     if (!/^[a-z]{3,}$/.test(word)) return;
     rows.push({
@@ -212,11 +239,13 @@ function main(): void {
   const cards: OutCard[] = [];
   const backs: Record<string, string> = {};
   const missing: string[] = [];
+  const drafts: string[] = [];
   const unmatched: string[] = [];
   const otherPos: string[] = [];
   for (const row of rows.slice(0, count)) {
     if (!Object.prototype.hasOwnProperty.call(glosses, row.word)) {
       missing.push(row.word);
+      drafts.push(`${row.word}\t${row.translation}`);
       continue;
     }
     const gloss = glosses[row.word];
@@ -244,9 +273,15 @@ function main(): void {
     if (phonetic) card.phonetic = phonetic;
     cards.push(card);
   }
-  if (missing.length > 0) throw new Error(`这些词还没有写短释义: ${missing.join(' ')}`);
+  if (missing.length > 0) {
+    if (todo) {
+      writeFileSync(todo, drafts.join('\n') + '\n');
+      throw new Error(`还有 ${missing.length} 个词没有写短释义,连同词典的释义写到了 ${todo}`);
+    }
+    throw new Error(`这些词还没有写短释义: ${missing.join(' ')}`);
+  }
 
-  const deck = { id: `cet4-${count}`, name: `大学英语四级 · 常用 ${count} 词`, version: 1, cards };
+  const deck = { id: `${deckKey}-${count}`, name: `${spec.name} · 常用 ${count} 词`, version: 1, cards };
   writeFileSync(out, JSON.stringify(deck, null, 1) + '\n');
 
   const byPos: Record<string, number> = {};

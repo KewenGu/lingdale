@@ -6,7 +6,7 @@
 // 打出来三个文件:
 //   page.html   页面本身,不带 <html> 外壳。发布到会自己套外壳的地方用这一份
 //   index.html  套了外壳的同一个页面,本机打开用
-//   deck.json   词库。页面用相对路径取它
+//   decks/      词库:每个词库一个文件,加一份 index.json 列出有哪些。页面用相对路径取
 //
 // 这个脚本只在开发机上跑,所以可以用 Node 的接口。它不属于 core/。
 
@@ -15,7 +15,8 @@ import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { buildSync } from 'esbuild';
 
 const OUT = 'web/dist';
-const DECK = 'data/cet4-1000.json';
+/** 页面上能选的词库,排在最前面的是第一次打开时默认的。 */
+const DECKS = ['gre-1000', 'cet4-1000'];
 const PORT = 5173;
 
 const bundle = buildSync({
@@ -45,14 +46,25 @@ writeFileSync(
     '</body></html>',
 );
 // 词库去掉缩进再放出去,小一些
-writeFileSync(`${OUT}/deck.json`, JSON.stringify(JSON.parse(readFileSync(DECK, 'utf8'))));
-console.log(`打包好了:${OUT}/page.html(${Math.round(page.length / 1024)}KB)、index.html、deck.json`);
+mkdirSync(`${OUT}/decks`, { recursive: true });
+const index: { id: string; name: string }[] = [];
+for (const id of DECKS) {
+  const deck = JSON.parse(readFileSync(`data/${id}.json`, 'utf8')) as { id: string; name: string };
+  if (deck.id !== id) throw new Error(`data/${id}.json 里的 id 是 ${deck.id}`);
+  writeFileSync(`${OUT}/decks/${id}.json`, JSON.stringify(deck));
+  index.push({ id, name: deck.name });
+}
+writeFileSync(`${OUT}/decks/index.json`, JSON.stringify(index));
+console.log(
+  `打包好了:${OUT}/page.html(${Math.round(page.length / 1024)}KB)、index.html、decks/(${DECKS.join('、')})`,
+);
 
 if (process.argv.indexOf('--build') < 0) {
   const types: Record<string, string> = {
     '/index.html': 'text/html; charset=utf-8',
-    '/deck.json': 'application/json; charset=utf-8',
+    '/decks/index.json': 'application/json; charset=utf-8',
   };
+  for (const id of DECKS) types[`/decks/${id}.json`] = 'application/json; charset=utf-8';
   createServer((request, response) => {
     const path = request.url === '/' ? '/index.html' : (request.url || '').split('?')[0];
     if (!Object.prototype.hasOwnProperty.call(types, path)) {

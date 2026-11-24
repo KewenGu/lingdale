@@ -84,13 +84,16 @@ npx tsx --test tests/farm.test.ts
 
 词库怎么来的、怎么重新生成、查过什么没查过什么,见 [`data/README.md`](../../data/README.md)。要点:
 
-- `data/cet4-1000.json` 是 `scripts/build-deck.ts` 生成的,不要手改。改释义改的是 `data/cet4-glosses.txt`,然后重新生成。
+- 现在有两个:四级(`cet4`)和 GRE(`gre`),各 1000 词。
+- `data/cet4-1000.json`、`data/gre-1000.json` 是 `scripts/build-deck.ts --deck=cet4|gre` 生成的,不要手改。
+  改释义改的是 `data/<词库>-glosses.txt`,然后重新生成。
 - 生成要用到开源词典 ECDICT 的 `ecdict.csv`(66MB,不在仓库里),自己下载后把路径传给脚本。
-- 改了出题的规则或词库之后跑 `npm run guess`,蒙对率应该在 25% 上下。`tests/deck.test.ts` 里也有同样的检查。
+- 改了出题的规则或词库之后跑 `npm run guess`(量 GRE 的:`npm run guess -- data/gre-1000.json`),蒙对率应该在 25% 上下。
+  `tests/deck.test.ts` 对每个词库都跑同一套检查。
 
 ## 练习页
 
-`web/` 是一个没有美术的网页,把矿洞、农场、牧场、商店都接到核心层上,用四级 1000 词。它有两个用处:负责人每天真的用它背;
+`web/` 是一个没有美术的网页,把矿洞、农场、牧场、商店都接到核心层上,词库可以选 GRE 或四级。它有两个用处:负责人每天真的用它背;
 在没有游戏界面的时候检查词库、出题和整套规则玩起来顺不顺。它**不是**游戏的界面,做法不会原样搬进 Cocos。
 
 | 文件 | 管什么 |
@@ -102,7 +105,10 @@ npx tsx --test tests/farm.test.ts
 | `web/ui.ts` | 画界面的小工具:造节点、把时间说成"明天 04:00"、点两下才生效的按钮 |
 | `web/storage.ts` | 存取:浏览器本地一份,云端一份 |
 
-- `scripts/build-web.ts` 把它们打成 `web/dist/` 下的三个文件:`index.html`(本机打开)、`page.html`(同一个页面,不带外壳)、`deck.json`。
+- `scripts/build-web.ts` 把它们打成 `web/dist/` 下的 `index.html`(本机打开)、`page.html`(同一个页面,不带外壳)和 `decks/`(每个词库一个文件,加一份 `index.json`)。
+- **每个词库一份存档。** 页脚选词库,换词库就是换一个存档,金币、田、牲畜都各算各的;第一次打开默认是 `scripts/build-web.ts`
+  里 `DECKS` 的第一个(现在是 GRE)。四级是最早的词库,它的存档名字里不带词库的 id(见 `web/storage.ts`)。
+  这是练习页的省事做法,不是产品里多卡组的做法。
 - 四个页签的地址是 `#mine`、`#farm`、`#pasture`、`#shop`。页签上的数字是现在能浇几株、草地上有几株草。
 - 每次进一页、每次回到页面都会调用 `settlePasture`。它的结果只给一次,所以页面把"你不在的时候饿病了几只"留在顶上,直到点"知道了"。
 - 卖牲畜、全卖作物、怀小的这些收不回来的事,按钮要点两下:页面所在的地方弹不出系统的确认框。
