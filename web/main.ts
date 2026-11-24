@@ -31,6 +31,7 @@ import {
   Cloud,
   Flag,
   MAX_FLAGS,
+  flagDeck,
   loadLocalFlags,
   loadLocalSave,
   loadPrefs,
@@ -94,14 +95,20 @@ class App implements Ctx {
   private lastSyncAt = 0;
   private syncTimer = 0;
   private syncNote = '';
+  /** 正在进行的那次云端同步。换词库之前要等它写完,不然两个词库的存档会写串。 */
+  private syncing_: Promise<void> | null = null;
+  private switching = false;
 
-  constructor(public deck: Deck) {
-    const prefs = loadPrefs();
+  constructor(
+    public deck: Deck,
+    private decks: DeckInfo[],
+    private prefs: Record<string, string>,
+  ) {
     this.questionType =
       prefs.questionType === 'reverse' || prefs.questionType === 'spell' ? prefs.questionType : 'choice';
     this.tab = tabFromHash() || 'mine';
     this.flags = loadLocalFlags();
-    this.save = this.readSave(loadLocalSave()) || createSave(deck.id, Date.now(), tzOffsetMs());
+    this.save = this.readSave(loadLocalSave(deck.id)) || createSave(deck.id, Date.now(), tzOffsetMs());
   }
 
   now(): number {
@@ -123,15 +130,31 @@ class App implements Ctx {
 
   async start(): Promise<void> {
     this.bind();
-    this.renderAround();
-    const hadLocal = loadLocalSave() !== null;
-    // 等云端的进度:别的设备上可能答过更新的。等不到就用本机的
-    const cloud = await Promise.race([
+    // 连云端只连一次,最多等一会儿:等不到就只用本机的
+    this.cloud = await Promise.race([
       Cloud.connect(),
       new Promise<null>((resolve) => window.setTimeout(() => resolve(null), CLOUD_WAIT_MS)),
     ]);
+    await this.load();
+  }
+
+  /** 取当前这个词库的进度:先用这台设备上的,云端有更新的就换成云端的。 */
+  private async load(): Promise<void> {
+    this.ready = false;
+    this.round = null;
+    this.ask = null;
+    this.outcome = null;
+    this.dirty = false;
+    this.notice = '';
+    this.reports = [];
+    this.farm = { skip: 0, seed: null, planted: null };
+    const deckId = this.deck.id;
+    const hadLocal = loadLocalSave(deckId) !== null;
+    this.save = this.readSave(loadLocalSave(deckId)) || createSave(deckId, Date.now(), tzOffsetMs());
+    this.renderAround();
+    const cloud = this.cloud;
     if (cloud) {
-      this.cloud = cloud;
+      cloud.useDeck(deckId);
       try {
         const theirs = await cloud.load();
         const save = theirs ? this.readSave(theirs.json) : null;
@@ -154,7 +177,30 @@ class App implements Ctx {
     this.save = save;
     this.round = null;
     this.farm = { skip: 0, seed: null, planted: null };
-    storeLocalSave(serialize(save));
+    storeLocalSave(this.deck.id, serialize(save));
+  }
+
+  /** 换一个词库。每个词库一份存档:金币、田、牲畜都各算各的。 */
+  private async switchDeck(deckId: string): Promise<void> {
+    if (deckId === this.deck.id || this.switching || !this.ready) return;
+    this.switching = true;
+    window.clearTimeout(this.advanceTimer);
+    try {
+      // 先把手上这个词库的进度写完
+      window.clearTimeout(this.syncTimer);
+      this.syncTimer = 0;
+      if (this.syncing_) await this.syncing_;
+      if (this.dirty) await this.sync();
+      const deck = await fetchDeck(deckId);
+      this.deck = deck;
+      this.prefs.deck = deckId;
+      storePrefs(this.prefs);
+      await this.load();
+    } catch {
+      this.notice = '词库没取到,还留在原来的词库。过一会儿再试。';
+      this.renderAround();
+    }
+    this.switching = false;
   }
 
   private mergeFlags(theirs: Flag[]): void {
@@ -180,7 +226,7 @@ class App implements Ctx {
   // ---------- 存 ----------
 
   private persist(): void {
-    const stored = storeLocalSave(serialize(this.save));
+    const stored = storeLocalSave(this.deck.id, serialize(this.save));
     if (!stored && !this.cloud)
       this.syncNote = '这台设备存不下进度(浏览器不让存)。这次做的事关掉页面就没了。';
     this.dirty = true;
@@ -196,8 +242,16 @@ class App implements Ctx {
     }, wait);
   }
 
-  private async sync(): Promise<void> {
-    if (!this.cloud || this.syncing || !this.dirty) return;
+  private sync(): Promise<void> {
+    if (!this.cloud || this.syncing || !this.dirty) return Promise.resolve();
+    this.syncing_ = this.syncOnce().then(() => {
+      this.syncing_ = null;
+    });
+    return this.syncing_;
+  }
+
+  private async syncOnce(): Promise<void> {
+    if (!this.cloud) return;
     this.syncing = true;
     this.dirty = false;
     this.lastSyncAt = Date.now();
@@ -321,7 +375,8 @@ class App implements Ctx {
   private setType(type: QuestionType): void {
     if (type === this.questionType) return;
     this.questionType = type;
-    storePrefs({ questionType: type });
+    this.prefs.questionType = type;
+    storePrefs(this.prefs);
     // 已经出了题还没答:换一种题型重新出这道。答完的那道不动
     if (this.tab !== 'mine' || !this.ready) return;
     const answered = this.outcome;
@@ -337,6 +392,7 @@ class App implements Ctx {
     if (index >= 0) this.flags.splice(index, 1);
     else {
       this.flags.push({
+        deckId: this.deck.id,
         cardId: question.cardId,
         kind,
         questionType: question.type,
@@ -354,7 +410,8 @@ class App implements Ctx {
 
   private flagIndex(cardId: string, kind: string): number {
     for (let i = this.flags.length - 1; i >= 0; i--) {
-      if (this.flags[i].cardId === cardId && this.flags[i].kind === kind) return i;
+      const flag = this.flags[i];
+      if (flagDeck(flag) === this.deck.id && flag.cardId === cardId && flag.kind === kind) return i;
     }
     return -1;
   }
@@ -633,8 +690,19 @@ class App implements Ctx {
     this.renderFlags();
 
     byId('sync').textContent = this.syncNote || '正在取你的进度…';
+    const picker = byId('decks');
+    fill(
+      picker,
+      this.decks.map((info) =>
+        button(info.name, { 'aria-pressed': String(info.id === this.deck.id), id: `deck-${info.id}` }, () =>
+          this.switchDeck(info.id),
+        ),
+      ),
+    );
+    picker.hidden = this.decks.length < 2;
     byId('deck-note').textContent =
-      `词库:${this.deck.name},见过 ${seen}/${this.deck.cards.length}。选词、词频和音标来自开源词典 ECDICT(MIT 许可);` +
+      `见过 ${seen}/${this.deck.cards.length}。每个词库各有一份进度,金币、田和牲畜也各算各的。` +
+      `选词、词频和音标来自开源词典 ECDICT(MIT 许可);` +
       `卡片上的词性和短释义是 AI 写的,还没有人逐个校对过,看到不对的请在答完后点"释义不准"。` +
       `这次打开答了 ${this.answeredThisVisit} 道。`;
   }
@@ -690,13 +758,15 @@ class App implements Ctx {
   }
 
   private renderFlags(): void {
-    byId('flags-count').textContent = String(this.flags.length);
+    byId('flags-count').textContent = String(
+      this.flags.filter((flag) => flagDeck(flag) === this.deck.id).length,
+    );
     const labels: Record<string, string> = {};
     for (const [kind, label] of FLAG_KINDS) labels[kind] = label;
     const rows: Child[] = this.flags
       .slice()
       .reverse()
-      .filter((flag) => hasCard(this.deck, flag.cardId))
+      .filter((flag) => flagDeck(flag) === this.deck.id && hasCard(this.deck, flag.cardId))
       .map((flag) => {
         const card = getCard(this.deck, flag.cardId);
         return h('div', { class: 'item' }, [
@@ -714,13 +784,31 @@ class App implements Ctx {
   }
 }
 
+/** 页面上能选的词库。打包时写进 decks/index.json,排在最前面的是默认的。 */
+interface DeckInfo {
+  id: string;
+  name: string;
+}
+
+async function fetchJson(path: string): Promise<unknown> {
+  const response = await fetch(path);
+  if (!response.ok) throw new Error(`${path} ${response.status}`);
+  return response.json();
+}
+
+function fetchDeck(deckId: string): Promise<Deck> {
+  return fetchJson(`decks/${deckId}.json`) as Promise<Deck>;
+}
+
 async function boot(): Promise<void> {
   const stage = byId('stage');
   try {
-    const response = await fetch('deck.json');
-    if (!response.ok) throw new Error(String(response.status));
-    const deck = (await response.json()) as Deck;
-    await new App(deck).start();
+    const decks = (await fetchJson('decks/index.json')) as DeckInfo[];
+    const prefs = loadPrefs();
+    // 上次用的词库;没有选过,或者那个词库已经不在了,用排在最前面的
+    const chosen = decks.filter((info) => info.id === prefs.deck)[0] || decks[0];
+    const deck = await fetchDeck(chosen.id);
+    await new App(deck, decks, prefs).start();
   } catch (error) {
     fill(stage, [
       h('div', { class: 'slab' }, [

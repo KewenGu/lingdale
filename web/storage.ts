@@ -6,6 +6,9 @@
 //   meta          { updatedAt, gen, chunks }   指向当前这一份
 //   save-<gen>-<i> { text }                     存档的第 i 段
 // 两个 gen 轮着用:先写完新的几段,最后改 meta。写到一半断了,meta 还指着上一份完整的。
+//
+// 每个词库一份存档,互不相干:换词库就是换一个存档(金币、田、牲畜都各算各的)。
+// 最早只有四级一个词库,它的存档用的是不带词库名的名字;后来的词库在名字后面带上词库的 id。
 
 interface Snapshot {
   exists: boolean;
@@ -26,6 +29,8 @@ interface Capabilities {
 }
 
 const SAVE_KEY = 'lingdale.save';
+/** 最早的那个词库。它的存档名字里不带词库的 id,已经存下的进度要照旧读得到。 */
+const FIRST_DECK = 'cet4-1000';
 const FLAGS_KEY = 'lingdale.flags';
 const PREFS_KEY = 'lingdale.prefs';
 
@@ -36,6 +41,7 @@ const CHUNK_CHARS = 100000;
 export const MAX_FLAGS = 300;
 
 export interface Flag {
+  deckId?: string; // 哪个词库的词。最早的标记没有记,都是四级的
   cardId: string;
   kind: string; // 'gloss' 释义不准 / 'options' 有两个选项都对 / 'phonetic' 音标不对
   questionType: string;
@@ -60,12 +66,21 @@ function writeLocal(key: string, value: string): boolean {
   }
 }
 
-export function loadLocalSave(): string | null {
-  return readLocal(SAVE_KEY);
+function suffix(deckId: string): string {
+  return deckId === FIRST_DECK ? '' : `.${deckId}`;
 }
 
-export function storeLocalSave(json: string): boolean {
-  return writeLocal(SAVE_KEY, json);
+/** 标记的是哪个词库的词。 */
+export function flagDeck(flag: Flag): string {
+  return flag.deckId || FIRST_DECK;
+}
+
+export function loadLocalSave(deckId: string): string | null {
+  return readLocal(SAVE_KEY + suffix(deckId));
+}
+
+export function storeLocalSave(deckId: string, json: string): boolean {
+  return writeLocal(SAVE_KEY + suffix(deckId), json);
 }
 
 export function loadLocalFlags(): Flag[] {
@@ -109,8 +124,24 @@ export class Cloud {
   private gen = 0;
   /** 我们最后一次在云端看到或写下的那份存档的时间。别的设备写过更新的,它就对不上了。 */
   private seen = 0;
+  private tail = '';
 
   private constructor(private mine: Collection) {}
+
+  /** 接下来读写哪个词库的存档。 */
+  useDeck(deckId: string): void {
+    this.tail = suffix(deckId);
+    this.gen = 0;
+    this.seen = 0;
+  }
+
+  private meta(): DocRef {
+    return this.mine.doc(`meta${this.tail}`);
+  }
+
+  private chunk(gen: number, index: number): DocRef {
+    return this.mine.doc(`save${this.tail}-${gen}-${index}`);
+  }
 
   static async connect(): Promise<Cloud | null> {
     const claude = (window as unknown as { claude?: Capabilities }).claude;
@@ -129,7 +160,7 @@ export class Cloud {
 
   /** 读云端的存档;没有时返回 null。读不全(写到一半断过)当作没有。 */
   async load(): Promise<CloudSave | null> {
-    const meta = await this.mine.doc('meta').get();
+    const meta = await this.meta().get();
     const body = meta.exists ? meta.data() : undefined;
     if (!body) return null;
     const gen = Number(body.gen) || 0;
@@ -137,7 +168,7 @@ export class Cloud {
     const updatedAt = Number(body.updatedAt) || 0;
     const parts: string[] = [];
     for (let i = 0; i < chunks; i++) {
-      const part = await this.mine.doc(`save-${gen}-${i}`).get();
+      const part = await this.chunk(gen, i).get();
       const data = part.exists ? part.data() : undefined;
       if (!data || typeof data.text !== 'string') return null;
       parts.push(data.text);
@@ -152,7 +183,7 @@ export class Cloud {
    * 这时不覆盖它,把它返回给调用的人(由他换成那一份)。写成功返回 null。
    */
   async store(json: string, updatedAt: number): Promise<CloudSave | null> {
-    const meta = await this.mine.doc('meta').get();
+    const meta = await this.meta().get();
     const body = meta.exists ? meta.data() : undefined;
     if (body && Number(body.updatedAt) > this.seen) {
       const theirs = await this.load();
@@ -161,9 +192,9 @@ export class Cloud {
     const gen = this.gen === 0 ? 1 : 0;
     const parts = splitText(json);
     for (let i = 0; i < parts.length; i++) {
-      await this.mine.doc(`save-${gen}-${i}`).set({ text: parts[i] });
+      await this.chunk(gen, i).set({ text: parts[i] });
     }
-    await this.mine.doc('meta').set({ updatedAt, gen, chunks: parts.length });
+    await this.meta().set({ updatedAt, gen, chunks: parts.length });
     this.gen = gen;
     this.seen = updatedAt;
     return null;
